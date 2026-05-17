@@ -1,0 +1,43 @@
+package com.rpgvtt.montador_de_rpg_backend.domain.model;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+public class Campanha {
+
+    @Id
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "camp_seq"
+    )
+    @SequenceGenerator(
+            name = "camp_seq",
+            sequenceName = "camp_sequence",
+            allocationSize = 1
+    )
+    private Long id;
+
+    private String nome;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_sistema")
+    private Sistema sistema;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_mestre")
+    private Usuario mestre;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+    private List<Sessao> sessoes;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+    private List<Personagem> personagens;
+}

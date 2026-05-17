@@ -1,0 +1,37 @@
+package com.rpgvtt.montador_de_rpg_backend.domain.model;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+public class Usuario {
+
+    @Id
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "user_seq"
+    )
+    @SequenceGenerator(
+            name = "user_seq",
+            sequenceName = "user_sequence",
+            allocationSize = 1
+    )
+    private Long id;
+
+    private String senha;
+    private String email;
+    private String apelido;
+
+    @OneToMany(mappedBy = "usuario")
+    private List<Sistema> sistema;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
+    private List<Personagem>  personagens;
+}

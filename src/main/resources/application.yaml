@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: montador-de-rpg-backend
