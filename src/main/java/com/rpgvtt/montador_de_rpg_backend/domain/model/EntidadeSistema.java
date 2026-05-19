@@ -34,7 +34,19 @@ public class EntidadeSistema {
     private String nome;
 
     private String descricao;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode atributos;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode propriedades;
 
     @OneToMany(mappedBy = "entidade")
     private List<EntidadeSistema> entidadeSistemas;
+
+    @OneToOne(mappedBy = "EntidadeSistema", cascade = CascadeType.ALL)
+    @PrimaryKeyJoinColumn
+    private Personagem personagem;
 }

@@ -24,6 +24,4 @@ public class EntidadeEfeito {
             allocationSize = 1
     )
     private Long id;
-
-    @Many
 }

@@ -35,5 +35,5 @@ public class Usuario {
     private List<Sistema> sistema;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
-    private List<Personagem>  personagens;
+    private List<Personagem> personagens;
 }

@@ -18,18 +18,11 @@ import java.util.List;
 @Entity
 public class Personagem {
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "per_seq"
-    )
-    @SequenceGenerator(
-            name = "per_seq",
-            sequenceName = "per_sequence",
-            allocationSize = 1
-    )
     private Long id;
 
     private String nome;
+
+    private String descricao;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario")
@@ -38,10 +31,6 @@ public class Personagem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_campanha")
     private Campanha campanha;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_sistema")
-    private Sistema sistema;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tipoPersonagem")
@@ -53,4 +42,12 @@ public class Personagem {
 
     @OneToMany(mappedBy = "personagem")
     private List<HistoricoAcoes> historicoAcoes;
+
+    @Column(columnDefinition = "jsonb")
+    private String caracteristicas;
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private EntidadeSistema entidade;
 }
