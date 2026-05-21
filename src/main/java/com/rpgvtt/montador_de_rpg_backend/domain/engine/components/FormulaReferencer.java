@@ -1,4 +1,4 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.components;
+package com.rpgvtt.montador_de_rpg_backend.domain.engine.components;
 
 
 public class FormulaReferencer{ 
