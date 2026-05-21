@@ -29,7 +29,7 @@ public class Sessao {
     )
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_campanha")
     private Campanha campanha;
 
@@ -45,4 +45,9 @@ public class Sessao {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "sessao")
     private List<HistoricoAcoes> historicoAcoes;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "sessao")
+    private List<MensagemLog> mensagens;
+
+
 }

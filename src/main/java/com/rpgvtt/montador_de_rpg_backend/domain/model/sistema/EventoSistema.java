@@ -1,6 +1,8 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.sistema;
 
+import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.EntidadeEfeito;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +10,8 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,17 +31,22 @@ public class EventoSistema {
             allocationSize = 1
     )
     @Column(name = "id_evento")
-    private Long idEvento;
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Sistemas_id_sistema", referencedColumnName = "id_sistema")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_sistema")
     private Sistema sistema;
 
+    @NotNull
     private String nome;
 
     private String descricao;
 
+    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode payloadSchema;
+
+    @OneToMany(mappedBy = "evento")
+    private List<EntidadeEfeito> efeitos;
 }

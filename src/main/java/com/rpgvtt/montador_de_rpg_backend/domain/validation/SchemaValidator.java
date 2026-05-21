@@ -8,6 +8,7 @@ import com.rpgvtt.montador_de_rpg_backend.domain.validation.exception.*;
 import com.rpgvtt.montador_de_rpg_backend.domain.validation.schema.*;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -62,10 +63,11 @@ public class SchemaValidator {
     public void validarEntidade(EntidadeSistema entidade, Sistema sistema) {
         Map<String, AtributoSchema> schemaAtributos = converterSchemaAtributos(sistema);
         Map<String, TipoEntidadeSchema> schemaEntidades = converterSchemaEntidades(sistema);
+        Map<String, Object> entidadeAtributos = jsonNodeToMap(entidade.getAtributos());
 
         TipoEntidadeSchema tipoSchema = resolverTipo(entidade.getTipo(), schemaEntidades);
-        validarObrigatorios(entidade.getAtributos(), tipoSchema);
-        validarValoresAtributos(entidade.getAtributos(), schemaAtributos, tipoSchema);
+        validarObrigatorios(entidadeAtributos, tipoSchema);
+        validarValoresAtributos(entidadeAtributos, schemaAtributos, tipoSchema);
     }
 
     // valida os atributos de uma EntidadeInstancia
@@ -73,10 +75,11 @@ public class SchemaValidator {
     public void validarInstancia(EntidadeInstancia instancia, Sistema sistema) {
         Map<String, AtributoSchema> schemaAtributos = converterSchemaAtributos(sistema);
         Map<String, TipoEntidadeSchema> schemaEntidades = converterSchemaEntidades(sistema);
+        Map<String, Object> instanciaAtributosAtuais = jsonNodeToMap(instancia.getAtributosAtuais());
 
         TipoEntidadeSchema tipoSchema = resolverTipo(instancia.getTipo(), schemaEntidades);
-        validarObrigatorios(instancia.getAtributosAtuais(), tipoSchema);
-        validarValoresAtributos(instancia.getAtributosAtuais(), schemaAtributos, tipoSchema);
+        validarObrigatorios(instanciaAtributosAtuais, tipoSchema);
+        validarValoresAtributos(instanciaAtributosAtuais, schemaAtributos, tipoSchema);
     }
 
 
@@ -97,7 +100,7 @@ public class SchemaValidator {
     }
 
     // Verifica se todos os atributos obrigatórios estão presentes no mapa de valores
-    private void validarObrigatorios( Map<String, Object> atributos, TipoEntidadeSchema tipoSchema) {
+    private void validarObrigatorios(Map<String, Object> atributos, TipoEntidadeSchema tipoSchema) {
 
         if (tipoSchema.getObrigatorios() == null) return;
 
@@ -264,5 +267,9 @@ public class SchemaValidator {
             sistema.getSchemaEntidades(),
             new TypeReference<Map<String, TipoEntidadeSchema>>() {}
         );
+    }
+
+    private Map<String, Object> jsonNodeToMap(JsonNode node) {
+        return objectMapper.convertValue(node, new TypeReference<>() {});
     }
 }

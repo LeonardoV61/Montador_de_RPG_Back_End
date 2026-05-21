@@ -1,5 +1,6 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.entidade;
 
+import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.EntidadeEfeito;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
@@ -57,6 +58,9 @@ public class EntidadeSistema {
     @Column(columnDefinition = "jsonb")
     private JsonNode propriedades;
 
-    @OneToMany(mappedBy = "entidade")
-    private List<EntidadeSistema> entidadeSistemas;
+    @OneToMany(mappedBy = "entidadeSistema")
+    private List<EntidadeInstancia> entidadeInstancias;
+
+    @OneToMany(mappedBy = "entidadeSistema")
+    private List<EntidadeEfeito> entidadeEfeitos;
 }

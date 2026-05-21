@@ -2,6 +2,7 @@ package com.rpgvtt.montador_de_rpg_backend.domain.model.sessao;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.usuario.Usuario;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,24 +21,25 @@ public class MensagemLog {
     @Id
     @GeneratedValue(
         strategy = GenerationType.SEQUENCE, 
-        generator = "evento_sistema_seq"
+        generator = "mensagem_seq"
     )
     @SequenceGenerator(
-        name = "evento_sistema_seq", 
+        name = "mensagem_seq",
         sequenceName = "evento_sistema_sequence", 
         allocationSize = 1
     )
     @Column(name = "id_log")
-    private Long idLog;
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "Sessoes_id_sessao")
     private Sessao sessao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "Usuarios_id_usuario")
     private Usuario usuario;
 
+    @NotNull
     private String conteudo;
 
     @CreationTimestamp

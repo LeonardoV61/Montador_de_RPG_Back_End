@@ -3,6 +3,7 @@ package com.rpgvtt.montador_de_rpg_backend.domain.model.entidade;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.CenaParticipantes;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.EfeitoAtivo;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.HistoricoAcoes;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -43,7 +44,7 @@ public class EntidadeInstancia {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn (name = "id_entidade")
-    private EntidadeSistema entidade;
+    private EntidadeSistema entidadeSistema;
 
     @NotNull
     private String tipo;
@@ -72,4 +73,7 @@ public class EntidadeInstancia {
 
     @OneToMany(mappedBy = "entidadeInstancia")
     private List<CenaParticipantes> cenas;
+
+    @OneToMany(mappedBy = "entidadeInstancia")
+    private List<HistoricoAcoes> acoes;
 }

@@ -1,6 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.sistema;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,17 +30,24 @@ public class EtapaProcedimento {
     @Column(name = "id_etapa")
     private Long idEtapa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Procedimentos_id_procedimento")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_procedimento")
     private Procedimento procedimento;
 
+    @NotNull
     private Integer ordem;
 
+    @NotNull
     private String nome;
 
+    @Column(name = "tipo_etapa")
+    private String tipoEtapa;
+
+    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode parametros_etapa;
 
+    @NotNull
     private Boolean obrigatorio;
 }

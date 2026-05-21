@@ -40,7 +40,7 @@ public class EntidadeEfeito {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_entidade")
-    private EntidadeSistema entidade;
+    private EntidadeSistema entidadeSistema;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_resolucao")

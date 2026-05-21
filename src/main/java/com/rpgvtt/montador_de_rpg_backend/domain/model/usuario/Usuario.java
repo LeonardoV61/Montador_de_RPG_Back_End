@@ -1,12 +1,17 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.usuario;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.MensagemLog;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,17 +35,32 @@ public class Usuario {
     )
     private Long id;
 
+    @NotBlank
     private String senha;
+
+    @NotBlank
     private String email;
+
+    @NotBlank
     private String apelido;
+
+    @NotBlank
     private boolean e_admin;
 
-    private LocalDateTime criado_em;
-    private LocalDateTime atualizado_em;
+    @CreationTimestamp
+    @Column(name="criado_em", updatable = false)
+    private LocalDateTime criadoEm;
+
+    @UpdateTimestamp
+    @Column(name="atualizado_em")
+    private LocalDateTime atualizadoEm;
 
     @OneToMany(mappedBy = "usuario")
     private List<Sistema> sistema;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
     private List<Personagem> personagens;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
+    private List<MensagemLog> mensagens;
 }

@@ -4,10 +4,12 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.usuario.Usuario;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
@@ -34,48 +36,53 @@ public class Sistema {
     )
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario_criador")
     private Usuario usuario;
 
     @ManyToOne (fetch = FetchType.LAZY)
-    @JoinColumn (name = "id_sistema_pai ")
+    @JoinColumn (name = "id_sistema_pai")
     private Sistema sistemaPai;
 
+    @NotNull
     private String nome;
 
     private String descricao;
 
+    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode schemaAtributos;
 
+    @NotNull
     @JdbcTypeCode (SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode schemaEntidades;
 
-    private int versaoSchemas;
+    @NotNull
+    private Integer versaoSchemas;
 
+    @NotNull
     private boolean eOficial;
+
+    @CreationTimestamp
+    @Column(name = "criado_em", updatable = false)
     private LocalDateTime criadoEm;
 
     @OneToMany(mappedBy = "sistema")
-    private List<Campanha> campanhas = new ArrayList<>();
-
-    // @OneToMany(mappedBy = "sistema")
-    // private List<TipoPersonagem> tiposPersonagens = new ArrayList<>();
+    private List<Campanha> campanhas;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "sistema")
-    private List<Personagem> personagens = new ArrayList<>();
+    private List<Personagem> personagens;
 
-    @OneToMany (cascade = CascadeType.ALL, mappedBy = "sistema")
-    private List<Procedimento> procedimento = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "sistema")
+    private List<Procedimento> procedimento;
 
-    @OneToMany (cascade = CascadeType.ALL, mappedBy = "sistema")
-    private List<EventoSistema> eventos = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "sistema")
+    private List<EventoSistema> eventos;
 
-    @OneToMany (cascade = CascadeType.ALL, mappedBy = "sistemaPai")
-    private List<Sistema> sistemasFilhos = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "sistemaPai")
+    private List<Sistema> sistemasFilhos;
 
 
 }
