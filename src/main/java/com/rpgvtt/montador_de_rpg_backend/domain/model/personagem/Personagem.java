@@ -38,6 +38,10 @@ public class Personagem {
     @JoinColumn(name = "id_instancia")
     private EntidadeInstancia instancia;
 
+//     @JdbcTypeCode(SqlTypes.JSON) Não precisa
+//     @Column(columnDefinition = "jsonb")
+//     private JsonNode atributos;
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_campanha")
     private Campanha campanha;
