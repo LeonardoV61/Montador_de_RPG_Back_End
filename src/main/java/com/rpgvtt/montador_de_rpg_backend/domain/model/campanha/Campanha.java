@@ -59,5 +59,5 @@ public class Campanha {
     private List<Personagem> personagens;
 
     @OneToMany(mappedBy = "campanha")
-    private List<Usuario> usuarios;
+    private List<CampanhaUsuario> usuarios;
 }
