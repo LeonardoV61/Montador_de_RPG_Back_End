@@ -19,8 +19,6 @@ import java.time.LocalDateTime;
 
 import java.util.List;
 
-import javax.net.ssl.Status;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,7 +41,7 @@ public class Campanha {
     @NotNull
     private String nome;
 
-    @NoteNull
+    @NotNull
     private StatusCampanha Status;
 
     @CreationTimestamp

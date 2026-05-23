@@ -1,7 +1,8 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.engine.components;
 
-import com.rpgvtt.montador_de_rpg_backend.domain.engine.Contexto;
+import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.Contexto;
 import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.ResultadoExpressao;
+import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.Alvo;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -350,7 +351,8 @@ public class InterpretadorJson {
         String template = templateNode.asText();
         JsonNode varsNode = expr.get("variaveis");
         if (varsNode != null && varsNode.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> fields = varsNode.fields();
+            ObjectNode varsObj = (ObjectNode) varsNode;
+            Iterator<Map.Entry<String, JsonNode>> fields = varsObj.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fields.next();
                 String nomeVar = entry.getKey();

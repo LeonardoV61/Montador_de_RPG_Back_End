@@ -1,6 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.engine.utils;
 
 import java.util.List;
+import java.util.Map;
 
 public class ResultadoExpressao {
 

@@ -1,7 +1,10 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.engine.utils;
 
-import tools.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import tools.jackson.databind.JsonNode;
+// import tools.jackson.core.type.TypeReference;
 
 public class ContextoJsonNode implements Contexto {
 
@@ -24,7 +27,7 @@ public class ContextoJsonNode implements Contexto {
 
     private Object converter(JsonNode node) {
         if (node.isNumber()) return node.numberValue();
-        if (node.isTextual()) return node.textValue();
+        if (node.isString()) return node.isString();
         if (node.isBoolean()) return node.booleanValue();
         if (node.isArray()) {
             List<Object> lista = new ArrayList<>();
