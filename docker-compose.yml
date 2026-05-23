@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: rpgdb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rpguser
+      POSTGRES_PASSWORD: rpgpass
+      POSTGRES_DB: db_rpg
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Backend.dockerfile
+    container_name: montador-rpg-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_rpg
+      - SPRING_DATASOURCE_USERNAME=rpguser
+      - SPRING_DATASOURCE_PASSWORD=rpgpass
+      - JWT_SECRET=SUA_CHAVE_SECRETA_SUPER_SEGURA_COM_PELO_MENOS_256_BITS_MUDAR_DEPOIS
+      - GOOGLE_CLIENT_ID=teu_google_client_id_aqui
+      - GOOGLE_CLIENT_SECRET=teu_google_client_secret_aqui
+      - DISCORD_CLIENT_ID=teu_discord_client_id_aqui
+      - DISCORD_CLIENT_SECRET=teu_discord_client_secret_aqui
+
+volumes:
+  postgres_data:

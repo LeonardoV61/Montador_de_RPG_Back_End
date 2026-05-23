@@ -352,7 +352,7 @@ public class InterpretadorJson {
         JsonNode varsNode = expr.get("variaveis");
         if (varsNode != null && varsNode.isObject()) {
             ObjectNode varsObj = (ObjectNode) varsNode;
-            Iterator<Map.Entry<String, JsonNode>> fields = varsObj.fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = varsObj.properties().iterator();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fields.next();
                 String nomeVar = entry.getKey();

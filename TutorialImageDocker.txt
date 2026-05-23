@@ -1,0 +1,11 @@
+Para Gerar a Imagem e executar:
+docker compose up --build
+
+Para Acessar o Banco de Dados:
+docker exec -it rpgdb-postgres psql -U rpguser -d db_rpg
+
+Para Desativar o Pager que limita a quantidade de consultas para 1:
+\pset pager off
+OBS: Quando aparecer db_rpg=#
+
+Dai em diante podem fazer os comandos do mysql que funciona
