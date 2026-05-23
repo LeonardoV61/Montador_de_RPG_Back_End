@@ -37,9 +37,10 @@ public class InterpretadorJson {
             case "ternario"          -> resolverTernario(expressao, contexto);
             case "filtro"            -> resolverFiltro(expressao, contexto);
             case "funcao"            -> resolverFuncao(expressao, contexto);
-            case "alvo"              -> resolverAlvo(expressao);
+            case "alvo"              -> resolverAlvo(expressao, contexto);
             case "texto"             -> resolverTexto(expressao, contexto);
             case "instrucao"         -> resolverInstrucao(expressao);
+            case "objeto"            -> resolverObjeto(expressao);
             default -> throw new IllegalArgumentException("Tipo de expressão desconhecido: '" + tipo + "'");
         };
     }
@@ -317,7 +318,7 @@ public class InterpretadorJson {
         };
     }
 
-    private ResultadoExpressao resolverAlvo(JsonNode expr) {
+    private ResultadoExpressao resolverAlvo(JsonNode expr, Contexto ctx) {
         JsonNode tipoEntNode = expr.get("tipoEntidade");
         JsonNode idNode = expr.get("id");
 
@@ -329,15 +330,20 @@ public class InterpretadorJson {
         String tipoEntidade = tipoEntNode.asString();
         Object id;
 
-        if (idNode.isNumber()) {
-            id = idNode.numberValue();   // Long, Integer, Double
+        if (idNode.isObject() && idNode.has("tipo")) {
+
+            ResultadoExpressao idRes = interpretar(idNode, ctx);
+            id = idRes.getValor();
+
+        } else if (idNode.isNumber()) {
+            id = idNode.numberValue();
+
         } else if (idNode.isString()) {
             id = idNode.asString();
-        } else {
-            // Se for uma expressão, teria que avaliá-la – aqui simplificamos
-            throw new IllegalArgumentException("'id' deve ser número ou texto");
-        }
 
+        } else {
+            throw new IllegalArgumentException("'id' deve ser número, texto ou uma expressão");
+        }
         Alvo alvo = new Alvo(tipoEntidade, id);
         return ResultadoExpressao.alvo(alvo);
     }
@@ -366,6 +372,16 @@ public class InterpretadorJson {
         return ResultadoExpressao.instrucao(expr);
     }
 
+    private ResultadoExpressao resolverObjeto(JsonNode expr) {
+        JsonNode valorNode = expr.get("valor");
+        if (valorNode == null) {
+            return ResultadoExpressao.nulo();
+        }
+        // Converte o JsonNode para um objeto Java (Map, List, primitivo)
+        Object obj = converterParaObjetoJava(valorNode);
+        return ResultadoExpressao.objeto(obj);
+    }
+
     private ResultadoExpressao converterParaResultado(Object valor) {
         if (valor == null) return ResultadoExpressao.nulo();
         if (valor instanceof Number n) return ResultadoExpressao.numero(n.doubleValue());
@@ -373,5 +389,29 @@ public class InterpretadorJson {
         if (valor instanceof Boolean b) return ResultadoExpressao.booleano(b);
         if (valor instanceof List<?> l) return ResultadoExpressao.lista(l);
         return ResultadoExpressao.texto(valor.toString());
+    }
+
+    private Object converterParaObjetoJava(JsonNode node) {
+        if (node.isNull()) return null;
+        if (node.isNumber()) return node.numberValue();
+        if (node.isString()) return node.asString();
+        if (node.isBoolean()) return node.booleanValue();
+        if (node.isArray()) {
+            List<Object> lista = new ArrayList<>();
+            for (JsonNode item : node) {
+                lista.add(converterParaObjetoJava(item));
+            }
+            return lista;
+        }
+        if (node.isObject()) {
+            Map<String, Object> mapa = new LinkedHashMap<>();
+
+            for (Map.Entry<String, JsonNode> entry : node.properties()) {
+                mapa.put(entry.getKey(), converterParaObjetoJava(entry.getValue()));
+            }
+            
+            return mapa;
+        }
+        return null;
     }
 }
