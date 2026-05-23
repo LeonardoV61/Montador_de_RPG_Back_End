@@ -76,6 +76,7 @@ public class ResultadoExpressao {
         return (Alvo) valor;
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> comoInstrucao() {
         if (tipo != TipoResultado.INSTRUCAO)
             throw new IllegalStateException("Resultado é " + tipo + ", não INSTRUCAO");
@@ -85,7 +86,7 @@ public class ResultadoExpressao {
 
     public TipoResultado getTipo() { return tipo; }
 
-    // Talvez no futuro
+    
     public Object getValor() { return valor; }
 
     @Override

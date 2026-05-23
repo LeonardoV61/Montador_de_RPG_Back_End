@@ -46,10 +46,6 @@ public class Personagem {
     @JoinColumn(name = "id_campanha")
     private Campanha campanha;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private JsonNode atributos;
-
     private String historia;
 
     private String aparencia;

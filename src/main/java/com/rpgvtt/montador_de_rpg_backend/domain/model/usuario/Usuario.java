@@ -1,6 +1,6 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.usuario;
 
-import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
+// import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.CampanhaUsuario;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.MensagemLog;
