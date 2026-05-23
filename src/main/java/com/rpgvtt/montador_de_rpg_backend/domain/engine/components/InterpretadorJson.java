@@ -345,16 +345,14 @@ public class InterpretadorJson {
 
     private ResultadoExpressao resolverTexto(JsonNode expr, Contexto ctx) {
         JsonNode templateNode = expr.get("template");
-        if (templateNode == null || !templateNode.isTextual()) {
+        if (templateNode == null || !templateNode.isString()) {
             throw new IllegalArgumentException("'template' é obrigatório em texto");
         }
-        String template = templateNode.asText();
+        String template = templateNode.asString();
         JsonNode varsNode = expr.get("variaveis");
         if (varsNode != null && varsNode.isObject()) {
             ObjectNode varsObj = (ObjectNode) varsNode;
-            Iterator<Map.Entry<String, JsonNode>> fields = varsObj.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> entry = fields.next();
+            for (Map.Entry<String, JsonNode> entry : varsObj.properties()) {
                 String nomeVar = entry.getKey();
                 JsonNode exprVar = entry.getValue();
                 String valor = interpretar(exprVar, ctx).getValor().toString();
