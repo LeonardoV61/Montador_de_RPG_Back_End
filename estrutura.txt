@@ -1,0 +1,321 @@
+.
+├── Backend.dockerfile
+├── HELP.md
+├── README.md
+├── TutorialImageDocker.txt
+├── docker-compose.yml
+├── estrutura.txt
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com
+│   │   │       └── rpgvtt
+│   │   │           └── montador_de_rpg_backend
+│   │   │               ├── MontadorDeRpgBackendApplication.java
+│   │   │               ├── controller
+│   │   │               │   ├── campanha
+│   │   │               │   │   └── CampanhaController.java
+│   │   │               │   └── sessao
+│   │   │               │       └── SessaoController.java
+│   │   │               ├── domain
+│   │   │               │   ├── engine
+│   │   │               │   │   ├── EngineBattleMaster.java
+│   │   │               │   │   ├── components
+│   │   │               │   │   │   ├── FormulaReferencer.java
+│   │   │               │   │   │   ├── FormulaSolver.java
+│   │   │               │   │   │   └── InterpretadorJson.java
+│   │   │               │   │   ├── primitivos
+│   │   │               │   │   │   ├── EstadoSessao.java
+│   │   │               │   │   │   ├── PrimitivoExecutor.java
+│   │   │               │   │   │   ├── RegistroPrimitivos.java
+│   │   │               │   │   │   ├── Suspensao.java
+│   │   │               │   │   │   └── executores
+│   │   │               │   │   │       ├── AplicarEfeitoAtivoExecutor.java
+│   │   │               │   │   │       ├── DispararEventoExecutor.java
+│   │   │               │   │   │       ├── ModificarAtributoExecutor.java
+│   │   │               │   │   │       └── SolicitarEscolhaExecutor.java
+│   │   │               │   │   └── utils
+│   │   │               │   │       ├── Alvo.java
+│   │   │               │   │       ├── Contexto.java
+│   │   │               │   │       ├── ContextoComposto.java
+│   │   │               │   │       ├── ContextoJsonNode.java
+│   │   │               │   │       ├── DiceExtractor.java
+│   │   │               │   │       ├── InterpretadorMd
+│   │   │               │   │       │   └── interpretaor.md
+│   │   │               │   │       ├── Operations.java
+│   │   │               │   │       ├── Procedures.java
+│   │   │               │   │       └── ResultadoExpressao.java
+│   │   │               │   ├── enums
+│   │   │               │   │   ├── PapeisUsuario.java
+│   │   │               │   │   ├── StatusCampanha.java
+│   │   │               │   │   └── TipoVantagem.java
+│   │   │               │   ├── model
+│   │   │               │   │   ├── TipoPersonagem.java
+│   │   │               │   │   ├── campanha
+│   │   │               │   │   │   ├── Campanha.java
+│   │   │               │   │   │   ├── CampanhaUsuario.java
+│   │   │               │   │   │   └── CampanhaUsuarioKey.java
+│   │   │               │   │   ├── entidade
+│   │   │               │   │   │   ├── EntidadeInstancia.java
+│   │   │               │   │   │   ├── EntidadeRelacao.java
+│   │   │               │   │   │   ├── EntidadeRelacaoKey.java
+│   │   │               │   │   │   └── EntidadeSistema.java
+│   │   │               │   │   ├── mecanica
+│   │   │               │   │   │   ├── EfeitosPrimitivos.java
+│   │   │               │   │   │   ├── EfeitosPrimitivosKey.java
+│   │   │               │   │   │   ├── EntidadeEfeito.java
+│   │   │               │   │   │   ├── Primitivo.java
+│   │   │               │   │   │   ├── Resolucao.java
+│   │   │               │   │   │   └── Rolagem.java
+│   │   │               │   │   ├── personagem
+│   │   │               │   │   │   └── Personagem.java
+│   │   │               │   │   ├── sessao
+│   │   │               │   │   │   ├── Anotacao.java
+│   │   │               │   │   │   ├── Cena.java
+│   │   │               │   │   │   ├── CenaParticipantes.java
+│   │   │               │   │   │   ├── CenaParticipantesKey.java
+│   │   │               │   │   │   ├── EfeitoAtivo.java
+│   │   │               │   │   │   ├── HistoricoAcoes.java
+│   │   │               │   │   │   ├── MensagemLog.java
+│   │   │               │   │   │   └── Sessao.java
+│   │   │               │   │   ├── sistema
+│   │   │               │   │   │   ├── EtapaProcedimento.java
+│   │   │               │   │   │   ├── EventoSistema.java
+│   │   │               │   │   │   ├── Procedimento.java
+│   │   │               │   │   │   └── Sistema.java
+│   │   │               │   │   └── usuario
+│   │   │               │   │       └── Usuario.java
+│   │   │               │   └── validation
+│   │   │               │       ├── SchemaValidator.java
+│   │   │               │       ├── exception
+│   │   │               │       │   ├── AtributoInvalidoException.java
+│   │   │               │       │   ├── SchemaInconsistenteException.java
+│   │   │               │       │   ├── TipoEntidadeInvalidoException.java
+│   │   │               │       │   └── ValidacaoSchemaException.java
+│   │   │               │       └── schema
+│   │   │               │           ├── AtributoSchema.java
+│   │   │               │           ├── CampoCompostoSchema.java
+│   │   │               │           └── TipoEntidadeSchema.java
+│   │   │               ├── dto
+│   │   │               │   ├── campanha
+│   │   │               │   │   ├── AdicionarJogadorDTO.java
+│   │   │               │   │   ├── CampanhaCreateDTO.java
+│   │   │               │   │   ├── CampanhaParticipanteResponseDTO.java
+│   │   │               │   │   └── CampanhaResponseDTO.java
+│   │   │               │   └── sessao
+│   │   │               │       ├── SessaoCreateDTO.java
+│   │   │               │       └── SessaoResponseDTO.java
+│   │   │               ├── repository
+│   │   │               │   ├── AnotacaoRepository.java
+│   │   │               │   ├── campanha
+│   │   │               │   │   ├── CampanhaRepository.java
+│   │   │               │   │   └── CampanhaUsuarioRepository.java
+│   │   │               │   ├── entidade
+│   │   │               │   │   ├── EntidadeEfeitoRepository.java
+│   │   │               │   │   ├── EntidadeInstanciaRepository.java
+│   │   │               │   │   ├── EntidadeRelacaoRepository.java
+│   │   │               │   │   └── EntidadeSistemaRepository.java
+│   │   │               │   ├── mecanica
+│   │   │               │   │   ├── EfeitosPrimitivosRepository.java
+│   │   │               │   │   ├── EntidadeEfeitoRepository.java
+│   │   │               │   │   ├── PrimitivoRepository.java
+│   │   │               │   │   ├── ResolucaoRepository.java
+│   │   │               │   │   └── RolagemRepository.java
+│   │   │               │   ├── personagem
+│   │   │               │   │   └── PersonagemRepository.java
+│   │   │               │   ├── sessao
+│   │   │               │   │   ├── CenaParticipantesRepository.java
+│   │   │               │   │   ├── CenaRepository.java
+│   │   │               │   │   ├── EfeitoAtivoRepository.java
+│   │   │               │   │   ├── HistoricoAcoesRepository.java
+│   │   │               │   │   ├── MensagemLogRepository.java
+│   │   │               │   │   └── SessaoRepository.java
+│   │   │               │   ├── sistema
+│   │   │               │   │   ├── EtapaProcedimentoRepository.java
+│   │   │               │   │   ├── EventoSistemaRepository.java
+│   │   │               │   │   ├── ProcedimentoRepository.java
+│   │   │               │   │   └── SistemaRepository.java
+│   │   │               │   └── usuario
+│   │   │               │       └── UsuarioRepository.java
+│   │   │               ├── security
+│   │   │               │   ├── CustomOAuth2UserService.java
+│   │   │               │   ├── JwtAuthenticationFilter.java
+│   │   │               │   ├── JwtTokenProvider.java
+│   │   │               │   ├── OAuth2AuthenticationSuccessHandler.java
+│   │   │               │   └── SecurityConfig.java
+│   │   │               └── service
+│   │   │                   ├── campanha
+│   │   │                   │   └── CampanhaService.java
+│   │   │                   └── sessao
+│   │   │                       └── SessaoService.java
+│   │   └── resources
+│   │       ├── application-dev.yaml
+│   │       ├── application-prod.yaml
+│   │       └── application.yaml
+│   └── test
+│       └── java
+│           └── com
+│               └── rpgvtt
+│                   └── montador_de_rpg_backend
+│                       └── MontadorDeRpgBackendApplicationTests.java
+└── target
+    ├── classes
+    │   ├── application-dev.yaml
+    │   ├── application-prod.yaml
+    │   ├── application.yaml
+    │   └── com
+    │       └── rpgvtt
+    │           └── montador_de_rpg_backend
+    │               ├── MontadorDeRpgBackendApplication.class
+    │               ├── controller
+    │               │   ├── campanha
+    │               │   │   └── CampanhaController.class
+    │               │   └── sessao
+    │               │       └── SessaoController.class
+    │               ├── domain
+    │               │   ├── engine
+    │               │   │   ├── EngineBattleMaster.class
+    │               │   │   ├── components
+    │               │   │   │   ├── FormulaReferencer.class
+    │               │   │   │   ├── FormulaSolver.class
+    │               │   │   │   └── InterpretadorJson.class
+    │               │   │   ├── primitivos
+    │               │   │   │   ├── EstadoSessao.class
+    │               │   │   │   ├── PrimitivoExecutor.class
+    │               │   │   │   ├── RegistroPrimitivos.class
+    │               │   │   │   ├── Suspensao$TipoSuspensao.class
+    │               │   │   │   ├── Suspensao.class
+    │               │   │   │   └── executores
+    │               │   │   │       ├── AplicarEfeitoAtivoExecutor.class
+    │               │   │   │       ├── DispararEventoExecutor.class
+    │               │   │   │       ├── ModificarAtributoExecutor.class
+    │               │   │   │       └── SolicitarEscolhaExecutor.class
+    │               │   │   └── utils
+    │               │   │       ├── Alvo.class
+    │               │   │       ├── Contexto.class
+    │               │   │       ├── ContextoComposto.class
+    │               │   │       ├── ContextoJsonNode.class
+    │               │   │       ├── DiceExtractor.class
+    │               │   │       ├── InterpretadorMd
+    │               │   │       │   └── interpretaor.md
+    │               │   │       ├── Operations.class
+    │               │   │       ├── Procedures.class
+    │               │   │       ├── ResultadoExpressao$TipoResultado.class
+    │               │   │       └── ResultadoExpressao.class
+    │               │   ├── enums
+    │               │   │   ├── PapeisUsuario.class
+    │               │   │   ├── StatusCampanha.class
+    │               │   │   └── TipoVantagem.class
+    │               │   ├── model
+    │               │   │   ├── campanha
+    │               │   │   │   ├── Campanha.class
+    │               │   │   │   ├── CampanhaUsuario.class
+    │               │   │   │   └── CampanhaUsuarioKey.class
+    │               │   │   ├── entidade
+    │               │   │   │   ├── EntidadeInstancia.class
+    │               │   │   │   ├── EntidadeRelacao.class
+    │               │   │   │   ├── EntidadeRelacaoKey.class
+    │               │   │   │   └── EntidadeSistema.class
+    │               │   │   ├── mecanica
+    │               │   │   │   ├── EfeitosPrimitivos.class
+    │               │   │   │   ├── EfeitosPrimitivosKey.class
+    │               │   │   │   ├── EntidadeEfeito.class
+    │               │   │   │   ├── Primitivo.class
+    │               │   │   │   ├── Resolucao.class
+    │               │   │   │   └── Rolagem.class
+    │               │   │   ├── personagem
+    │               │   │   │   └── Personagem.class
+    │               │   │   ├── sessao
+    │               │   │   │   ├── Cena.class
+    │               │   │   │   ├── CenaParticipantes.class
+    │               │   │   │   ├── CenaParticipantesKey.class
+    │               │   │   │   ├── EfeitoAtivo.class
+    │               │   │   │   ├── HistoricoAcoes.class
+    │               │   │   │   ├── MensagemLog.class
+    │               │   │   │   └── Sessao.class
+    │               │   │   ├── sistema
+    │               │   │   │   ├── EtapaProcedimento.class
+    │               │   │   │   ├── EventoSistema.class
+    │               │   │   │   ├── Procedimento.class
+    │               │   │   │   └── Sistema.class
+    │               │   │   └── usuario
+    │               │   │       └── Usuario.class
+    │               │   └── validation
+    │               │       ├── SchemaValidator$1.class
+    │               │       ├── SchemaValidator$2.class
+    │               │       ├── SchemaValidator$3.class
+    │               │       ├── SchemaValidator.class
+    │               │       ├── exception
+    │               │       │   ├── AtributoInvalidoException.class
+    │               │       │   ├── SchemaInconsistenteException.class
+    │               │       │   ├── TipoEntidadeInvalidoException.class
+    │               │       │   └── ValidacaoSchemaException.class
+    │               │       └── schema
+    │               │           ├── AtributoSchema.class
+    │               │           ├── CampoCompostoSchema.class
+    │               │           └── TipoEntidadeSchema.class
+    │               ├── dto
+    │               │   ├── campanha
+    │               │   │   ├── AdicionarJogadorDTO.class
+    │               │   │   ├── CampanhaCreateDTO.class
+    │               │   │   ├── CampanhaParticipanteResponseDTO.class
+    │               │   │   └── CampanhaResponseDTO.class
+    │               │   └── sessao
+    │               │       ├── SessaoCreateDTO.class
+    │               │       └── SessaoResponseDTO.class
+    │               ├── repository
+    │               │   ├── campanha
+    │               │   │   ├── CampanhaRepository.class
+    │               │   │   └── CampanhaUsuarioRepository.class
+    │               │   ├── entidade
+    │               │   │   ├── EntidadeEfeitoRepository.class
+    │               │   │   ├── EntidadeInstanciaRepository.class
+    │               │   │   ├── EntidadeRelacaoRepository.class
+    │               │   │   └── EntidadeSistemaRepository.class
+    │               │   ├── mecanica
+    │               │   │   ├── EfeitosPrimitivosRepository.class
+    │               │   │   ├── EntidadeEfeitoRepository.class
+    │               │   │   ├── PrimitivoRepository.class
+    │               │   │   ├── ResolucaoRepository.class
+    │               │   │   └── RolagemRepository.class
+    │               │   ├── personagem
+    │               │   │   └── PersonagemRepository.class
+    │               │   ├── sessao
+    │               │   │   ├── CenaParticipantesRepository.class
+    │               │   │   ├── CenaRepository.class
+    │               │   │   ├── EfeitoAtivoRepository.class
+    │               │   │   ├── HistoricoAcoesRepository.class
+    │               │   │   ├── MensagemLogRepository.class
+    │               │   │   └── SessaoRepository.class
+    │               │   ├── sistema
+    │               │   │   ├── EtapaProcedimentoRepository.class
+    │               │   │   ├── EventoSistemaRepository.class
+    │               │   │   ├── ProcedimentoRepository.class
+    │               │   │   └── SistemaRepository.class
+    │               │   └── usuario
+    │               │       └── UsuarioRepository.class
+    │               ├── security
+    │               │   ├── CustomOAuth2UserService.class
+    │               │   ├── JwtAuthenticationFilter.class
+    │               │   ├── JwtTokenProvider.class
+    │               │   ├── OAuth2AuthenticationSuccessHandler.class
+    │               │   └── SecurityConfig.class
+    │               └── service
+    │                   ├── campanha
+    │                   │   └── CampanhaService.class
+    │                   └── sessao
+    │                       └── SessaoService.class
+    ├── generated-sources
+    │   └── annotations
+    ├── generated-test-sources
+    │   └── test-annotations
+    └── test-classes
+        └── com
+            └── rpgvtt
+                └── montador_de_rpg_backend
+                    └── MontadorDeRpgBackendApplicationTests.class
+
+100 directories, 219 files

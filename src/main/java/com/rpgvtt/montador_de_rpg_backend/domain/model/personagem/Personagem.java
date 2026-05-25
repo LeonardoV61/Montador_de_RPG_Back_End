@@ -11,6 +11,7 @@ import lombok.Setter;
 // import org.hibernate.annotations.JdbcTypeCode;
 // import org.hibernate.type.SqlTypes;
 // import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 @Getter
 @Setter
@@ -52,6 +53,10 @@ public class Personagem {
 
     @Column(name = "notas_jogador")
     private String notasJogador;
+
+    public JsonNode getAtributos() {
+        throw new UnsupportedOperationException("Unimplemented method 'getAtributos'");
+    }
 
     // @OneToOne
     // @MapsId

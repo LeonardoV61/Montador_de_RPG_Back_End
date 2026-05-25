@@ -80,7 +80,6 @@ public class ResultadoExpressao {
         return (Alvo) valor;
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> comoInstrucao() {
         if (tipo != TipoResultado.INSTRUCAO)
             throw new IllegalStateException("Resultado é " + tipo + ", não INSTRUCAO");
