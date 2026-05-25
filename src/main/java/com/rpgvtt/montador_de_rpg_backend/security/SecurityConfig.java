@@ -1,5 +1,6 @@
 package com.rpgvtt.montador_de_rpg_backend.security;
 
+import org.springframework.beans.factory.annotation.Value; // IMPORTANTE
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +12,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -20,6 +22,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    // Injeta a lista dinâmica definida no seu application.yml / application-dev.yml
+    @Value("${app.cors.allowed-origins}")
+    private List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           CustomOAuth2UserService customOAuth2UserService,
@@ -69,30 +75,33 @@ public class SecurityConfig {
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             );
 
-        // 6. Insere o nosso filtro do JWT (Passo 3) antes do filtro padrão de autenticação do Spring
+        // 6. Insere o nosso filtro do JWT antes do filtro padrão de autenticação do Spring
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * Configuração de CORS para permitir que o React converse com o Spring Boot
+     * Configuração de CORS desacoplada e dinâmica
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permite explicitamente a porta padrão do React (Vite)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        // Alterado de setAllowedOrigins para setAllowedOriginPatterns para aceitar as URLs com "*" do Codespaces
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         
-        // Métodos HTTP aceites pela API
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Métodos HTTP aceitos pela API
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         
         // Cabeçalhos permitidos. O "Authorization" é crucial para o envio do Bearer Token JWT
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With", "Accept"));
         
         // Permite o envio de credenciais/cookies se necessário
         configuration.setAllowCredentials(true);
+        
+        // Cache pré-flight por 1 hora
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Aplica estas regras a todos os endpoints da aplicação

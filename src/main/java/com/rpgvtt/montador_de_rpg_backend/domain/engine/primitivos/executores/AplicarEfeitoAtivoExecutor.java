@@ -6,7 +6,7 @@ import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.PrimitivoExec
 import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.Contexto;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.EntidadeEfeito;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.EfeitoAtivo;
-import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeEfeitoRepository;
+import com.rpgvtt.montador_de_rpg_backend.repository.mecanica.EntidadeEfeitoRepository;
 import tools.jackson.databind.JsonNode;
 
 // Primitivo: instancia um EfeitoAtivo na sessão
