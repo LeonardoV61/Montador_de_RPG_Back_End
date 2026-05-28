@@ -8,6 +8,7 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.Sessao;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,8 @@ public class EstadoSessao {
 
     private final List<EfeitoAtivo> efeitosParaAdicionar = new ArrayList<>();
 
+    private List<EfeitoAtivo> efeitosAtivos = new ArrayList<>();
+
     private final List<Long> efeitosParaRemover = new ArrayList<>();
 
     private final List<HistoricoAcoes> historicoGerado = new ArrayList<>();
@@ -30,6 +33,9 @@ public class EstadoSessao {
     private final List<Long> eventosDisparados = new ArrayList<>();
 
     private final List<Suspensao> suspensoes = new ArrayList<>();
+
+    private Deque<FrameExecucao> pilhaExecucao;
+    private Long entidadeAtual;
 
     // Variáveis de contexto geradas durante a execução
     private final Map<String, Object> variaveis = new HashMap<>();
@@ -60,12 +66,20 @@ public class EstadoSessao {
             }
         }
         String ultimoCampo = partes[partes.length - 1];
-            if (valor instanceof Double d) atual.put(ultimoCampo, d);
-            else if (valor instanceof Integer i) atual.put(ultimoCampo, i);
-            else if (valor instanceof Boolean b) atual.put(ultimoCampo, b);
-            else if (valor instanceof String s) atual.put(ultimoCampo, s);
-            else atual.putPOJO(ultimoCampo, valor); // fallback
+        if (valor instanceof Double d) atual.put(ultimoCampo, d);
+        else if (valor instanceof Integer i) atual.put(ultimoCampo, i);
+        else if (valor instanceof Boolean b) atual.put(ultimoCampo, b);
+        else if (valor instanceof String s) atual.put(ultimoCampo, s);
+        else atual.putPOJO(ultimoCampo, valor); // fallback
     }
+
+    public Deque<FrameExecucao> getPilhaExecucao() { return pilhaExecucao; }
+
+    public void setPilhaExecucao(Deque<FrameExecucao> pilha) { this.pilhaExecucao = pilha; }
+
+    public Long getEntidadeAtual() { return entidadeAtual; }
+
+    public void setEntidadeAtual(Long id) { this.entidadeAtual = id; }
 
     public void adicionarEfeito(EfeitoAtivo efeito) {
         efeitosParaAdicionar.add(efeito);

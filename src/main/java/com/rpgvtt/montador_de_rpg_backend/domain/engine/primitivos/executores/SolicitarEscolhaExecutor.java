@@ -2,7 +2,7 @@ package com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.executores;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.EstadoSessao;
 import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.PrimitivoExecutor;
-// import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.Suspensao;
+import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.Suspensao;
 import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.Contexto;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -24,8 +24,8 @@ public class SolicitarEscolhaExecutor implements PrimitivoExecutor {
             );
         }
 
-        // estado.adicionarSuspensao(
-        //     // new Suspensao(Suspensao.TipoSuspensao.ESCOLHA, guardarComoNode.asText(), opcoesNode)
-        // );
+        estado.adicionarSuspensao(
+            new Suspensao(Suspensao.TipoSuspensao.ESCOLHA, guardarComoNode.asText(), opcoesNode)
+        );
     }
 }

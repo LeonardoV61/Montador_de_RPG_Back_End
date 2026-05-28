@@ -227,13 +227,13 @@ public class InterpretadorJson {
         return new Contexto() {
             @Override
             public Optional<Object> get(String caminho) {
-                if (!caminho.startsWith("item")) {
+                if (!caminho.startsWith("self")) {
                     return Optional.empty();
                 }
-                if (caminho.equals("item")) {
+                if (caminho.equals("self")) {
                     return Optional.ofNullable(item);
                 }
-                String resto = caminho.substring(5); // remove "item."
+                String resto = caminho.substring(5);
                 if (resto.isEmpty()) return Optional.ofNullable(item);
                 if (item instanceof Map<?, ?> map) {
                     return Optional.ofNullable(resolverCaminhoEmMap(map, resto));

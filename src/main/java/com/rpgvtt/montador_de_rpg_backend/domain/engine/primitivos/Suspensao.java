@@ -4,12 +4,11 @@ package com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos;
 import lombok.Getter;
 import com.fasterxml.jackson.databind.JsonNode;
 
-// Representa uma pausa na execução que precisa de input do front.
 @Getter
 public class Suspensao {
 
     public enum TipoSuspensao {
-        ESCOLHA   // ex: front precisa apresentar opções ao jogador
+        ESCOLHA
 
     }
 
@@ -17,7 +16,6 @@ public class Suspensao {
 
     private final String guardarComo;
 
-    // Dados da suspensão. Ex: as opcoes para o tipo ESCOLHA
     private final JsonNode dados;
 
     public Suspensao(TipoSuspensao tipo, String guardarComo, JsonNode dados) {

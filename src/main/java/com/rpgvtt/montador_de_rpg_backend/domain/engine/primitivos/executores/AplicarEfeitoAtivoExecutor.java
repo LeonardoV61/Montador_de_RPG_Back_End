@@ -5,8 +5,13 @@
 // import com.rpgvtt.montador_de_rpg_backend.domain.engine.primitivos.PrimitivoExecutor;
 // import com.rpgvtt.montador_de_rpg_backend.domain.engine.utils.Contexto;
 // // import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.EntidadeEfeito;
+// import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
+// import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
+
 // import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.EfeitoAtivo;
-// import com.rpgvtt.montador_de_rpg_backend.repository.mecanica.EntidadeEfeitoRepository;
+// // import com.rpgvtt.montador_de_rpg_backend.repository.mecanica.EntidadeEfeitoRepository;
+// import com.rpgvtt.montador_de_rpg_backend.repository.sistema.ProcedimentoRepository;
+// import com.rpgvtt.montador_de_rpg_backend.repository.sistema.EtapaProcedimentoRepository;
 // import tools.jackson.databind.JsonNode;
 
 // // Primitivo: instancia um EfeitoAtivo na sessão
@@ -18,11 +23,11 @@
 // public class AplicarEfeitoAtivoExecutor implements PrimitivoExecutor {
 
 //     private final InterpretadorJson interpretador;
-//     private final EntidadeEfeitoRepository efeitoRepository;
+//     private final EtapaProcedimentoRepository efeitoRepository;
 
 //     public AplicarEfeitoAtivoExecutor(
 //             InterpretadorJson interpretador,
-//             EntidadeEfeitoRepository efeitoRepository) {
+//             EtapaProcedimentoRepository efeitoRepository) {
 //         this.interpretador = interpretador;
 //         this.efeitoRepository = efeitoRepository;
 //     }
@@ -44,9 +49,9 @@
 //         long idAlvo   = (long) interpretador.interpretar(idAlvoNode, contexto).comoNumero();
 //         int expiraEm  = (int) interpretador.interpretar(expiraEmNode, contexto).comoNumero();
 
-//         EntidadeEfeito efeito = efeitoRepository.findById(idEfeito)
+//         EtapaProcedimento efeito = efeitoRepository.findById(idEfeito)
 //             .orElseThrow(() -> new IllegalArgumentException(
-//                 "EntidadeEfeito %d não encontrado".formatted(idEfeito)
+//                 "EtapaProcedimento %d não encontrado".formatted(idEfeito)
 //             ));
 
 //         EfeitoAtivo efeitoAtivo = new EfeitoAtivo();
