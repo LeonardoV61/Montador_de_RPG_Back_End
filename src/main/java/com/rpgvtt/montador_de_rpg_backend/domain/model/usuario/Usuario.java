@@ -46,7 +46,6 @@ public class Usuario {
 
     private String urlImagem; // Icone de perfil do usuário
 
-
     private boolean e_admin;
 
     // NOVOS CAMPOS PARA OAUTH2:
