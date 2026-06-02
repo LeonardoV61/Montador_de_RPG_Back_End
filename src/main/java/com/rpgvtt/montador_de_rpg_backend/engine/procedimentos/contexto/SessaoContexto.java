@@ -1,11 +1,14 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.Sessao;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot.ProcedimentoSnapshot;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot.SessaoSnapshot;
 import com.rpgvtt.montador_de_rpg_backend.repository.sessao.SessaoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -22,7 +25,7 @@ public class SessaoContexto {
             = new ConcurrentHashMap<>();
 
     private final SessaoRepository sessaoRepo;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
 
     public void iniciarSessao(Long idSessao) {
         sessoes.put(idSessao, new ArrayDeque<>());
@@ -131,7 +134,7 @@ public class SessaoContexto {
         return pilha;
     }
 
-    void empurrarSemPersistir(Long idSessao, ProcedimentoContexto ctx) {
+    public void empurrarSemPersistir(Long idSessao, ProcedimentoContexto ctx) {
         sessoes.computeIfAbsent(idSessao, id -> new ArrayDeque<>()).push(ctx);
     }
 }

@@ -1,6 +1,4 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
-
-import jakarta.validation.constraints.NotNull;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 public record ResultadoEtapa(
     TipoResultado tipo,

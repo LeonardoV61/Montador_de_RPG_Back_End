@@ -2,24 +2,62 @@ package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.ProcedimentoContexto.Status;
-import lombok.RequiredArgsConstructor;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.*;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto.Status;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class ProcedimentoEngine {
 
     private final SessaoContexto sessaoCtx;
     private final ProcedimentoLoader loader;
-    private final Map<String, EtapaHandler> handlers;
     private final InstanciaResolver instanciaResolver;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
+    private final Map<String, EtapaHandler> handlers;
+
+    public ProcedimentoEngine(SessaoContexto sessaoContexto,
+                              ProcedimentoLoader loader,
+                              InstanciaResolver instanciaResolver,
+                              JsonMapper mapper,
+                              List<EtapaHandler> handlerList) {
+        this.sessaoCtx = sessaoContexto;
+        this.loader = loader;
+        this.instanciaResolver = instanciaResolver;
+        this.mapper = mapper;
+        this.handlers = buildHandlerMap(handlerList);
+    }
+
+    private Map<String, EtapaHandler> buildHandlerMap(List<EtapaHandler> handlerList) {
+        Map<String, EtapaHandler> map = new HashMap<>();
+
+        for (EtapaHandler handler : handlerList) {
+            String tipo = handler.tipoEtapa();
+
+            if (map.containsKey(tipo)) {
+                // Two handlers claiming the same tipo_etapa — fail fast at startup
+                throw new IllegalStateException(
+                        "Dois handlers registrados para tipo_etapa '" + tipo + "': " +
+                                map.get(tipo).getClass().getSimpleName() + " e " +
+                                handler.getClass().getSimpleName()
+                );
+            }
+
+            map.put(tipo, handler);
+            log.info("Handler registrado: {} → {}", tipo,
+                    handler.getClass().getSimpleName());
+        }
+
+        return Collections.unmodifiableMap(map); // immutable after startup
+    }
 
     public ProcedimentoContexto iniciarComInstancia(Long idProcedimento,
                                                     Long idSessao,
@@ -102,6 +140,7 @@ public class ProcedimentoEngine {
                 frame.pularEtapa(etapa.getNome() + " — não disponível");
                 continue;
             }
+
 
             EtapaHandler handler = handlers.get(etapa.getTipoEtapa());
             if (handler == null) {

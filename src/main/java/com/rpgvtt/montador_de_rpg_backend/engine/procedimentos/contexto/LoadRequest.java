@@ -1,6 +1,7 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
 
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Map;
 public record LoadRequest(
         Long idProcedimento,
         Long idSessao,
-        EscopoInstancias     escopo,
+        EscopoInstancias escopo,
         String               retornoContexto,      // null for root procedures
         Map<String, Object> contextoInicial,      // keys to seed from parent
         List<Personagem> participantesHerdados // null = query DB
