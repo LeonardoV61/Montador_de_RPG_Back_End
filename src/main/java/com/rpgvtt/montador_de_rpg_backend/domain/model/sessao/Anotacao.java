@@ -42,17 +42,17 @@ public class Anotacao {
     @JoinColumn(name = "Sessoes_id_sessao")
     private Sessao sessao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Cenas_id_cena")
-    private Cena cena;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "Cenas_id_cena")
+    // private Cena cena;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Entidade_Instancia_id_entidade")
-    private EntidadeInstancia entidadeInstancia;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "Entidade_Instancia_id_entidade")
+    // private EntidadeInstancia entidadeInstancia;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Entidade_Sistema_id_entidade")
-    private EntidadeSistema entidadeSistema;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "Entidade_Sistema_id_entidade")
+    // private EntidadeSistema entidadeSistema;
 
     private String titulo;
 
