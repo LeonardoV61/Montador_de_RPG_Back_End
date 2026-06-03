@@ -1,0 +1,16 @@
+{
+  "tipo": "formula",
+  "operandoA": {
+    "tipo": "formula",
+    "operandoA": {"tipo": "caminho", "caminho": "atributos.vigor"},
+    "operador": "+",
+    "operandoB": {
+      "tipo": "formula",
+      "operandoA": {"tipo": "caminho", "caminho": "atributos.guarda"},
+      "operador": "+",
+      "operandoB": {"tipo": "caminho", "caminho": "atributos.armadura"}
+    }
+  },
+  "operador": "-",
+  "operandoB": {"tipo": "caminho", "caminho": "resultado.rolagem"}
+}

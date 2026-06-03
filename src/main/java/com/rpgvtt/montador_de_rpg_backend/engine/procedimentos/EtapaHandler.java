@@ -10,6 +10,6 @@ public interface EtapaHandler {
 
     ResultadoEtapa executar(
             EtapaProcedimento etapa,
-            ProcedimentoContexto estado
+            ProcedimentoContexto ctx
     );
 }
