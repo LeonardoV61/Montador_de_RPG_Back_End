@@ -1,9 +1,10 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class ProcedimentoContexto {
+public class  ProcedimentoContexto {
 
     private Procedimento procedimento;
     private List<EtapaProcedimento> etapas;
@@ -64,5 +65,9 @@ public class ProcedimentoContexto {
         throw new IllegalStateException(
                 "Procedimento '" + procedimento.getNome() + "' não tem escopo UNICA" +
                         " — use idsInstancias() para escopo " + escopo.getClass().getSimpleName());
+    }
+
+    public boolean semInstancias() {
+        return escopo instanceof EscopoInstancias.Nenhuma;
     }
 }

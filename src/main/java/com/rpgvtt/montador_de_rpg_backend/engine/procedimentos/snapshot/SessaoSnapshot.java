@@ -1,4 +1,4 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

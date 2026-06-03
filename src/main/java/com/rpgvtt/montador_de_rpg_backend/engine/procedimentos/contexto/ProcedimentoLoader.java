@@ -1,11 +1,11 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
 import com.rpgvtt.montador_de_rpg_backend.engine.exceptions.EntityNotFoundException;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.ProcedimentoContexto.Status;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto.Status;
 import com.rpgvtt.montador_de_rpg_backend.repository.personagem.PersonagemRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.sistema.EtapaProcedimentoRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.sistema.ProcedimentoRepository;

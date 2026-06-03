@@ -1,8 +1,8 @@
 package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
-
-import java.util.Map;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
 
 public interface EtapaHandler {
 

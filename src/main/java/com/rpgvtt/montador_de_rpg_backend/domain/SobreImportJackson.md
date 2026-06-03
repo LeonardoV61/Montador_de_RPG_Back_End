@@ -33,3 +33,5 @@ So the migration from my previous answer is actually the **reverse** of what you
 
 **As for IntelliJ not resolving `JsonNode`:** make sure the `tools.jackson.core:jackson-databind` dependency is explicitly in your `pom.xml` 
 (or that Spring Boot's parent BOM is properly set up) and sync the project. It should resolve correctly after that.
+
+Outra fonte que fala sobre a mesma coisa: https://www.javacodegeeks.com/2026/04/spring-boot-4-vs-3-what-actually-changed.html

@@ -1,5 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.engine.utils;
 
+import tools.jackson.databind.JsonNode;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
