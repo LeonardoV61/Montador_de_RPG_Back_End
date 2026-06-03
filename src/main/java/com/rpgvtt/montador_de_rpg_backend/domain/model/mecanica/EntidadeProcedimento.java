@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeSistema;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
@@ -25,11 +25,11 @@ public class EntidadeProcedimento {
     @Id
     @GeneratedValue(
         strategy = GenerationType.SEQUENCE, 
-        generator = "evento_sistema_seq"
+        generator = "entidade_procedimento_seq"
     )
     @SequenceGenerator(
-        name = "evento_sistema_seq", 
-        sequenceName = "evento_sistema_sequence", 
+        name = "etapa_procedimento_seq", 
+        sequenceName = "entidade_procedimento_sequence", 
         allocationSize = 1
     )
     @Column(name = "id_entidade_procedimento")

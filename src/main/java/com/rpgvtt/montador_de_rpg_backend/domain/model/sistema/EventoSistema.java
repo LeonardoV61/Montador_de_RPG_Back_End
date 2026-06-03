@@ -47,6 +47,4 @@ public class EventoSistema {
     @Column(columnDefinition = "jsonb")
     private JsonNode payloadSchema;
 
-//     @OneToMany(mappedBy = "evento")
-//     private List<EntidadeEfeito> efeitos;
 }

@@ -14,8 +14,8 @@ import java.io.Serializable;
 public class EntidadeRelacaoKey implements Serializable {
 
     @Column(name = "id_entidade_pai")
-    private Integer idEntidadePai;
+    private Long idEntidadePai;
 
     @Column(name = "id_entidade_filha")
-    private Integer idEntidadeFilha;
+    private Long idEntidadeFilha;
 }

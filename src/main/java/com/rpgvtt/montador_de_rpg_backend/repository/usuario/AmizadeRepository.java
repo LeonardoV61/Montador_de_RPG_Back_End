@@ -29,6 +29,6 @@ public interface AmizadeRepository extends JpaRepository<Amizade, AmizadeKey> {
     List<Amizade> findByUsuarioAndStatus(@Param("idUsuario") Long idUsuario,
                                          @Param("status") StatusAmizade status);
 
-    // Lista solicitações pendentes recebidas por um usuário
+
     List<Amizade> findByIdDestinatarioAndStatus(Long idDestinatario, StatusAmizade status);
 }

@@ -20,11 +20,11 @@ public class EtapaProcedimento {
     @Id
     @GeneratedValue(
         strategy = GenerationType.SEQUENCE, 
-        generator = "evento_sistema_seq"
+        generator = "etapa_procedimento_seq"
     )
     @SequenceGenerator(
-        name = "evento_sistema_seq", 
-        sequenceName = "evento_sistema_sequence", 
+        name = "etapa_procedimento_seq", 
+        sequenceName = "etapa_procedimento_sequence", 
         allocationSize = 1
     )
     @Column(name = "id_etapa")

@@ -4,6 +4,7 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -11,6 +12,7 @@ import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
 
 @Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -19,11 +21,11 @@ public class Resolucao {
     @Id
     @GeneratedValue(
         strategy = GenerationType.SEQUENCE, 
-        generator = "evento_sistema_seq"
+        generator = "resolucao_seq"
     )
     @SequenceGenerator(
-        name = "evento_sistema_seq", 
-        sequenceName = "evento_sistema_sequence", 
+        name = "resolucao_seq", 
+        sequenceName = "resolucao_sequence", 
         allocationSize = 1
     )
     @Column(name = "id_etapa")

@@ -253,7 +253,6 @@ public class SchemaValidator {
     }
 
 
-    // CONVERSORES — transformam o Map<String, Object> do JSONB em tipos conhecidos
 
     private Map<String, AtributoSchema> converterSchemaAtributos(Sistema sistema) {
         return objectMapper.convertValue(

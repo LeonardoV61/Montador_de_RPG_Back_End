@@ -68,11 +68,6 @@ public class Sistema {
         private JsonNode schemaEntidades;
 
         @NotNull
-        @JdbcTypeCode(SqlTypes.JSON)
-        @Column(columnDefinition = "jsonb")
-        private JsonNode schemaResolucoes;
-
-        @NotNull
         private Integer versaoSchemas;
 
         @NotNull
@@ -229,61 +224,4 @@ Shcema Entidades:
         }
 }
 
-Shcema Resoluções:
-
-{
-        "virtude_save": {
-                "label": "Teste de Virtude",
-                "descricao": "Rola d20 <= atributo",
-                "parametros": {
-                        "atributo": {
-                        "tipo": "referencia_atributo",
-                        "obrigatorio": true,
-                        "atributos_permitidos": ["vig", "cla", "spi"],
-                        "descricao": "Nome do atributo (vig, cla, spi)"
-                },
-                "sucesso_critico": {
-                        "tipo": "int",
-                        "min": 1,
-                        "max": 20,
-                        "padrao": 1,
-                },
-                "falha_critica": {
-                        "tipo": "int",
-                        "min": 1,
-                        "max": 20,
-                        "padrao": 20
-                }
-        }
-
-        "luck_roll": {
-                "label": "Rolagem de Sorte (Luck Roll)",
-                "descricao": "Rola 1d6 e consulta a tabela de sorte.",
-                "parametros": {
-                        "dado": {
-                                "tipo": "enum",
-                                "valores": ["d6"],
-                                "padrao": "d6"
-                        },
-                        "tabela": {
-                                "tipo": "array",
-                                "obrigatorio": true,
-                                "item_schema": {
-                                        "tipo": "composto",
-                                        "campos": {
-                                                "min": { "tipo": "int", "min": 1, "max": 6 },
-                                                "max": { "tipo": "int", "min": 1, "max": 6 },
-                                                "resultado": {
-                                                "tipo": "enum",
-                                                "valores": ["Crise", "Problema", "Bênção"]
-                                                },
-                                                "descricao": { "tipo": "string", "obrigatorio": false }
-                                        }
-                                }
-                        }
-                }
-        }
-}
-
-OBS: Não existem regras de sucesso ou falha critica no Mythic Bastionlad, isso é apenas um exemplo.
 */

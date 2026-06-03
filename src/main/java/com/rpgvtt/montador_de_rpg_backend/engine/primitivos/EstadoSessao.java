@@ -11,8 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+
 
 @Getter
 public class EstadoSessao {
@@ -52,19 +53,24 @@ public class EstadoSessao {
 
     private void aplicarNoCaminho(JsonNode raiz, String caminho, Object valor) {
         String[] partes = caminho.split("\\.");
-        ObjectNode atual = (ObjectNode) raiz;
+        JsonNode atual = raiz;
         for (int i = 0; i < partes.length - 1; i++) {
-            atual = (ObjectNode) atual.get(partes[i]);
-            if (atual == null) {
-                throw new IllegalArgumentException("Caminho '%s' não encontrado".formatted(caminho));
+            JsonNode proximo = atual.get(partes[i]);
+            if (proximo == null || !proximo.isObject()) {
+                throw new IllegalArgumentException(
+                    "Caminho '%s' não encontrado ou não é um objeto".formatted(caminho));
             }
+            atual = proximo;
         }
+        
+        ObjectNode objetoFinal = (ObjectNode) atual;
         String ultimoCampo = partes[partes.length - 1];
-            if (valor instanceof Double d) atual.put(ultimoCampo, d);
-            else if (valor instanceof Integer i) atual.put(ultimoCampo, i);
-            else if (valor instanceof Boolean b) atual.put(ultimoCampo, b);
-            else if (valor instanceof String s) atual.put(ultimoCampo, s);
-            else atual.putPOJO(ultimoCampo, valor); // fallback
+
+        if (valor instanceof Double d) objetoFinal.put(ultimoCampo, d);
+        else if (valor instanceof Integer i) objetoFinal.put(ultimoCampo, i);
+        else if (valor instanceof Boolean b) objetoFinal.put(ultimoCampo, b);
+        else if (valor instanceof String s) objetoFinal.put(ultimoCampo, s);
+        else objetoFinal.putPOJO(ultimoCampo, valor);
     }
 
     public void adicionarEfeito(EfeitoAtivo efeito) {

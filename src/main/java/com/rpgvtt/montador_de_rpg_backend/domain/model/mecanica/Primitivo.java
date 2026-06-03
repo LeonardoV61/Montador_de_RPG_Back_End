@@ -41,6 +41,4 @@ public class Primitivo {
     @Column(columnDefinition = "jsonb")
     private JsonNode parametro_schemas;
 
-    // @OneToMany(mappedBy = "primitivo")
-    // private List<EfeitosPrimitivos> efeitos;
 }
