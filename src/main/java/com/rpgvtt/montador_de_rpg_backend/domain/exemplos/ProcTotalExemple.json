@@ -1,0 +1,1020 @@
+{
+  "_meta": {
+    "sistema": "Mythic Bastionland",
+    "versao": "Feb 2025 Pre-Print",
+    "descricao": "Schemas de Procedimento e EtapaProcedimento para os fluxos de Combate e Criação de Personagem do Mythic Bastionland. Cada procedimento abaixo pode ser cadastrado via POST /procedimentos e suas etapas via POST /procedimentos/{id}/etapas.",
+    "tipos_etapa_disponiveis": [
+      "SOLICITAR_INPUT",
+      "ALTERAR_ATRIBUTO",
+      "CALCULAR_ATRIBUTO",
+      "CHAMAR_PROCEDIMENTO",
+      "PARA_CADA",
+      "VERIFICAR_REPETICAO"
+    ],
+    "notas": [
+      "Todos os campos `parametrosEtapa` correspondem ao JsonNode persistido na coluna `jsonb` da entidade EtapaProcedimento.",
+      "O campo `confgsGeral` do Procedimento também é JsonNode livre, vamos usar para guardar metadados do sistema.",
+      "Etapas com `obrigatorio: false` são puladas automaticamente se `recurso_necessario` não estiver disponível na instância.",
+      "Procedimentos filhos chamados via CHAMAR_PROCEDIMENTO herdam ou sobrescrevem o escopo de instâncias conforme o campo `escopo`."
+    ]
+  },
+  "procedimentos": [
+    {
+      "_comentario": "\n  FLUXO 1 -> CRIAÇÃO DE PERSONAGEM (Knight)\n  Referência do livro: p.7 'Knighthood'\n",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Criação de Personagem: Knight",
+        "descricao": "Guia o jogador pela criação completa de um Knight: rolar as três Virtudes, rolar Guard (GD), escolher o tipo de Knight (p.26) e registrar Propriedade, Habilidade e Paixão.",
+        "tipo": "CRIACAO_PERSONAGEM",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "livro": "Mythic Bastionland",
+          "pagina_referencia": 7,
+          "start_types": {
+            "Wanderer": {
+              "virtude_dado": "d12+d6",
+              "guard_dado": "d6"
+            },
+            "Courtier": {
+              "virtude_dado": "d12+6",
+              "guard_dado": "2d6"
+            },
+            "Ruler": {
+              "virtude_dado": "d12+6",
+              "guard_dado": "d6+6"
+            }
+          },
+          "virtudes": ["VIG", "CLA", "SPI"],
+
+          "_comentario_2": "itens e feats talvez sejam entidades depois, mas por enquanto isso é mais interessante para o exemplo",
+          "itens_iniciais_fixos": [
+            "Adaga (d6)",
+            "Tochas",
+            "Corda",
+            "Rações Secas",
+            "Equipamento de Acampamento"
+          ],
+          "feats_conhecidos": ["SMITE", "FOCUS", "DENY"]
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Escolher tipo de início da Companhia",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Escolha o tipo de início da Companhia (Start)",
+            "salvar_em": "start_type",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["Wanderer", "Courtier", "Ruler"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Rolar Vigor (VIG)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role os dados para VIG conforme o Start escolhido (Wanderer: d12+d6 | Courtier/Ruler: d12+6). Informe o resultado.",
+            "salvar_em": "valor_vig",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 3,
+          "nome": "Aplicar VIG",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "obrigatorio": true,
+          "parametrosEtapa": {
+            "atributo": "VIG",
+            "source_key": "valor_vig",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 4,
+          "nome": "Rolar Clareza (CLA)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+          
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role os dados para CLA. Informe o resultado.",
+            "salvar_em": "valor_cla",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 5,
+          "nome": "Aplicar CLA",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "CLA",
+            "source_key": "valor_cla",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 6,
+          "nome": "Rolar Espírito (SPI)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role os dados para SPI. Informe o resultado.",
+            "salvar_em": "valor_spi",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 7,
+          "nome": "Aplicar SPI",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "SPI",
+            "source_key": "valor_spi",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 8,
+          "nome": "Rolar Guard (GD)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role os dados para GD conforme o Start (Wanderer: d6 | Courtier: 2d6 | Ruler: d6+6). Informe o resultado.",
+            "salvar_em": "valor_gd",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 9,
+          "nome": "Aplicar GD",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "GD",
+            "source_key": "valor_gd",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario*": "Precisamos pensar como funcionaria as tabelas de cavaleiro",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 10,
+          "nome": "Escolher Tipo de Knight",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Escolha ou role seu tipo de Knight (tabela p.26). O tipo define Propriedade, Habilidade e Paixão.",
+            "salvar_em": "tipo_knight",
+            "pode_passar": false,
+            "opcoes_fonte": "config_sistema.tipos_knight"
+          }
+        },
+        {
+          "_comentario*": "Não sei se o tipo 'SOLICITAR_INPUT' é o mais correto aqui",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 11,
+          "nome": "Registrar Propriedade do Knight",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Informe a Propriedade (Property) concedida pelo seu tipo de Knight.",
+            "salvar_em": "propriedade_knight",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario*": "Não sei se o tipo 'SOLICITAR_INPUT' é o mais correto aqui",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 12,
+          "nome": "Registrar Habilidade do Knight",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Informe a Habilidade (Ability) única do seu tipo de Knight.",
+            "salvar_em": "habilidade_knight",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario*": "Não sei se o tipo 'SOLICITAR_INPUT' é o mais correto aqui",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 13,
+          "nome": "Registrar Paixão do Knight",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Informe a Paixão (Passion) do seu Knight -> o meio especial de restaurar SPI.",
+            "salvar_em": "paixao_knight",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario*": [
+            "Isso esta errado",
+            "Habilidades/Propriedades seriam entidades"
+          ],
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 14,
+          "nome": "Aplicar Atributos de Habilidade/Propriedade ao Personagem",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "propriedade",
+            "source_key": "propriedade_knight",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 15,
+          "nome": "Registrar Glória Inicial",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "gloria",
+            "quantidade": 0,
+            "operacao": ""
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": "\n  FLUXO 2 -> COMBATE: RODADA COMPLETA\n  Referência do livro: p.8-10\n  Este é o procedimento raiz. Chama sub-procedimentos\n  para cada fase da rodada de combate.\n",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Combate Rodada Completa",
+        "descricao": "Procedimento raiz de uma rodada de combate. Coordena: surpresa, turno dos jogadores (ataque), turno dos NPCs, verificação de moral e repetição até o fim do combate.",
+        "tipo": "COMBATE",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "livro": "Mythic Bastionland",
+          "pagina_referencia": 8,
+          "nota": "Jogadores sempre agem primeiro, salvo estado de SURPRESA. NPCs reagem conforme contexto ou salvaguarda de SPI."
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Verificar Surpresa",
+          "tipoEtapa": "CHAMAR_PROCEDIMENTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "id_procedimento": "<ID_PROC_VERIFICAR_SURPRESA>",
+            "salvar_em": "resultado_surpresa",
+            "escopo": "HERDAR"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Turno dos Jogadores (Ação)",
+          "tipoEtapa": "CHAMAR_PROCEDIMENTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "id_procedimento": "<ID_PROC_TURNO_JOGADOR>",
+            "salvar_em": "resultado_turno_jogador",
+            "escopo": "TODOS"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 3,
+          "nome": "Turno dos NPCs",
+          "tipoEtapa": "CHAMAR_PROCEDIMENTO",
+          "obrigatorio": true,
+          
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "id_procedimento": "<ID_PROC_TURNO_NPC>",
+            "salvar_em": "resultado_turno_npc",
+            "escopo": "CONTEXTO_IDS",
+            "escopo_contexto_chave": "ids_inimigos_vivos"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 4,
+          "nome": "Verificar Moral (Wavering Morale)",
+          "tipoEtapa": "CHAMAR_PROCEDIMENTO",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "id_procedimento": "<ID_PROC_MORAL>",
+            "salvar_em": "resultado_moral",
+            "escopo": "CONTEXTO_IDS",
+            "escopo_contexto_chave": "ids_inimigos_vivos",
+            "recurso_necessario": "inimigos_vivos"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 5,
+          "nome": "Checar Fim do Combate",
+          "tipoEtapa": "VERIFICAR_REPETICAO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "condicao": {
+              "tipo": "condicao",
+              "operandoA": { "tipo": "caminho", "caminho": "count_inimigos_vivos" },
+              "operador": ">",
+              "operandoB": { "tipo": "constante", "valor": 0 }
+            },
+            "voltar_para_ordem": 2,
+            "max_iteracoes": 50,
+            "limpar_contexto": ["resultado_turno_jogador", "resultado_turno_npc"]
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": " \n  FLUXO 2a -> VERIFICAR SURPRESA\n  Referência: p.8 'SURPRISE'\n ",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Combate -> Verificar Surpresa",
+        "descricao": "Personagens que não estavam preparados para o combate devem passar uma Salvaguarda de CLA ou perder o primeiro turno.",
+        "tipo": "COMBATE_SUB",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "pagina_referencia": 8,
+          "regra": "Characters who were not readied for combat must pass a CLA Save or miss the first turn."
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Perguntar se havia prontidão",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Os personagens estavam prontos para o combate (sem surpresa)?",
+            "salvar_em": "combate_prontidao",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM", "NAO"]
+          }
+        },
+        {
+
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Salvaguarda de CLA para quem foi pego de surpresa",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role d20 para cada personagem surpreso. Quem PASSOU (≤ CLA) age normalmente. Quem FALHOU perde o primeiro turno. Informe os IDs dos que falharam.",
+            "salvar_em": "ids_surpresos_falhos",
+            "pode_passar": true,
+            "recurso_necessario": "combate_prontidao_negado",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": " \n  FLUXO 2b -> TURNO DO JOGADOR (Ataque)\n  Referência: p.8-10 'ATTACKS', 'FEATS', 'GAMBITS'\n ",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Combate -> Turno do Jogador",
+        "descricao": "Gerencia o turno completo de um Knight: Mover + Ação (Atacar ou outra ação). Inclui uso opcional de Feats (Smite/Focus/Deny) e Gambits.",
+        "tipo": "COMBATE_SUB",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "pagina_referencia": "8-10",
+          "regra_turno": "A turn is enough time to Move and then perform an Action, always in that order.",
+          "ordem_ataque": [
+            "1. Todos atacando o mesmo alvo rolam os dados simultaneamente",
+            "2. Alvo ou aliados próximos podem usar DENY",
+            "3. Atacantes podem usar GAMBITS",
+            "4. Tome o dado mais alto",
+            "5. Some dano extra de Bolster",
+            "6. Subtraia Armadura total do alvo",
+            "7. Aplique o Dano"
+          ]
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Declarar Movimento",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "O personagem se move? Para onde?",
+            "salvar_em": "movimento_declarado",
+            "pode_passar": true,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM", "NAO"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Declarar Ação",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Qual é a ação do personagem?",
+            "salvar_em": "tipo_acao",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["ATACAR", "OUTRA_ACAO"]
+          }
+        },
+        {
+          "_comentario*": "Isso teria que ser uma entidade ou talvez chamar um procedimento de smite. Algo assim",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 3,
+          "nome": "Usar Feat SMITE (opcional)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Usar Feat SMITE? (Antes de rolar: +d12 OU Blast no ataque. Role VIG para não ficar Fatigado.)",
+            "salvar_em": "uso_smite",
+            "pode_passar": true,
+            "recurso_necessario": "feat_smite_disponivel",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM_D12", "SIM_BLAST", "NAO"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 4,
+          "nome": "Rolar Dados de Ataque",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Role todos os dados de ataque (arma + escudo + bônus de aliados). Informe todos os resultados separados por vírgula.",
+            "salvar_em": "resultados_dados_ataque",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 5,
+          "nome": "Usar Feat DENY pelo alvo (opcional)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "O alvo ou um aliado próximo quer usar Feat DENY? (Descarta 1 dado de ataque. Role SPI para não ficar Fatigado.)",
+            "salvar_em": "uso_deny",
+            "pode_passar": true,
+            "recurso_necessario": "feat_deny_disponivel_alvo",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM", "NAO"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 6,
+          "nome": "Usar Feat FOCUS (opcional)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Usar Feat FOCUS? (Após rolar: realiza um Gambit sem gastar dado. Role CLA para não ficar Fatigado.)",
+            "salvar_em": "uso_focus",
+            "pode_passar": true,
+            "recurso_necessario": "feat_focus_disponivel",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM", "NAO"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 7,
+          "nome": "Declarar Gambits",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "Isso teria que ser um procedimento separado proprio com cada opção de gambit e seus efeitos primitivos",
+            "campo_pedido": "Usar Gambits? Gaste dados de 4+ para efeitos (Bolster +1 Dano, Repelir, Parar, Prejudicar arma, etc.). Um dado de 8+ permite Strong Gambit.",
+            "salvar_em": "gambits_usados",
+            "pode_passar": true,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": [
+              "BOLSTER (+1 Dano total)",
+              "MOVER (mover após ataque)",
+              "REPELIR (afastar inimigo)",
+              "PARAR (impedir movimento)",
+              "PREJUDICAR ARMA",
+              "PRENDER ESCUDO",
+              "DESMONTAR",
+              "NAO_USAR"
+            ]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 8,
+          "nome": "Calcular Dano Final",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Informe o dado mais alto dos restantes, mais qualquer Bolster. Este é o Dano bruto.",
+            "salvar_em": "dano_bruto",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 9,
+          "nome": "Informar Armadura do Alvo",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Qual é a Armadura total do alvo? (Somar escudo, elmo, placas, etc.)",
+            "salvar_em": "armadura_alvo",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 10,
+          "nome": "Calcular Dano Líquido",
+          "tipoEtapa": "CALCULAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "Acho que pode ter um erro aqui",
+            "source_key": "dano_bruto",
+            "salvar_em": "dano_liquido",
+            "expressao": {
+              "tipo": "formula",
+              "operandoA": { "tipo": "caminho", "caminho": "resultado" },
+              "operador": "-",
+              "operandoB": { "tipo": "caminho", "caminho": "atributos.armadura_alvo" }
+            }
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 11,
+          "nome": "Aplicar Dano ao GD do Alvo",
+          "tipoEtapa": "CHAMAR_PROCEDIMENTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "id_procedimento": "<ID_PROC_APLICAR_DANO>",
+            "salvar_em": "resultado_dano",
+            "escopo": "UNICA",
+            "escopo_contexto_chave": "id_alvo",
+            "passar_contexto": ["dano_liquido"]
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": " \n  FLUXO 2c -> APLICAR DANO\n  Referência: p.8 'DAMAGE'\n  Lógica: GD > 0 - Evita | GD = 0 - Cicatriz | Excede GD - Ferimento em VIG\n ",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Combate -> Aplicar Dano",
+        "descricao": "Aplica o dano líquido ao alvo seguindo a cascata: GD - Cicatriz (se GD = 0) - VIG (excesso). Verifica Ferimento Mortal e Morte.",
+        "tipo": "COMBATE_SUB",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "pagina_referencia": 8,
+          "cascata_dano": [
+            "Dano deduzido do GD",
+            "≥1 GD restante -> Evadiu (nenhum efeito adicional)",
+            "Exatamente 0 GD -> Ganha uma Cicatriz",
+            "Excede GD -> Excesso deduzido do VIG → Ferimento",
+            "≥ metade do VIG restante perdido → Ferimento Mortal (moribundo)",
+            "VIG = 0 -> Morto"
+          ]
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Subtrair Dano do GD",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "GD",
+            "source_key": "dano_liquido",
+            "operacao": "sub"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Verificar Resultado do GD",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Qual o resultado do GD após o dano? (Se GD ficou negativo, informe o excesso separado.)",
+            "salvar_em": "resultado_gd_pos_dano",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["POSITIVO (Evadiu)", "ZERO_EXATO (Cicatriz)", "NEGATIVO (Dano em VIG)"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 3,
+          "nome": "Rolar Cicatriz",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "Teria que fazer um procedimento para essa opções de cicatrizes e talvez até entidades, proque é algo qualitativo" ,
+            "campo_pedido": "GD chegou a exatamente 0. Role o dado que causou a Cicatriz e consulte a tabela (p.9). Informe o resultado.",
+            "salvar_em": "resultado_cicatriz",
+            "pode_passar": false,
+            "recurso_necessario": "gd_chegou_zero_exato",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": [
+              "1 -> Distress: perde d6 SPI",
+              "2 -> Disfigurement: marca permanente",
+              "3 -> Smash: perde d6 VIG",
+              "4 -> Stun: perde d6 CLA",
+              "5 -> Rupture: perde 2d6 VIG",
+              "6 -> Gouge: carne arrancada",
+              "7 -> Concussion: perde 2d6 CLA",
+              "8 -> Tear: parte do corpo arrancada",
+              "9 -> Agony: perde 2d6 SPI",
+              "10 -> Mutilation: membro perdido",
+              "11 -> Doom: próximo Ferimento Mortal = Morte",
+              "12 -> Humiliation: GD cresce com vingança"
+            ]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 4,
+          "nome": "Aplicar Perda de Virtude pela Cicatriz",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "So um exemplo, como falei teria que ter algo proprio depois" ,
+            "campo_pedido": "Informe a Virtude perdida e o valor (conforme Cicatriz rolada).",
+            "salvar_em": "perda_virtude_cicatriz",
+            "pode_passar": true,
+            "recurso_necessario": "cicatriz_ocorreu",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario*": "Não tenho certeza se aqui é realmente 'SOLICITAR_INPUT' ",
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 5,
+          "nome": "Aplicar Excesso ao VIG",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Dano excedeu o GD. Informe o excesso que vai para VIG.",
+            "salvar_em": "excesso_vig",
+            "pode_passar": false,
+            "recurso_necessario": "gd_negativo",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": []
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 6,
+          "nome": "Subtrair Excesso do VIG",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "VIG",
+            "source_key": "excesso_vig",
+            "operacao": "sub",
+            "recurso_necessario": "gd_negativo"
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 7,
+          "nome": "Verificar Ferimento Mortal",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "O alvo perdeu metade ou mais do seu VIG restante neste ataque? (Ferimento Mortal: fica caído e morrendo em 1h sem atendimento.)",
+            "salvar_em": "ferimento_mortal",
+            "pode_passar": true,
+            "recurso_necessario": "gd_negativo",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM -> Ferimento Mortal", "NAO -> Apenas Ferido"]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 8,
+          "nome": "Verificar Morte (VIG = 0)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": [
+              "Isso não esta completamente correto",
+              "Porque o VIG pode chegar a 0 e não haver morte",
+              "A morte só ocorre quando é DANO e não quando é VIRTUE LOSS",
+              "Pode não ser um problema aqui, já que essa etapa e para dano",
+              "Esse comentario é mais para avisar"
+            ],
+            "campo_pedido": "VIG chegou a 0? Se sim, o alvo está Morto.",
+            "salvar_em": "alvo_morto",
+            "pode_passar": true,
+            "recurso_necessario": "gd_negativo",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["SIM -> Morto", "NAO"]
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": " \n  FLUXO 2d -> VERIFICAR MORAL (Wavering Morale)\n  Referência: p.10 'WAVERING MORALE'\n ",
+      "procedimento": {
+        "_comentario*": "Talvez não precise no nosse MVP, porque é muito burocratico",
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Combate -> Verificar Moral",
+        "descricao": "Indivíduos Feridos ou grupos que perderam metade dos membros devem passar Salvaguarda de SPI ou recuar/render.",
+        "tipo": "COMBATE_SUB",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+
+          "pagina_referencia": 10,
+          "regra": "Indivíduos Feridos, ou grupos que perderam metade: Save de SPI ou rout/surrender. Grupos organizados rolam uma vez pelo líder. Não se aplica a personagens jogadores."
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Verificar gatilho de moral",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "Talvez não precise no nosse MVP, porque é muito burocratico",
+            "campo_pedido": "Algum inimigo foi Ferido OU o grupo inimigo perdeu metade dos membros?",
+            "salvar_em": "gatilho_moral",
+            "pode_passar": false,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": [
+              "SIM -> Inimigo Ferido",
+              "SIM -> Metade do Grupo Perdida",
+              "NAO"
+            ]
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Rolar Salvaguarda de SPI",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "_comentario": "Talvez não precise no nosse MVP, porque é muito burocratico",
+            "campo_pedido": "Role d20 para a Salvaguarda de SPI do líder (grupo organizado) ou de cada indivíduo. Quem FALHOU (> SPI) recua ou rende.",
+            "salvar_em": "resultado_save_moral",
+            "pode_passar": false,
+            "recurso_necessario": "gatilho_moral_ativo",
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": ["PASSOU", "FALHOU -> Recua", "FALHOU -> Rende"]
+          }
+        }
+      ]
+    },
+    {
+      "_comentario": " \n  FLUXO 3 -> RECUPERAÇÃO PÓS-COMBATE\n  Referência: p.9 'RECOVERY'\n ",
+      "procedimento": {
+        "_comentario": " ATRIBUTOS DA CLASSE ",
+        "sistemaId": "<ID_DO_SISTEMA>",
+        "nome": "Recuperação Pós-Combate",
+        "descricao": "Após o perigo passar, o GD é totalmente restaurado com um momento de paz. Fadiga também é removida. Virtudes requerem Remédio, Ação específica ou novo Season.",
+        "tipo": "RECUPERACAO",
+
+        "_comentario_2": " JSON DA CLASSE ",
+        "confgsGeral": {
+          "_comentario": "Os itens citados devem ser entidades com seus porprios procedimentos",
+          "pagina_referencia": 9,
+          "virtudes_e_remedios": {
+            "VIG": [
+              "Sustenância (Sustenance)",
+              "Dia completo em hospitalidade quente"
+            ],
+            "CLA": [
+              "Estimulante (Stimulant)",
+              "Orientação de um Seer"
+            ],
+            "SPI": [
+              "Sacramento (Sacrament)",
+              "Indulging a Passion"
+            ]
+          }
+        }
+      },
+      "etapas": [
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 1,
+          "nome": "Restaurar GD",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "GD",
+            "source_key": "gd_maximo",
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 2,
+          "nome": "Remover Fadiga",
+          "tipoEtapa": "ALTERAR_ATRIBUTO",
+          "obrigatorio": true,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "atributo": "fatigado",
+            "quantidade": 0,
+            "operacao": ""
+          }
+        },
+        {
+          "_comentario": " ATRIBUTOS DA CLASSE ",
+          "ordem": 3,
+          "nome": "Recuperação de Virtudes (opcional)",
+          "tipoEtapa": "SOLICITAR_INPUT",
+          "obrigatorio": false,
+
+          "_comentario_2": " JSON DA CLASSE ",
+          "parametrosEtapa": {
+            "campo_pedido": "Algum personagem usa um Remédio para recuperar Virtudes?",
+            "salvar_em": "remedio_usado",
+            "pode_passar": true,
+            "opcoes_fonte": "estatico",
+            "opcoes_estatico": [
+              "Sustenância -> restaura VIG",
+              "Estimulante -> restaura CLA",
+              "Sacramento -> restaura SPI",
+              "NAO"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+
+  "_comentario": " -------------------------------- SUGESTÕES DO CLAUDIO -------------------------------- ",
+  "_guia_implementacao": {
+    "ordem_cadastro": [
+      "1. Crie o Sistema (POST /sistemas)",
+      "2. Crie os Procedimentos folha primeiro (Aplicar Dano, Verificar Surpresa, Moral)",
+      "3. Anote os IDs gerados e substitua os placeholders <ID_PROC_*>",
+      "4. Crie o Procedimento raiz 'Combate -> Rodada Completa' referenciando os IDs",
+      "5. Adicione as Etapas via POST /procedimentos/{id}/etapas"
+    ],
+    "campos_entidade_personagem_sugeridos": {
+      "VIG": { "tipo": "number", "min": 0, "max": 19 },
+      "CLA": { "tipo": "number", "min": 0, "max": 19 },
+      "SPI": { "tipo": "number", "min": 0, "max": 19 },
+      "GD": { "tipo": "number", "min": 0 },
+      "gd_maximo": { "tipo": "number" },
+      "gloria": { "tipo": "number", "min": 0 },
+      "fatigado": { "tipo": "boolean" },
+      "ferimento_mortal": { "tipo": "boolean" },
+      "propriedade": { "tipo": "string" },
+      "habilidade": { "tipo": "string" },
+      "paixao": { "tipo": "string" },
+      "tipo_knight": { "tipo": "string" },
+      "itens": { "tipo": "array" },
+      "cicatrizes": { "tipo": "array" },
+      "feat_smite_disponivel": { "tipo": "boolean" },
+      "feat_focus_disponivel": { "tipo": "boolean" },
+      "feat_deny_disponivel": { "tipo": "boolean" }
+    }
+  }
+}
