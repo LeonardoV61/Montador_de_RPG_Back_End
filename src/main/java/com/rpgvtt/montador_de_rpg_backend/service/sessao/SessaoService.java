@@ -30,7 +30,6 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -69,12 +68,7 @@ public class SessaoService {
 
         // Guard: no double sessions
         sessaoRepo.findAtivaByCampanhaId(idCampanha).ifPresent(s -> {
-            try {
-                throw new EstadoInvalidoException(
-                        "Já existe uma sessão ativa para esta campanha: " + s.getId());
-            } catch (EstadoInvalidoException e) {
-                throw new RuntimeException(e);
-            }
+                throw new EstadoInvalidoException("Já existe uma sessão ativa para esta campanha: " + s.getId());
         });
 
         // Create the session record
@@ -228,7 +222,7 @@ public class SessaoService {
                 Map.of(
                         "idSessao",  idSessao,
                         "token",     token,
-                        "expiraEm",  OffsetDateTime.now().plusMinutes(10)
+                        "expiraEm",  LocalDateTime.now().plusMinutes(10)
                 )
         );
 

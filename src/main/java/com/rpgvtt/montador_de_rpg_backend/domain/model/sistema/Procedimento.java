@@ -38,10 +38,14 @@ public class Procedimento {
     private Sistema sistema;
 
     @NotNull
+    private String tipo;
+
+    @NotNull
     private String nome;
 
     private String descricao;
 
+    @NotNull
     @Enumerated(value = EnumType.STRING)
     private StatusProcedimento status;
 
