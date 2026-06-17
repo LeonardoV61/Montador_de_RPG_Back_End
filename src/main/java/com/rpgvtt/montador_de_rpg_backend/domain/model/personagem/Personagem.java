@@ -35,7 +35,7 @@ public class Personagem {
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
-    @OneToOne(mappedBy = "personagem")
+    @OneToOne(mappedBy = "id_instancia")
     private EntidadeInstancia instancia;
 
      @ManyToOne(optional = false, fetch = FetchType.LAZY)

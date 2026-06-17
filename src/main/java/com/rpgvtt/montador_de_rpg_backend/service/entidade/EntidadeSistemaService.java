@@ -1,8 +1,6 @@
 // EntidadeSistemaService.java
 package com.rpgvtt.montador_de_rpg_backend.service.entidade;
 
-import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeRelacao;
-import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeRelacaoKey;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeSistema;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.EntidadeProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
@@ -11,7 +9,6 @@ import com.rpgvtt.montador_de_rpg_backend.domain.validation.SchemaValidator;
 import com.rpgvtt.montador_de_rpg_backend.dto.entidade.*;
 import com.rpgvtt.montador_de_rpg_backend.dto.mecanica.*;
 import com.rpgvtt.montador_de_rpg_backend.repository.mecanica.EntidadeProcedimentoRepository;
-import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeRelacaoRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeSistemaRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.sistema.ProcedimentoRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.sistema.SistemaRepository;
@@ -28,7 +25,6 @@ import java.util.List;
 public class EntidadeSistemaService {
 
     private final EntidadeSistemaRepository entidadeRepository;
-    private final EntidadeRelacaoRepository relacaoRepository;
     private final EntidadeProcedimentoRepository entidadeProcedimentoRepository;
     private final SistemaRepository sistemaRepository;
     private final ProcedimentoRepository procedimentoRepository;
@@ -241,17 +237,17 @@ public class EntidadeSistemaService {
         );
     }
 
-    private EntidadeRelacaoResponseDTO mapearRelacaoParaDTO(EntidadeRelacao relacao) {
-        return new EntidadeRelacaoResponseDTO(
-                relacao.getIdEntidadePai().getId(),
-                relacao.getIdEntidadePai().getNome(),
-                relacao.getIdEntidadeFilha().getId(),
-                relacao.getIdEntidadeFilha().getNome(),
-                relacao.getQuantidade(),
-                relacao.getCustomizacoes(),
-                relacao.getOrigem()
-        );
-    }
+    // private EntidadeRelacaoResponseDTO mapearRelacaoParaDTO(EntidadeRelacao relacao) {
+    //     return new EntidadeRelacaoResponseDTO(
+    //             relacao.getIdEntidadePai().getId(),
+    //             relacao.getIdEntidadePai().getNome(),
+    //             relacao.getIdEntidadeFilha().getId(),
+    //             relacao.getIdEntidadeFilha().getNome(),
+    //             relacao.getQuantidade(),
+    //             relacao.getCustomizacoes(),
+    //             relacao.getOrigem()
+    //     );
+    // }
 
     private EntidadeProcedimentoResponseDTO mapearEpParaDTO(EntidadeProcedimento ep) {
         return new EntidadeProcedimentoResponseDTO(

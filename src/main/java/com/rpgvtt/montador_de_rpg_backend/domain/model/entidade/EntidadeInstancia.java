@@ -54,6 +54,8 @@ public class EntidadeInstancia {
 
     private String descricao;
 
+    private String urlImagem;
+
     @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

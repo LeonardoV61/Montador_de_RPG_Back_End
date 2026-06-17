@@ -9,6 +9,8 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
+
+import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeSistema;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
@@ -42,6 +44,10 @@ public class EntidadeProcedimento {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn (name = "id_entidade")
     private EntidadeSistema entidadeSistema;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn (name = "id_instancia")
+    private EntidadeInstancia entidadeInstancia;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_procedimento")
