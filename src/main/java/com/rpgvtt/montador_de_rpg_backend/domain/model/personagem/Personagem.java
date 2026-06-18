@@ -9,9 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 // import org.hibernate.annotations.JdbcTypeCode;
 // import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -35,12 +37,13 @@ public class Personagem {
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
-    @OneToOne(mappedBy = "id_instancia")
+    @OneToOne
+    @JoinColumn
     private EntidadeInstancia instancia;
 
-     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-     @JoinColumn(name = "id_campanha")
-     private Campanha campanha;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_campanha")
+    private Campanha campanha;
 
     private String historia;
 
@@ -52,6 +55,10 @@ public class Personagem {
 
     @Column(name = "notas_jogador")
     private String notasJogador;
+
+    @CreationTimestamp
+    @Column(name = "criado_em")
+    private LocalDateTime criadoEm;
 
     public JsonNode getAtributos() {
         throw new UnsupportedOperationException("Unimplemented method 'getAtributos'");

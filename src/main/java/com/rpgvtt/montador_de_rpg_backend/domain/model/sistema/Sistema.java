@@ -67,6 +67,10 @@ public class Sistema {
         @Column(columnDefinition = "jsonb")
         private JsonNode schemaEntidades;
 
+        @JdbcTypeCode (SqlTypes.JSON)
+        @Column(columnDefinition = "jsonb")
+        private JsonNode schemaResolucoes;
+
         @NotNull
         private Integer versaoSchemas;
 

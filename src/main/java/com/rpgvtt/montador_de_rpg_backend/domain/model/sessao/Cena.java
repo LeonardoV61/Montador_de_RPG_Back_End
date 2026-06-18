@@ -38,7 +38,9 @@ public class Cena {
     @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private JsonNode mapa;
+    private JsonNode mapaJson;
+    
+    private String urlMapa;
 
     @NotNull
     private Integer ordem;

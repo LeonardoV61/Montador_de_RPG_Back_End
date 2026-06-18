@@ -201,6 +201,30 @@ public class SessaoService {
         broadcastParticipantes(sessao);
     }
 
+        /**
+         * Remove a user from all sessions they are currently connected to
+         * (used on websocket disconnect where session id is not known).
+         */
+        public void sairDaSessao(Long idUsuario) {
+                // copy to avoid concurrent modification
+                java.util.Set<Long> salas = participanteCache.listarIds();
+                for (Long idSessao : salas) {
+                        Sessao sessao = sessaoRepo.findById(idSessao).orElse(null);
+                        boolean eraMestre = participanteCache.isMestre(idSessao, idUsuario);
+                        participanteCache.remover(idSessao, idUsuario);
+
+                        if (sessao != null) {
+                                if (eraMestre && sessao.getStatus() == StatusSessao.ATIVA) {
+                                        sessao.setStatus(StatusSessao.PAUSADA);
+                                        sessaoRepo.save(sessao);
+                                        broadcastSessao(sessao, "SESSAO_PAUSADA",
+                                                        Map.of("motivo", "Mestre desconectado"));
+                                }
+                                broadcastParticipantes(sessao);
+                        }
+                }
+        }
+
     // ── Invite token ──────────────────────────────────────────────
 
     /**

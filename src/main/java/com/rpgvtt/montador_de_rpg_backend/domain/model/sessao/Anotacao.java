@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.type.SqlTypes;
+import tools.jackson.databind.JsonNode;
 
 @Getter
 @Setter
@@ -59,6 +61,10 @@ public class Anotacao {
     private String conteudo;
 
     private String categoria;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode anotacaoComplexa;
 
     @Column(name = "e_privado", nullable = false, columnDefinition = "boolean default true")
     private Boolean ePrivado = true;

@@ -3,13 +3,24 @@ package com.rpgvtt.montador_de_rpg_backend.engine.components;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.Alvo;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.Contexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.ResultadoExpressao;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.mecanica.Resolucao;
+import com.rpgvtt.montador_de_rpg_backend.repository.mecanica.ResolucaoRepository;
+import com.rpgvtt.montador_de_rpg_backend.service.mecanica.ResolutionEvaluator;
+import com.rpgvtt.montador_de_rpg_backend.service.mecanica.ResolutionOutcome;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
 public class InterpretadorJson {
+
+    private final ResolucaoRepository resolucaoRepository;
+    private final ResolutionEvaluator resolutionEvaluator;
+    private final ObjectMapper objectMapper;
 
     public ResultadoExpressao interpretar(JsonNode expressao, Contexto contexto) {
         if (expressao == null || !expressao.isObject()) {
@@ -334,6 +345,27 @@ public class InterpretadorJson {
                     soma += interpretar(mapExpr, itemCtx).comoNumero();
                 }
                 yield ResultadoExpressao.numero(soma / lista.size());
+            }
+            case "resolver" -> {
+                if (args.size() != 2) throw new IllegalArgumentException("resolver requer 2 argumentos (idResolucao, contexto)");
+                Object idArg = args.get(0).getValor();
+                Long idResolucao = switch (idArg) {
+                    case Number n -> n.longValue();
+                    case String s -> Long.parseLong(s);
+                    default -> throw new IllegalArgumentException("idResolucao deve ser número ou texto numérico");
+                };
+                Object contextoObj = args.get(1).getValor();
+                JsonNode contextoJson = objectMapper.valueToTree(contextoObj);
+                Resolucao resolucao = resolucaoRepository.findById(idResolucao)
+                        .orElseThrow(() -> new IllegalArgumentException("Resolução não encontrada: " + idResolucao));
+                ResolutionOutcome resultado = resolutionEvaluator.evaluate(resolucao, contextoJson);
+                Map<String, Object> objeto = new LinkedHashMap<>();
+                objeto.put("roll", resultado.roll());
+                objeto.put("targetValue", resultado.targetValue());
+                objeto.put("success", resultado.success());
+                objeto.put("motivo", resultado.motivo());
+                objeto.put("detalhes", objectMapper.convertValue(resultado.detalhes(), Map.class));
+                yield ResultadoExpressao.objeto(objeto);
             }
             case "if" -> {
                 boolean cond = args.get(0).comoBooleano();

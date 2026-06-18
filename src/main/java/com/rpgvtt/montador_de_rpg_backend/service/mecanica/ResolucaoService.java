@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import tools.jackson.databind.JsonNode;
+import com.rpgvtt.montador_de_rpg_backend.service.mecanica.ResolutionEvaluator;
+import com.rpgvtt.montador_de_rpg_backend.dto.mecanica.ResolucaoExecucaoDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class ResolucaoService {
 
     private final ResolucaoRepository resolucaoRepository;
     private final SistemaRepository sistemaRepository;
+    private final ResolutionEvaluator resolutionEvaluator;
 
     @Transactional
     public ResolucaoResponseDTO criar(ResolucaoCreateDTO dto) {
@@ -72,6 +76,22 @@ public class ResolucaoService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Resolução não encontrada.");
         }
         resolucaoRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public ResolucaoExecucaoDTO executar(Long id, JsonNode contexto) {
+        Resolucao resolucao = resolucaoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resolução não encontrada."));
+
+        var outcome = resolutionEvaluator.evaluate(resolucao, contexto);
+
+        return new ResolucaoExecucaoDTO(
+                outcome.roll(),
+                outcome.targetValue(),
+                outcome.success(),
+                outcome.motivo(),
+                outcome.detalhes()
+        );
     }
 
     private ResolucaoResponseDTO mapearParaDTO(Resolucao resolucao) {
