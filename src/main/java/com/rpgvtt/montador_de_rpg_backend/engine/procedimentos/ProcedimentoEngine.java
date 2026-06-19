@@ -2,8 +2,11 @@ package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
+import com.rpgvtt.montador_de_rpg_backend.engine.primitivos.HandlerRegistry;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.*;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto.Status;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
@@ -23,41 +26,19 @@ public class ProcedimentoEngine {
     private final ProcedimentoLoader loader;
     private final InstanciaResolver instanciaResolver;
     private final JsonMapper mapper;
-    private final Map<String, EtapaHandler> handlers;
+    private final HandlerRegistry handlers;
 
     public ProcedimentoEngine(SessaoContexto sessaoContexto,
                               ProcedimentoLoader loader,
                               InstanciaResolver instanciaResolver,
                               JsonMapper mapper,
-                              List<EtapaHandler> handlerList) {
+                              HandlerRegistry handlers
+                              ) {
         this.sessaoCtx = sessaoContexto;
         this.loader = loader;
         this.instanciaResolver = instanciaResolver;
         this.mapper = mapper;
-        this.handlers = buildHandlerMap(handlerList);
-    }
-
-    private Map<String, EtapaHandler> buildHandlerMap(List<EtapaHandler> handlerList) {
-        Map<String, EtapaHandler> map = new HashMap<>();
-
-        for (EtapaHandler handler : handlerList) {
-            String tipo = handler.tipoEtapa();
-
-            if (map.containsKey(tipo)) {
-                // Two handlers claiming the same tipo_etapa — fail fast at startup
-                throw new IllegalStateException(
-                        "Dois handlers registrados para tipo_etapa '" + tipo + "': " +
-                                map.get(tipo).getClass().getSimpleName() + " e " +
-                                handler.getClass().getSimpleName()
-                );
-            }
-
-            map.put(tipo, handler);
-            log.info("Handler registrado: {} → {}", tipo,
-                    handler.getClass().getSimpleName());
-        }
-
-        return Collections.unmodifiableMap(map); // immutable after startup
+        this.handlers = handlers;
     }
 
     public ProcedimentoContexto iniciarComInstancia(Long idProcedimento,

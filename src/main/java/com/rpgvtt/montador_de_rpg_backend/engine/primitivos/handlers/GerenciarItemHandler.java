@@ -3,21 +3,25 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeRelacao;
-import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.components.ItemResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeRelacaoRepository;
+import com.rpgvtt.montador_de_rpg_backend.service.personagem.ItemEfeitoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -25,63 +29,195 @@ public class GerenciarItemHandler implements EtapaHandler {
 
     private final JsonMapper mapper;
     private final InstanciaResolver instanciaResolver;
+    private final ItemResolver itemResolver;
+    private final ItemEfeitoService itemEfeitoService;
     private final EntidadeRelacaoRepository entidadeRelacaoRepo;
     private final EntidadeInstanciaRepository entidadeInstanciaRepo;
 
     @Override
-    public String tipoEtapa() {
-        return "GERENCIAR_ITEM";
+    public String tipoEtapa() { return "GERENCIAR_ITEM"; }
+
+    /**
+     * parametros_etapa schema:
+     * {
+     *   "tipo": "CRIAR" | "REMOVER" | "EQUIPAR" | "DESEQUIPAR",
+     *   "opcao_fonte_item": "estatico" | "contexto",
+     *   "opcao_item": <idInstancia literal>  | <chave do contexto>,
+     *   "fonte_qtd": "estatico" | "contexto",       -- only for CRIAR/REMOVER
+     *   "opcao_qtd": <int literal> | <chave>,
+     *   "opcao_fonte_personagem": "instancia_ativa" | "batalha.aliados" | "batalha.inimigos" | "todos"
+     * }
+     */
+    
+    @Override
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        Map<String, Object> params = mapper.convertValue(
+                etapa.getParametrosEtapa(), new TypeReference<>() {});
+
+        String tipo = (String) params.get("tipo");
+
+        Long idItem = resolverIdItem(params, ctx);
+        List<EntidadeInstancia> personagens = resolverPersonagens(params, ctx);
+
+        EntidadeInstancia item = entidadeInstanciaRepo.findById(idItem)
+                .orElseThrow(() -> new IllegalArgumentException("Item não encontrado: " + idItem));
+
+        return switch (tipo) {
+            case "CRIAR"       -> inserir(personagens, item, params, ctx);
+            case "REMOVER"     -> remover(personagens, item, params);
+            case "EQUIPAR"     -> equipar(personagens, item, ctx);
+            case "DESEQUIPAR"  -> desequipar(personagens, item, ctx);
+            default -> ResultadoEtapa.erro("tipo de GERENCIAR_ITEM desconhecido: " + tipo);
+        };
     }
 
-    @Override
-    public ResultadoEtapa executar(EtapaProcedimento etapa, ProcedimentoContexto ctx) {
-        Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
-        String tipo = (String) params.get("tipo");
-        String fonteItem = (String) params.get("opcao_fonte_item"); //  "estatico", "contexto"
-        String opcaoItem = (String) params.get("opcao_item"); // idItem direto se for estatico, chave do contexto se for contexto
-        String fonteQtd = (String) params.get("fonte_qtd"); // "estatico", "contexto"
-        String opcaoQtd = (String) params.get("opcao_qtd");
-        String fontePersonagem = (String) params.get("opcao_fonte_personagem"); // "instancia_ativa", "batalha.aliados", "batalha.inimigos", "todos"
+    // ── INSERIR: grant item to character(s), stacking quantity if already held ──
 
-        Long idItem = null;
+    private ResultadoEtapa inserir(List<EntidadeInstancia> personagens,
+                                 EntidadeInstancia item,
+                                 Map<String, Object> params,
+                                 ExecucaoContexto ctx) {
+        int qtd = resolverQtd(params, ctx);
+        Map<Long, Integer> resultado = new LinkedHashMap<>();
 
-        if (fonteItem.startsWith("estatico")) idItem = Long.parseLong(opcaoItem);
-        if (fonteItem.startsWith("contexto")) idItem = ctx.getContexto().getLong(opcaoItem).orElseThrow();
-        if (idItem == null) throw new RuntimeException();
+        for (EntidadeInstancia personagem : personagens) {
+            Optional<EntidadeRelacao> existente =
+                    itemResolver.buscarRelacao(personagem.getId(), item.getId());
 
-        List<EntidadeInstancia> personagens = new ArrayList<>();
-
-        if (fontePersonagem.startsWith("instancia_ativa")) personagens = List.of(instanciaResolver.retornarAtiva(ctx));
-        if (fontePersonagem.startsWith("batalha.")) personagens = instanciaResolver.resolverDeFonte(fontePersonagem, ctx);
-        if (personagens.isEmpty()) throw new RuntimeException();
-
-        Integer qtd = null;
-
-        if (fonteQtd.startsWith("estatico")) qtd = Integer.parseInt(opcaoQtd);
-        if (fonteQtd.startsWith("contexto")) qtd = ctx.getContexto().getInt(opcaoQtd).orElseThrow();
-        if (qtd == null) throw new RuntimeException();
-
-        switch (tipo) {
-            case "CRIAR" -> {
-                EntidadeInstancia instanciaItem = entidadeInstanciaRepo.findById(idItem).orElseThrow();
-                for (EntidadeInstancia personagem : personagens) {
-                    EntidadeRelacao entidadeRelacao = new EntidadeRelacao();
-                    entidadeRelacao.setIdEntidadeFilha(instanciaItem);
-                    entidadeRelacao.setIdEntidadePai(personagem);
-                    entidadeRelacao.setQuantidade(qtd);
-                    entidadeRelacaoRepo.save(entidadeRelacao);
-                }
+            int novaQtd;
+            if (existente.isPresent()) {
+                EntidadeRelacao rel = existente.get();
+                novaQtd = rel.getQuantidade() + qtd;
+                rel.setQuantidade(novaQtd);
+                entidadeRelacaoRepo.save(rel);
+            } else {
+                EntidadeRelacao rel = new EntidadeRelacao();
+                rel.setEntidadePai(personagem);
+                rel.setEntidadeFilha(item);
+                rel.setQuantidade(qtd);
+                entidadeRelacaoRepo.save(rel);
+                novaQtd = qtd;
             }
-            case "REMOVER" -> {
-                for (EntidadeInstancia personagem : personagens) {
-                    EntidadeRelacao entidadeRelacao = entidadeRelacaoRepo
-                            .findById_IdEntidadePaiAndId_IdEntidadeFilha(personagem.getId(), idItem);
-                    entidadeRelacaoRepo.delete(entidadeRelacao);
-                }
-            }
-            // No futuro, fazer case "ALTERAR" quando terminar as customizações
+            resultado.put(personagem.getId(), novaQtd);
         }
 
-        return null;
+        return ResultadoEtapa.concluida(Map.of(
+                "tipo", "CRIAR", "idItem", item.getId(), "quantidades", resultado));
+    }
+
+    // ── REMOVER: decrement quantity, delete relation only when it reaches zero ──
+
+    private ResultadoEtapa remover(List<EntidadeInstancia> personagens,
+                                   EntidadeInstancia item,
+                                   Map<String, Object> params) {
+        int qtd = resolverQtd(params, null); // qtd to remove must be explicit/static here
+        Map<Long, Integer> resultado = new LinkedHashMap<>();
+
+        for (EntidadeInstancia personagem : personagens) {
+            EntidadeRelacao rel = itemResolver
+                    .buscarRelacao(personagem.getId(), item.getId())
+                    .orElse(null);
+
+            if (rel == null) {
+                resultado.put(personagem.getId(), 0);
+                continue;
+            }
+
+            int restante = rel.getQuantidade() - qtd;
+            if (restante <= 0) {
+                entidadeRelacaoRepo.delete(rel);
+                resultado.put(personagem.getId(), 0);
+            } else {
+                rel.setQuantidade(restante);
+                entidadeRelacaoRepo.save(rel);
+                resultado.put(personagem.getId(), restante);
+            }
+        }
+
+        return ResultadoEtapa.concluida(Map.of(
+                "tipo", "REMOVER", "idItem", item.getId(), "quantidades", resultado));
+    }
+
+    // ── EQUIPAR: toggle relation.customizacoes.equipado, enforcing slot exclusivity ──
+
+    private ResultadoEtapa equipar(List<EntidadeInstancia> personagens,
+                                   EntidadeInstancia item,
+                                   ExecucaoContexto ctx) {
+        String slot = itemResolver.slotDoItem(item);
+        if (slot == null) {
+            return ResultadoEtapa.erro("Item " + item.getId() + " não possui slot — não pode ser equipado");
+        }
+
+        for (EntidadeInstancia personagem : personagens) {
+            EntidadeRelacao rel = itemResolver
+                    .buscarRelacao(personagem.getId(), item.getId())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Personagem " + personagem.getId() + " não possui o item " + item.getId()));
+
+            // Unequip whatever currently occupies this slot
+            itemResolver.buscarEquipadoPorSlot(personagem.getId(), slot)
+                    .ifPresent(atual -> {
+                        if (!atual.getEntidadeFilha().getId().equals(item.getId())) {
+                            setEquipado(atual, false);
+                            itemEfeitoService.dispararGatilho(
+                                    atual.getEntidadeFilha(), "AO_DESEQUIPAR", personagem, personagem, Map.of());
+                        }
+                    });
+
+            setEquipado(rel, true);
+            itemEfeitoService.dispararGatilho(item, "AO_EQUIPAR", personagem, personagem, Map.of());
+        }
+
+        return ResultadoEtapa.concluida(Map.of(
+                "tipo", "EQUIPAR", "idItem", item.getId(), "slot", slot));
+    }
+
+    private ResultadoEtapa desequipar(List<EntidadeInstancia> personagens,
+                                      EntidadeInstancia item,
+                                      ExecucaoContexto ctx) {
+        for (EntidadeInstancia personagem : personagens) {
+            EntidadeRelacao rel = itemResolver
+                    .buscarRelacao(personagem.getId(), item.getId())
+                    .orElseThrow();
+
+            setEquipado(rel, false);
+            itemEfeitoService.dispararGatilho(item, "AO_DESEQUIPAR", personagem, personagem, Map.of());
+        }
+
+        return ResultadoEtapa.concluida(Map.of("tipo", "DESEQUIPAR", "idItem", item.getId()));
+    }
+
+    private void setEquipado(EntidadeRelacao rel, boolean valor) {
+        ObjectNode custom = rel.getCustomizacoes() instanceof ObjectNode on
+                ? on : mapper.createObjectNode();
+        custom.put("equipado", valor);
+        rel.setCustomizacoes(custom);
+        entidadeRelacaoRepo.save(rel);
+    }
+
+    // ── Param resolution helpers ─────────────────────────────────
+
+    private Long resolverIdItem(Map<String, Object> params, ExecucaoContexto ctx) {
+        String fonte  = (String) params.get("opcao_fonte_item");
+        String opcao  = (String) params.get("opcao_item");
+        if ("estatico".equals(fonte)) return Long.parseLong(opcao);
+        if ("contexto".equals(fonte)) return ctx.getContexto().getLong(opcao).orElseThrow();
+        throw new IllegalArgumentException("opcao_fonte_item inválida: " + fonte);
+    }
+
+    private int resolverQtd(Map<String, Object> params, ExecucaoContexto ctx) {
+        String fonte = (String) params.get("fonte_qtd");
+        String opcao = (String) params.get("opcao_qtd");
+        if ("estatico".equals(fonte)) return Integer.parseInt(opcao);
+        if ("contexto".equals(fonte)) return ctx.getContexto().getInt(opcao).orElseThrow();
+        throw new IllegalArgumentException("fonte_qtd inválida: " + fonte);
+    }
+
+    private List<EntidadeInstancia> resolverPersonagens(Map<String, Object> params,
+                                                        ExecucaoContexto ctx) {
+        String fonte = (String) params.get("opcao_fonte_personagem");
+        if ("instancia_ativa".equals(fonte)) return List.of(instanciaResolver.retornarAtiva(ctx));
+        if (fonte.startsWith("batalha.")) return instanciaResolver.resolverDeFonte(fonte, ctx);
+        throw new IllegalArgumentException("opcao_fonte_personagem inválida: " + fonte);
     }
 }

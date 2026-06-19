@@ -37,6 +37,16 @@ public class CampanhaAutorizacao {
                 .orElse(false);
     }
 
+    public CampanhaUsuario exigirAcessoPersonagem(Personagem personagem, Long idUsuario) {
+
+        Long idCampanha = personagem.getCampanha().getId();
+
+        if (personagem.getUsuario().getId() == idUsuario) return exigirMembro(idCampanha, idUsuario);
+
+        return exigirMestre(idCampanha, idUsuario);
+
+    }
+
     /**
      * A player can auto-join if they have a personagem in the campaign
      * that is alive (hp > 0) and not marked as inactive.

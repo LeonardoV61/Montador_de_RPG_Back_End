@@ -2,121 +2,124 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.*;
+import com.rpgvtt.montador_de_rpg_backend.engine.exceptions.JsonFieldNotFoundException;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class SolicitarInputHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
-    private JsonMapper mapper;
 
     @Override
-    public String tipoEtapa() {
-        return "SOLICITAR_INPUT";
-    }
+    public String tipoEtapa() { return "SOLICITAR_INPUT"; }
 
     @Override
-    public ResultadoEtapa executar(EtapaProcedimento etapa, ProcedimentoContexto ctx) {
-        Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
-        String ctxKey = params.get("salvar_em").toString();
-        String campoPedido =  params.get("campo_pedido").toString();
-        boolean podePassar = (boolean) params.getOrDefault("pode_passar", true);
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        JsonNode params = etapa.getParametrosEtapa();
 
-        String recursoNecessario = params.get("recurso_necessario").toString();
+        String ctxKey       = exigirCampo(params, "salvar_em", etapa);
+        String campoPedido  = exigirCampo(params, "campo_pedido", etapa);
+        boolean podePassar  = params.path("pode_passar").asBoolean(true);
+        String recursoNecessario = params.path("recurso_necessario").asString(null);
+
         if (recursoNecessario != null && !ctx.semInstancias()) {
-
             EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-            Map<String, Object> instAtributos = mapper
-                    .convertValue(inst.getAtributosAtuais(), new TypeReference<>() {});
-            Object val = instAtributos.get(recursoNecessario);
-            boolean disponivel = (val instanceof Boolean b && b) || (val instanceof Number n && n.longValue() > 0);
+            JsonNode val = inst.getAtributosAtuais().path(recursoNecessario);
+            boolean disponivel = val.isBoolean() ? val.asBoolean()
+                    : val.isNumber() && val.asLong() > 0;
             if (!disponivel) {
-                return ResultadoEtapa.concluida(campoPedido + "nao disponível");
+                return ResultadoEtapa.concluida(Map.of(
+                        "campoPedido", campoPedido, "status", "recurso_indisponivel"));
             }
         }
 
         if (!ctx.getContexto().containsKey(ctxKey)) {
             return ResultadoEtapa.aguardandoInput(Map.of(
-                    "campoPedido", campoPedido,
-                    "opcoes", resolverOpcoes(params, ctx),
-                    "pode_passar", podePassar,
-                    "salvar_em", ctxKey
+                    "campoPedido",  campoPedido,
+                    "opcoes",       resolverOpcoes(params, ctx),
+                    "pode_passar",  podePassar,
+                    "salvar_em",    ctxKey
             ));
         }
 
         String escolha = ctx.getContexto().getStringOrThrow(ctxKey);
 
-        // Muito simples por enquanto, estrutura básica
         if ("PASSAR".equals(escolha) && podePassar) {
-            return ResultadoEtapa.concluida(campoPedido + "passar");
+            return ResultadoEtapa.concluida(Map.of("campoPedido", campoPedido, "status", "passou"));
         }
 
-        return ResultadoEtapa.concluida(Map.of("Campo pedido", campoPedido, "Escolha", escolha));
+        return ResultadoEtapa.concluida(Map.of("campoPedido", campoPedido, "escolha", escolha));
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String> resolverOpcoes(Map<String, Object> params, ProcedimentoContexto ctx) {
+    private String exigirCampo(JsonNode params, String chave, EtapaExecutavel etapa) {
+        JsonNode v = params.path(chave);
+        if (v.isMissingNode() || v.isNull()) {
+            throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        }
+        return v.asString();
+    }
 
-        String fonte = params.get("opcoes_fonte").toString();
+    private List<String> resolverOpcoes(JsonNode params, ExecucaoContexto ctx) {
+        String fonte = params.path("opcoes_fonte").asString("");
 
         if ("estatico".equals(fonte)) {
-            Object raw = params.get("opcoes_estatico");
-            if (raw == null) return List.of();
-            return (List<String>) raw;
+            return jsonArrayParaLista(params.path("opcoes_estatico"));
         }
 
         if (fonte.startsWith("config_sistema.")) {
             String chave = fonte.substring("config_sistema.".length());
-            Object raw = ctx.getSistema().getConfiguracao().get(chave);
-            if (raw == null) {
-                log.warn("config_sistema.{} não encontrado no sistema {}",
-                        chave, ctx.getIdSistema());
+            JsonNode raw = ctx.getSistema().getConfiguracao().path(chave);
+            if (raw.isMissingNode()) {
+                log.warn("config_sistema.{} não encontrado no sistema {}", chave, ctx.getIdSistema());
                 return List.of();
             }
-            return (List<String>) raw;
+            return jsonArrayParaLista(raw);
         }
 
         if (fonte.startsWith("contexto.")) {
             String chave = fonte.substring("contexto.".length());
-            Object raw = ctx.getContexto().get(chave, List.class);
-            if (raw == null) {
+            return ctx.getContexto().get(chave, List.class).orElseGet(() -> {
                 log.warn("Chave '{}' não encontrada no contexto do procedimento", chave);
                 return List.of();
-            }
-            return (List<String>) raw;
+            });
         }
 
         if (fonte.startsWith("atributos_instancia.")) {
             String chave = fonte.substring("atributos_instancia.".length());
-
             if (ctx.semInstancias()) {
                 log.warn("opcoes_fonte '{}' requer instância mas escopo é NENHUMA", fonte);
                 return List.of();
             }
-
-            // Resolver esse caso dps: if (ctx.getEscopo() instanceof EscopoInstancias.Multiplas)
-
             EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-            Object raw = inst.getAtributosAtuais().get(chave);
-            if (raw == null) return List.of();
-            return (List<String>) raw;
+            return jsonArrayParaLista(inst.getAtributosAtuais().path(chave));
         }
 
         log.warn("opcoes_fonte desconhecido: '{}'", fonte);
         return List.of();
     }
 
+    private List<String> jsonArrayParaLista(JsonNode node) {
+        if (node == null || !node.isArray()) return List.of();
+        List<String> out = new ArrayList<>();
+        node.forEach(n -> out.add(n.asString()));
+        return out;
+    }
 }

@@ -2,14 +2,16 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.engine.exceptions.JsonFieldNotFoundException;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.*;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.*;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +27,10 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
     public String tipoEtapa() { return "CHAMAR_PROCEDIMENTO"; }
 
     @Override
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        return null;
+    }
+
     public ResultadoEtapa executar(EtapaProcedimento etapa,
                                    ProcedimentoContexto procedimentoCtx) {
 

@@ -2,11 +2,13 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.engine.components.InterpretadorJson;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InterpretadorContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.Contexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.ResultadoExpressao;
 import com.rpgvtt.montador_de_rpg_backend.repository.batalha.BatalhaRepository;
@@ -14,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
 
 import java.util.Map;
 
@@ -33,6 +34,10 @@ public class VerificarRepeticaoHandler implements EtapaHandler {
     }
 
     @Override
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        return null;
+    }
+
     public ResultadoEtapa executar(EtapaProcedimento etapa, ProcedimentoContexto ctx) {
         // parametros_etapa is already JsonNode — no objectMapper needed
         JsonNode params = etapa.getParametrosEtapa(); // returns raw JsonNode

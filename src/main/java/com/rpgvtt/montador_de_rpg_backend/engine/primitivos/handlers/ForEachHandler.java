@@ -2,11 +2,13 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
@@ -38,7 +40,7 @@ public class ForEachHandler implements EtapaHandler {
     private final JsonMapper mapper;
 
     @Override
-    public ResultadoEtapa executar(EtapaProcedimento etapa, ProcedimentoContexto ctx) {
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
         Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
 
         String fonte          = (String) params.get("fonte");

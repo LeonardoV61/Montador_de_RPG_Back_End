@@ -1,7 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.Sessao;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot.ProcedimentoSnapshot;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot.SessaoSnapshot;
 import com.rpgvtt.montador_de_rpg_backend.repository.sessao.SessaoRepository;

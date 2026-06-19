@@ -23,17 +23,16 @@ public class EntidadeRelacao {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idEntidadePai") 
     @JoinColumn(name = "id_entidade_pai")
-    private EntidadeInstancia idEntidadePai;
+    private EntidadeInstancia entidadePai;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idEntidadeFilha") 
     @JoinColumn(name = "id_entidade_filha")
-    private EntidadeInstancia idEntidadeFilha;
+    private EntidadeInstancia entidadeFilha;
 
     @NotNull
     private Integer quantidade;
 
-    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode customizacoes;

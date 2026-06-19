@@ -1,4 +1,4 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces;
 
 import java.util.List;
 

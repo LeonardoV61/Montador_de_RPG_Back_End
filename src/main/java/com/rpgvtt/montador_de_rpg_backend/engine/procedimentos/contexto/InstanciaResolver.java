@@ -3,6 +3,7 @@ package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.batalha.BatalhaParticipantes;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.batalha.Batalha;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.rpgvtt.montador_de_rpg_backend.repository.batalha.BatalhaParticipantesRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.batalha.BatalhaRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaRepository;
@@ -22,7 +23,7 @@ public class InstanciaResolver {
     private final BatalhaRepository batalhaRepo;
     private final BatalhaParticipantesRepository batalhaParticipantesRepo;
 
-    public List<EntidadeInstancia> retornarTodas(ProcedimentoContexto ctx) {
+    public List<EntidadeInstancia> retornarTodas(ExecucaoContexto ctx) {
         List<Long> ids = ctx.idsInstancias();
         if (ids.isEmpty()) return List.of();
 
@@ -42,14 +43,14 @@ public class InstanciaResolver {
                 .toList();
     }
 
-    public EntidadeInstancia retornarAtiva(ProcedimentoContexto ctx) {
+    public EntidadeInstancia retornarAtiva(ExecucaoContexto ctx) {
         return instanciaRepo
                 .findById(ctx.idInstanciaAtiva())
                 .orElseThrow(() -> new IllegalStateException(
                         "Instância não encontrada: " + ctx.idInstanciaAtiva()));
     }
 
-    public EntidadeInstancia retornarDeContexto(ProcedimentoContexto ctx, String chave) {
+    public EntidadeInstancia retornarDeContexto(ExecucaoContexto ctx, String chave) {
         Long id = ctx.getContexto().getLong(chave).orElseThrow();
         return instanciaRepo
                 .findById(id)
@@ -74,7 +75,7 @@ public class InstanciaResolver {
      *     → specific team index, e.g. "batalha.time.0"
      */
     public List<EntidadeInstancia> resolverDeFonte(String fonte,
-                                                   ProcedimentoContexto ctx) {
+                                                   ExecucaoContexto ctx) {
         // ... existing cases ...
 
         if (fonte.startsWith("batalha.")) {
@@ -85,7 +86,7 @@ public class InstanciaResolver {
     }
 
     private List<EntidadeInstancia> resolverDeBatalha(String fonte,
-                                                      ProcedimentoContexto ctx) {
+                                                      ExecucaoContexto ctx) {
         Long idBatalha = ctx.getContexto()
                 .getLongOrThrow("id_batalha");
 
@@ -128,7 +129,7 @@ public class InstanciaResolver {
         return preservarOrdem(ids, instanciaRepo.findAllById(ids));
     }
 
-    private int resolverTimeAtivo(Batalha batalha, ProcedimentoContexto ctx) {
+    private int resolverTimeAtivo(Batalha batalha, ExecucaoContexto ctx) {
         Long idAtiva = ctx.idInstanciaAtiva();
         return batalha.participantesAtivos().stream()
                 .filter(p -> p.getEntidadeInstancia().getId().equals(idAtiva))

@@ -5,10 +5,12 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento
 import com.rpgvtt.montador_de_rpg_backend.engine.components.InterpretadorJson;
 import com.rpgvtt.montador_de_rpg_backend.engine.exceptions.EntityNotFoundException;
 import com.rpgvtt.montador_de_rpg_backend.engine.exceptions.JsonFieldNotFoundException;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.utils.ContextoJsonNode;
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,43 +33,50 @@ public class CalcularAtributoHandler implements EtapaHandler {
     private final EntidadeInstanciaRepository instanciaRepo;
 
     @Override
-    public String tipoEtapa() {
-        return "CALCULAR_ATRIBUTO";
-    }
+    public String tipoEtapa() { return "CALCULAR_ATRIBUTO"; }
 
     @Override
-    public ResultadoEtapa executar(EtapaProcedimento etapa, ProcedimentoContexto ctx) {
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        JsonNode params = etapa.getParametrosEtapa();
 
-        Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
-        String sourceKey = params.get("source_key").toString();
-        String ctxKey = params.get("salvar_em").toString();
-        JsonNode expressao = (JsonNode) params.get("expressao");
-        Long idEntidade = (Long) params.get("id_entidade"); // opcional
+        String ctxKey = exigirTexto(params, "salvar_em", etapa);
+        JsonNode expressao = params.get("expressao"); // lido direto do JsonNode — nunca via Map
+        if (expressao == null) throw new JsonFieldNotFoundException("expressao", etapa.getNome());
 
-        EntidadeInstancia inst;
+        EntidadeInstancia inst = resolverInstancia(params, ctx);
 
-        if (idEntidade == null) {
-            inst = instanciaResolver.retornarAtiva(ctx);
-        } else {
-            inst = instanciaRepo.findById(idEntidade)
-                    .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idEntidade));
+        ObjectNode execCtx = mapper.createObjectNode();
+        execCtx.set("atributos", inst.getAtributosAtuais());
+
+        // source_key agora é opcional — fórmulas puras não precisam de um valor prévio
+        if (params.has("source_key")) {
+            String sourceKey = params.get("source_key").asString();
+            Integer anterior = ctx.getContexto().getInt(sourceKey)
+                    .orElseThrow(() -> new JsonFieldNotFoundException("source_key", etapa.getNome()));
+            execCtx.put("resultado", anterior);
         }
 
-        Map<String, Object> execCtx = new HashMap<>();
-
-        Integer resultadoAnterior = ctx.getContexto().getInt(sourceKey).orElseThrow(
-                () -> new JsonFieldNotFoundException("source_key", etapa.getNome())
-        );
-
-        execCtx.put("atributos", inst.getAtributosAtuais());
-        execCtx.put("resultado", resultadoAnterior);
-
-        ContextoJsonNode ctxFinal = new ContextoJsonNode(mapper.valueToTree(execCtx));
-
+        ContextoJsonNode ctxFinal = new ContextoJsonNode(execCtx);
         double val = interpretadorJson.interpretar(expressao, ctxFinal).comoNumero();
 
         ctx.getContexto().put(ctxKey, val);
 
-        return null;
+        return ResultadoEtapa.concluida(Map.of("salvoEm", ctxKey, "valor", val));
+    }
+
+    private EntidadeInstancia resolverInstancia(JsonNode params, ExecucaoContexto ctx) {
+        JsonNode idNode = params.path("id_entidade");
+        if (idNode.isMissingNode() || idNode.isNull()) {
+            return instanciaResolver.retornarAtiva(ctx);
+        }
+        Long idEntidade = idNode.asLong();
+        return instanciaRepo.findById(idEntidade)
+                .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idEntidade));
+    }
+
+    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
+        JsonNode v = params.path(chave);
+        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return v.asString();
     }
 }

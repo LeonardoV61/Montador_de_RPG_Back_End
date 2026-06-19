@@ -1,4 +1,4 @@
-package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos;
+package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
@@ -8,8 +8,6 @@ public interface EtapaHandler {
 
     String tipoEtapa();
 
-    ResultadoEtapa executar(
-            EtapaProcedimento etapa,
-            ProcedimentoContexto ctx
-    );
+    ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx);
+
 }

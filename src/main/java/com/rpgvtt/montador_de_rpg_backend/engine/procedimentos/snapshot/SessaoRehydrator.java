@@ -2,7 +2,7 @@ package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.snapshot;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.enums.StatusSessao;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.Sessao;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.LoadRequest;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoLoader;

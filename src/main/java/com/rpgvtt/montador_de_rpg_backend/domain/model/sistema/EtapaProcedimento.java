@@ -1,5 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.domain.model.sistema;
 
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,7 +18,7 @@ import tools.jackson.databind.JsonNode;
 @AllArgsConstructor
 @Entity
 @Table(name = "Etapas_Procedimento")
-public class EtapaProcedimento {
+public class EtapaProcedimento implements EtapaExecutavel {
     @Id
     @GeneratedValue(
         strategy = GenerationType.SEQUENCE, 
@@ -33,7 +35,6 @@ public class EtapaProcedimento {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_procedimento")
     private Procedimento procedimento;
-
 
     @NotNull
     private Integer ordem;

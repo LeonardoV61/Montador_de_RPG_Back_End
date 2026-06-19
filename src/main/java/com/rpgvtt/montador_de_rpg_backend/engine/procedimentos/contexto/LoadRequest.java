@@ -1,7 +1,7 @@
 package com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
 
 import java.util.List;
 import java.util.Map;

@@ -1,0 +1,14 @@
+{
+  "ordem": 0,
+  "nome": "Aplicar efeito sangrando",
+  "tipoEtapa": "APLICAR_EFEITO",
+  "obrigatorio": true,
+
+  "parametrosEtapa": {
+    "campo_pedido": "Role os dados para VIG conforme o Start escolhido (Wanderer: d12+d6 | Courtier/Ruler: d12+6). Informe o resultado.",
+    "salvar_em": "valor_vig",
+    "pode_passar": false,
+    "opcoes_fonte": "estatico",
+    "opcoes_estatico": "<ID_EFEITO_SANGRANDO>"
+  }
+}

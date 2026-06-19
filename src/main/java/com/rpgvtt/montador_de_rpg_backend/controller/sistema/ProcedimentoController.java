@@ -3,8 +3,6 @@ package com.rpgvtt.montador_de_rpg_backend.controller.sistema;
 import com.rpgvtt.montador_de_rpg_backend.dto.sistema.ProcedimentoContextoDTO;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.ProcedimentoEngine;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.LoadRequest;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

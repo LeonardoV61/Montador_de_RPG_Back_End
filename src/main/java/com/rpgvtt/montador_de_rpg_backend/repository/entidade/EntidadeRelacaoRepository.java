@@ -6,14 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EntidadeRelacaoRepository extends JpaRepository<EntidadeRelacao, EntidadeRelacaoKey> {
-    
-// Busca todas as relações onde o id da chave tem idEntidadePai = :idPai
-    List<EntidadeRelacao> findById_IdEntidadePai(Long idPai);
 
-    // Busca a relação exata usando os dois campos da chave
-    EntidadeRelacao findById_IdEntidadePaiAndId_IdEntidadeFilha(Long idPai, Long idFilha);
+    List<EntidadeRelacao> findByEntidadePaiId(Long idPai);
+    Optional<EntidadeRelacao> findByEntidadePaiIdAndEntidadeFilhaId(Long idPai, Long idFilho);
+    List<EntidadeRelacao> findAllByEntidadePaiId(long idPai);
 
 }

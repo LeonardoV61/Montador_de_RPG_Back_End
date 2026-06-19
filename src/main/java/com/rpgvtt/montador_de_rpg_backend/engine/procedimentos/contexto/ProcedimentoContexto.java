@@ -4,7 +4,8 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Procedimento;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
-import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
+import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
-public class ProcedimentoContexto {
+public class ProcedimentoContexto implements ExecucaoContexto {
 
     private Procedimento procedimento;
     private List<EtapaProcedimento> etapas;
@@ -36,7 +37,7 @@ public class ProcedimentoContexto {
     private EscopoInstancias escopo;
 
     private Long idSessao;
-    public enum Status {EM_ANDAMENTO, CONCLUIDO, ERRO}
+    public enum Status {EM_ANDAMENTO, CONCLUIDO, ERRO, AGUARDANDO_INPUT_MULTIPLO, AGUARDANDO_INPUT}
     private Status status;
     private List<ResultadoEtapa> historico = new ArrayList<>();
     private String retornoContexto;

@@ -17,6 +17,8 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import java.security.Principal;
 import java.util.Map;
 
+import static com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto.Status.AGUARDANDO_INPUT_MULTIPLO;
+
 @Controller
 @RequiredArgsConstructor
 public class SessaoWebSocketController {
@@ -59,9 +61,9 @@ public class SessaoWebSocketController {
         Long idPersonagem = sessaoService.resolverInstanciaDoJogador(idSessao, idUsuario);
 
         ProcedimentoContexto ctx = engine.responder(idSessao, input);
-        ProcedimentoContextoDTO resposta  = ProcedimentoContextoDTO.from(ctx);
+        ProcedimentoContextoDTO resposta = ProcedimentoContextoDTO.from(ctx);
 
-        if ("AGUARDANDO_INPUT_MULTIPLO".equals(resposta.getStatus())) {
+        if (resposta.getStatus() == AGUARDANDO_INPUT_MULTIPLO) {
             // Acknowledge only to the player who just declared
             messagingTemplate.convertAndSendToUser(
                     principal.getName(),
