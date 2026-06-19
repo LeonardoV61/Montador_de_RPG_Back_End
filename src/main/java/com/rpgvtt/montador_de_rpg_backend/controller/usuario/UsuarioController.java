@@ -4,7 +4,7 @@ import com.rpgvtt.montador_de_rpg_backend.dto.usuario.UsuarioResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.usuario.UsuarioUpdateDTO;
 import com.rpgvtt.montador_de_rpg_backend.service.usuario.UsuarioService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+// import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
