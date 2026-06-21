@@ -18,14 +18,14 @@ public class CampanhaAutorizacao {
 
     public CampanhaUsuario exigirMestre(Long idCampanha, Long idUsuario) {
         return campUsuarioRepo
-                .findByUsuarioIdAndCampanhaIdAndPapel(idCampanha, idUsuario, PapeisUsuario.MESTRE)
-                .orElseThrow(() -> new DeniedAcessException(
-                        "Usuário " + idUsuario + " não é mestre da campanha " + idCampanha));
+            .findByCampanhaIdAndUsuarioIdAndPapel(idUsuario, idCampanha, PapeisUsuario.MESTRE)
+            .orElseThrow(() -> new DeniedAcessException(
+                "Usuário " + idUsuario + " não é mestre da campanha " + idCampanha));
     }
 
     public CampanhaUsuario exigirMembro(Long idCampanha, Long idUsuario) {
         return campUsuarioRepo
-                .findByCampanhaIdAndUsuarioId(idCampanha, idUsuario)
+                .findByCampanhaIdAndUsuarioIdAndPapel(idCampanha, idUsuario, PapeisUsuario.JOGADOR)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Usuário " + idUsuario + " não é membro da campanha " + idCampanha));
     }

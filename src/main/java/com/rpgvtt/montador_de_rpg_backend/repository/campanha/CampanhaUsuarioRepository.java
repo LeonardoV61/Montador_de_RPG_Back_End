@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface CampanhaUsuarioRepository extends JpaRepository<CampanhaUsuario, CampanhaUsuarioKey> {
 
-    Optional<CampanhaUsuario> findByUsuarioIdAndCampanhaIdAndPapel(Long idCampanha, Long idUsuario, PapeisUsuario papel);
+    Optional<CampanhaUsuario> findByCampanhaIdAndUsuarioIdAndPapel(Long idCampanha, Long idUsuario, PapeisUsuario papel);
 
     Optional<CampanhaUsuario> findByCampanhaIdAndUsuarioId(Long idCampanha, Long idUsuario);
 }

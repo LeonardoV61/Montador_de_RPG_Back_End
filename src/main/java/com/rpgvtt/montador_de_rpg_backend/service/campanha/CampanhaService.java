@@ -42,7 +42,7 @@ public class CampanhaService {
     }
 
     @Transactional
-    public CampanhaResponseDTO criar(CampanhaCreateDTO dto) {
+    public CampanhaResponseDTO criar(CampanhaCreateDTO dto, Long criadorId) { 
         Campanha campanha = new Campanha();
         campanha.setNome(dto.nome());
 
@@ -52,18 +52,20 @@ public class CampanhaService {
 
         campanha = campanhaRepository.save(campanha);
 
-        Usuario usuarioProxy = entityManager.getReference(Usuario.class, dto.criadorId());
+        System.out.println(">>> criadorId usado: " + criadorId);  // log temporário
 
-        CampanhaUsuarioKey vinculoKey = new CampanhaUsuarioKey(campanha.getId(), dto.criadorId());
+        Usuario usuarioProxy = entityManager.getReference(Usuario.class, criadorId);
+
+        CampanhaUsuarioKey vinculoKey = new CampanhaUsuarioKey(campanha.getId(), criadorId);
         CampanhaUsuario vinculo = new CampanhaUsuario();
         vinculo.setId(vinculoKey);
         vinculo.setCampanha(campanha);
         vinculo.setUsuario(usuarioProxy);
         vinculo.setPapel(PapeisUsuario.MESTRE);
-        
 
-        // Alterado de entityManager.persist para usar o Repository por consistência
         campanhaUsuarioRepository.save(vinculo);
+
+        System.out.println(">>> vínculo MESTRE salvo para campanha " + campanha.getId());  // log temporário
 
         return mapToResponseDTO(campanha);
     }

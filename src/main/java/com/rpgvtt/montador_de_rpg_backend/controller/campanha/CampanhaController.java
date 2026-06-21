@@ -2,12 +2,16 @@ package com.rpgvtt.montador_de_rpg_backend.controller.campanha;
 
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaCreateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaResponseDTO;
+import com.rpgvtt.montador_de_rpg_backend.repository.usuario.UsuarioRepository;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.usuario.Usuario;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.AdicionarJogadorDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaParticipanteResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.service.campanha.CampanhaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,9 +21,11 @@ import java.util.List;
 public class CampanhaController {
 
     private final CampanhaService campanhaService;
+    private final UsuarioRepository usuarioRepository;
 
-    public CampanhaController(CampanhaService campanhaService) {
+    public CampanhaController(CampanhaService campanhaService, UsuarioRepository usuarioRepository) {
         this.campanhaService = campanhaService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping("/{campanhaId}/jogadores")
@@ -29,8 +35,15 @@ public class CampanhaController {
     }
 
     @PostMapping
-    public ResponseEntity<CampanhaResponseDTO> criar(@RequestBody @Valid CampanhaCreateDTO dto) {
-        CampanhaResponseDTO novaCampanha = campanhaService.criar(dto);
+    public ResponseEntity<CampanhaResponseDTO> criar(
+            @RequestBody @Valid CampanhaCreateDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) { // 👈 pega do JWT
+
+        // Busca o usuário autenticado pelo email/username do token
+        Usuario criador = usuarioRepository.findByEmail(userDetails.getUsername())
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        CampanhaResponseDTO novaCampanha = campanhaService.criar(dto, criador.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(novaCampanha);
     }
 
