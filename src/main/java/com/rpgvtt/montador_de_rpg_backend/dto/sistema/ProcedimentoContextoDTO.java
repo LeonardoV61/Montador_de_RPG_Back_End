@@ -19,9 +19,7 @@ public class ProcedimentoContextoDTO {
     String erro;
 
     public static ProcedimentoContextoDTO from(ProcedimentoContexto ctx) {
-        if (ctx == null) {
-            return new ProcedimentoContextoDTO(Status.CONCLUIDO, null, 0, null, List.of(), null);
-        }
+        if (ctx == null) return new ProcedimentoContextoDTO(Status.CONCLUIDO, null, 0, null, List.of(), null);
 
         // Todos os dados do histórico deste ciclo
         List<Object> resultadosCiclo = ctx.getHistorico().stream()
@@ -29,10 +27,23 @@ public class ProcedimentoContextoDTO {
                 .filter(Objects::nonNull)
                 .toList();
 
+        // boolean aguardando = ctx.getStatus() == Status.AGUARDANDO_INPUT
+        //         || ctx.getStatus() == Status.AGUARDANDO_INPUT_MULTIPLO ;
+
+        // Object inputSolicitado = null;
+        // if (aguardando && ctx.getEtapaPendente() != null) {
+        //     inputSolicitado = ctx.getHistorico().stream()
+        //             .filter(r -> r.tipo() == ResultadoEtapa.Tipo.AGUARDANDO_INPUT
+        //                     || r.tipo() == ResultadoEtapa.Tipo.AGUARDANDO_INPUT_MULTIPLO)
+        //             .reduce((first, second) -> second)
+        //             .map(ResultadoEtapa::dados)
+        //             .orElse(null);
+        // }
+
         // inputSolicitado: dados do último AGUARDANDO_INPUT no histórico
         // (funciona para AGUARDANDO_INPUT e também se status for ERRO após aguardar)
         Object inputSolicitado = ctx.getHistorico().stream()
-                .filter(r -> r.tipo() == ResultadoEtapa.TipoResultado.AGUARDANDO_INPUT)
+                .filter(r -> r.tipo() == ResultadoEtapa.Tipo.AGUARDANDO_INPUT)
                 .reduce((first, second) -> second) // pega o último
                 .map(ResultadoEtapa::dados)
                 .orElse(null);
@@ -41,7 +52,7 @@ public class ProcedimentoContextoDTO {
         String erro = null;
         if (ctx.getStatus() == Status.ERRO) {
             erro = ctx.getHistorico().stream()
-                    .filter(r -> r.tipo() == ResultadoEtapa.TipoResultado.ERRO)
+                    .filter(r -> r.tipo() == ResultadoEtapa.Tipo.ERRO)
                     .reduce((first, second) -> second)
                     .map(ResultadoEtapa::mensagem)
                     .orElse("Erro desconhecido no procedimento");
