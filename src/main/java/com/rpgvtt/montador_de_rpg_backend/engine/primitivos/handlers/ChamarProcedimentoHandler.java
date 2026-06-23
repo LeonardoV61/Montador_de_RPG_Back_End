@@ -28,7 +28,10 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        return null;
+        if (!(ctx instanceof ProcedimentoContexto procedimentoCtx)) {
+            return ResultadoEtapa.erro("CHAMAR_PROCEDIMENTO só pode ser usado dentro de um procedimento");
+        }
+        return executar((EtapaProcedimento) etapa, procedimentoCtx);
     }
 
     public ResultadoEtapa executar(EtapaProcedimento etapa,

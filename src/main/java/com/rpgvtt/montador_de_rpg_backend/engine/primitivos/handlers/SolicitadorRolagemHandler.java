@@ -33,7 +33,7 @@ public class SolicitadorRolagemHandler implements EtapaHandler {
         String campoPedido = params.path("campo_pedido").asString("Role os dados");
         boolean podePassar  = params.path("pode_passar").asBoolean(false);
         String salvarEm     = exigirTexto(params, "salvar_em", etapa);
-
+        
         String startType = ctx.getContexto().getStringOrThrow("start_type");
 
         Procedimento procedimento = ctx.getProcedimento();

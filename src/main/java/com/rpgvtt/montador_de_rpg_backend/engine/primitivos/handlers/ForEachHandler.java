@@ -5,11 +5,14 @@ import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EscopoInstancias;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaHandler;
+import com.rpgvtt.montador_de_rpg_backend.engine.primitivos.HandlerRegistry;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.ExecucaoContexto;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -28,16 +31,25 @@ import java.util.Map;
 //   "salvar_count_em": "count_inimigos_vivos"
 // }
 @Component
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class ForEachHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
-    private final Map<String, EtapaHandler> handlers;
+    private final HandlerRegistry handlers;
 
     @Override
     public String tipoEtapa() { return "PARA_CADA"; }
 
     private final JsonMapper mapper;
+
+
+    public ForEachHandler(InstanciaResolver instanciaResolver,
+                          @Lazy HandlerRegistry handlerRegistry,
+                          JsonMapper mapper) {
+        this.instanciaResolver = instanciaResolver;
+        this.handlers = handlerRegistry;
+        this.mapper = mapper;
+    }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
