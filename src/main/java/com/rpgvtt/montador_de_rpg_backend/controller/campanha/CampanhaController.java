@@ -66,4 +66,10 @@ public class CampanhaController {
             @PathVariable Long usuarioId) {
         return ResponseEntity.ok(campanhaService.listarPorUsuario(usuarioId));
     }
+
+    @GetMapping("/minhas")
+    public ResponseEntity<List<CampanhaResponseDTO>> listarMinhas(
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        return ResponseEntity.ok(campanhaService.listarPorUsuario(principal.getId()));
+    }
 }
