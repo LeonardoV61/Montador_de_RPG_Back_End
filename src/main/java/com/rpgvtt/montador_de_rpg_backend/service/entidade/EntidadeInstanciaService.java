@@ -256,8 +256,8 @@ public class EntidadeInstanciaService {
 
     private EntidadeInstanciaResponseDTO mapearParaDTO(EntidadeInstancia instancia) {
         return new EntidadeInstanciaResponseDTO(
-                instancia.getCampanha().getId(),
-                instancia.getEntidadeSistema().getId(),
+                instancia.getCampanha().getId() != null ? instancia.getCampanha().getId() : null,
+                instancia.getEntidadeSistema().getId() != null ? instancia.getEntidadeSistema().getId() : null,
                 instancia.getTipo(),
                 instancia.getNome(),
                 instancia.getDescricao(),

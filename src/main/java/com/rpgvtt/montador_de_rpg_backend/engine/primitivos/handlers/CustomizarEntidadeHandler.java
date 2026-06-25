@@ -40,7 +40,7 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
             EntidadeSistemaRepository entidadeSistemaRepo,
             InstanciaResolver instanciaResolver,
             EntidadeInstanciaRepository instanciaRepo,
-            @Lazy HandlerRegistry handlers,        // ← @Lazy aqui
+            @Lazy HandlerRegistry handlers, 
             ObjectMapper mapper) {
         this.entidadeSistemaRepo = entidadeSistemaRepo;
         this.instanciaResolver = instanciaResolver;
