@@ -91,6 +91,7 @@ public class ConcederClasseHandler implements EtapaHandler {
         instancia.setEntidadeSistema(template);                          // era setSistema()
         instancia.setTipo(template.getTipo());
         instancia.setNome(template.getNome());
+        instancia.setDescricao(template.getDescricao());
         instancia.setAtributosAtuais(template.getAtributos());
 
         return instanciaRepo.save(instancia);
@@ -113,6 +114,7 @@ public class ConcederClasseHandler implements EtapaHandler {
         instanciaClasse.setEntidadeSistema(template);                    // era setSistema()
         instanciaClasse.setTipo(template.getTipo());
         instanciaClasse.setNome(template.getNome());
+        instanciaClasse.setDescricao(template.getDescricao());
         instanciaClasse.setAtributosAtuais(template.getAtributos());
         instanciaClasse = instanciaRepo.save(instanciaClasse);
 
