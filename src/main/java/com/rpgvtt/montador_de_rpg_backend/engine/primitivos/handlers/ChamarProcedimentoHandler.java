@@ -39,7 +39,7 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
 
         Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
 
-        Long idFilho  = (Long) params.get("id_procedimento");
+        Long idFilho  = ((Number) params.get("id_procedimento")).longValue();
         String salvarEm  = (String) params.get("salvar_em");
         String escopoTipo = (String) params.getOrDefault("escopo", "HERDAR");
 

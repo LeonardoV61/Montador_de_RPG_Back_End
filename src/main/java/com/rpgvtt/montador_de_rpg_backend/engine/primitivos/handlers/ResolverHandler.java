@@ -66,6 +66,14 @@ public class ResolverHandler implements EtapaHandler {
         JsonNode params = etapa.getParametrosEtapa();
         Long idResolucao = params.get("id_resolucao").asLong();
         String salvarResultadoEm = params.path("salvar_resultado_em").asString(null);
+        String modoEsperado = params.path("modo_esperado").asString(null);
+
+        if (modoEsperado != null) {
+            String modoAtual = ctx.getContexto().getStringOrThrow("modo_escolha_cavaleiro");
+            if (!modoEsperado.equals(modoAtual)) {
+                return ResultadoEtapa.concluida(Map.of("pulado", true));
+            }
+        }
 
         Resolucao resolucao = resolucaoRepo.findById(idResolucao)
                 .orElseThrow(() -> new IllegalArgumentException("Resolução não encontrada: " + idResolucao));
@@ -93,10 +101,10 @@ public class ResolverHandler implements EtapaHandler {
         }
 
         // Aplica ações da tabela, se houver
-        return aplicarAcoes(outcome, resolucao, ctx);
+        return aplicarAcoes(outcome, resolucao, ctx, salvarResultadoEm);
     }
 
-    private ResultadoEtapa aplicarAcoes(ResolutionOutcome outcome, Resolucao resolucao, ExecucaoContexto ctx) {
+    private ResultadoEtapa aplicarAcoes(ResolutionOutcome outcome, Resolucao resolucao, ExecucaoContexto ctx, String salvarResultadoEm) {
         JsonNode params = resolucao.getParametros();
         JsonNode tabela = params.get("tabela");
         if (tabela == null || !tabela.isArray()) {
@@ -106,6 +114,16 @@ public class ResolverHandler implements EtapaHandler {
         // Localiza a entrada correspondente ao resultado
         Object rollValue = outcome.roll();
         JsonNode entrada = null;
+
+        if (entrada.has("id_entidade")) {
+            Long idEntidade = entrada.get("id_entidade").asLong();
+            if (salvarResultadoEm != null) {
+                ctx.getContexto().put(salvarResultadoEm, idEntidade);
+            }
+            return ResultadoEtapa.concluida(Map.of("entidade_selecionada", idEntidade));
+        }
+
+
         if (rollValue instanceof Integer roll) {
             entrada = findTabelaEntrada(tabela, roll);
         } else if (rollValue instanceof List<?> list && list.size() == 2) {

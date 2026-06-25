@@ -5,6 +5,7 @@ import com.rpgvtt.montador_de_rpg_backend.dto.entidade.EntidadeSistemaResponseDT
 import com.rpgvtt.montador_de_rpg_backend.dto.importacao.DefinicaoDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.importacao.ImportacaoRequestDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.mecanica.ResolucaoCreateDTO;
+import com.rpgvtt.montador_de_rpg_backend.dto.sistema.EtapaProcedimentoCreateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.sistema.ProcedimentoCreateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.sistema.ProcedimentoResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.service.entidade.EntidadeSistemaService;
@@ -35,30 +36,45 @@ public class ImportacaoService {
     public Map<String, Long> processar(ImportacaoRequestDTO request) {
         Map<String, Long> aliasParaId = new HashMap<>();
 
-        // ── Fase 1: entidades sem dependências (itens, montarias, etc.) ──
+        // Fase 1: entidades SEM aliases (itens, montarias)
         for (DefinicaoDTO def : request.definicoes()) {
             if ("entidade".equals(def.tipo()) && !contemAliases(def.dados())) {
-                Long id = criarEntidade(def.dados(), aliasParaId);
-                aliasParaId.put(def.alias(), id);
+                aliasParaId.put(def.alias(), criarEntidade(def.dados(), aliasParaId));
             }
         }
 
-        // ── Fase 2: procedimentos e resoluções ──
+        // Fase 2: procedimentos SEM aliases (sub-procs, proc_conceder_classe)
         for (DefinicaoDTO def : request.definicoes()) {
-            if ("procedimento".equals(def.tipo())) {
-                Long id = criarProcedimento(def.dados(), aliasParaId);
-                aliasParaId.put(def.alias(), id);
-            } else if ("resolucao".equals(def.tipo())) {
-                Long id = criarResolucao(def.dados(), aliasParaId);
-                aliasParaId.put(def.alias(), id);
+            if ("procedimento".equals(def.tipo()) && !contemAliases(def.dados())) {
+                aliasParaId.put(def.alias(), criarProcedimento(def.dados(), aliasParaId));
             }
         }
 
-        // ── Fase 3: entidades que dependem de outras (classes, habilidades) ──
+        // Fase 3: resoluções SEM aliases (resolucao_moeda)
+        for (DefinicaoDTO def : request.definicoes()) {
+            if ("resolucao".equals(def.tipo()) && !contemAliases(def.dados())) {
+                aliasParaId.put(def.alias(), criarResolucao(def.dados(), aliasParaId));
+            }
+        }
+
+        // Fase 4: entidades COM aliases (habilidades, cavaleiros)
         for (DefinicaoDTO def : request.definicoes()) {
             if ("entidade".equals(def.tipo()) && contemAliases(def.dados())) {
-                Long id = criarEntidade(def.dados(), aliasParaId);
-                aliasParaId.put(def.alias(), id);
+                aliasParaId.put(def.alias(), criarEntidade(def.dados(), aliasParaId));
+            }
+        }
+
+        // Fase 5: resoluções COM aliases (resolucao_cavaleiros)
+        for (DefinicaoDTO def : request.definicoes()) {
+            if ("resolucao".equals(def.tipo()) && contemAliases(def.dados())) {
+                aliasParaId.put(def.alias(), criarResolucao(def.dados(), aliasParaId));
+            }
+        }
+
+        // Fase 6: procedimentos COM aliases (proc_criacao_personagem)
+        for (DefinicaoDTO def : request.definicoes()) {
+            if ("procedimento".equals(def.tipo()) && contemAliases(def.dados())) {
+                aliasParaId.put(def.alias(), criarProcedimento(def.dados(), aliasParaId));
             }
         }
 
@@ -78,17 +94,22 @@ public class ImportacaoService {
 
     private Long criarProcedimento(JsonNode dados, Map<String, Long> aliases) {
         JsonNode resolvido = resolverAliases(dados, aliases);
-        // Garante que existe um campo "configsGeral" (não nulo)
-        ObjectNode obj = (ObjectNode) resolvido;
-        if (!obj.has("configsGeral") || obj.get("configsGeral").isNull()) {
-            obj.set("configsGeral", mapper.createObjectNode());
-        }
-        // Log para depuração (pode remover depois)
-        System.out.println("JSON para ProcedimentoCreateDTO: " + obj);
-        ProcedimentoCreateDTO dto = mapper.convertValue(obj, ProcedimentoCreateDTO.class);
+        resolvido = garantirConfigsGeral(resolvido);
+        ProcedimentoCreateDTO dto = mapper.convertValue(resolvido, ProcedimentoCreateDTO.class);
         ProcedimentoResponseDTO criado = procedimentoService.criar(dto);
+
+        // Salva as etapas, se existirem
+        JsonNode etapasNode = resolvido.get("etapas");
+        if (etapasNode != null && etapasNode.isArray()) {
+            for (JsonNode etapaNode : etapasNode) {
+                EtapaProcedimentoCreateDTO etapaDto = mapper.convertValue(etapaNode, EtapaProcedimentoCreateDTO.class);
+                procedimentoService.adicionarEtapa(criado.id(), etapaDto);
+            }
+        }
+
         return criado.id();
     }
+
     private Long criarResolucao(JsonNode dados, Map<String, Long> aliases) {
         JsonNode resolvido = resolverAliases(dados, aliases);
         ResolucaoCreateDTO dto = mapper.convertValue(resolvido, ResolucaoCreateDTO.class);
@@ -168,14 +189,14 @@ public class ImportacaoService {
         return comPropriedades;
     }
 
-    // private JsonNode garantirConfigsGeral(JsonNode dados) {
-    //     if (dados.has("configsGeral") && !dados.get("configsGeral").isNull()) {
-    //         return dados;
-    //     }
-    //     ObjectNode comConfig = (ObjectNode) dados.deepCopy();
-    //     comConfig.set("configsGeral", mapper.createObjectNode());
-    //     return comConfig;
-    // }
+    private JsonNode garantirConfigsGeral(JsonNode dados) {
+        if (dados.has("configsGeral") && !dados.get("configsGeral").isNull()) {
+            return dados;
+        }
+        ObjectNode comConfig = (ObjectNode) dados.deepCopy();
+        comConfig.set("configsGeral", mapper.createObjectNode());
+        return comConfig;
+    }
 
 
 }

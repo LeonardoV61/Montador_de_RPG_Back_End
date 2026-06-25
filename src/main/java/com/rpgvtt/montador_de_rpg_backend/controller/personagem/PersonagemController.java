@@ -80,4 +80,5 @@ public class PersonagemController {
         PersonagemResponseDTO dto = personagemService.buscarAtivoDoJogador(campanhaId, principal.getId());
         return ResponseEntity.ok(dto);
     }
+    
 }

@@ -31,6 +31,14 @@ public class SelecionarEntidadeHandler implements EtapaHandler {
         JsonNode params = etapa.getParametrosEtapa();
         String tipo = params.get("tipo_entidade").asString();
         String salvarEm = params.get("salvar_em").asString();
+        String modoEsperado = params.path("modo_esperado").asString(null);
+        
+        if (modoEsperado != null) {
+            String modoAtual = ctx.getContexto().getStringOrThrow("modo_escolha_cavaleiro");
+            if (!modoEsperado.equals(modoAtual)) {
+                return ResultadoEtapa.concluida(Map.of("pulado", true));
+            }
+        }
 
         if (ctx.getContexto().containsKey(salvarEm)) {
             Long id = ctx.getContexto().getLongOrThrow(salvarEm);

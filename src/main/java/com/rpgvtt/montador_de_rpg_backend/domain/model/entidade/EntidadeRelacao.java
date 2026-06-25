@@ -30,6 +30,10 @@ public class EntidadeRelacao {
     @JoinColumn(name = "id_entidade_filha")
     private EntidadeInstancia entidadeFilha;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_entidade_sistema_filha")
+    private EntidadeSistema entidadeSistemaFilha;
+
     @NotNull
     private Integer quantidade;
 
