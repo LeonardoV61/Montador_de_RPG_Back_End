@@ -3,7 +3,9 @@ package com.rpgvtt.montador_de_rpg_backend.engine.primitivos.handlers;
 
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeRelacao;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.EtapaProcedimento;
 import com.rpgvtt.montador_de_rpg_backend.engine.components.ItemResolver;
+import com.rpgvtt.montador_de_rpg_backend.engine.primitivos.HandlerRegistry;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.InstanciaResolver;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.contexto.ResultadoEtapa;
 import com.rpgvtt.montador_de_rpg_backend.engine.procedimentos.interfaces.EtapaExecutavel;
@@ -13,8 +15,12 @@ import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaR
 import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeRelacaoRepository;
 import com.rpgvtt.montador_de_rpg_backend.service.personagem.ItemEfeitoService;
 import lombok.RequiredArgsConstructor;
+
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -33,6 +39,8 @@ public class GerenciarItemHandler implements EtapaHandler {
     private final ItemEfeitoService itemEfeitoService;
     private final EntidadeRelacaoRepository entidadeRelacaoRepo;
     private final EntidadeInstanciaRepository entidadeInstanciaRepo;
+    @Lazy @Autowired
+    private final HandlerRegistry handlers;
 
     @Override
     public String tipoEtapa() { return "GERENCIAR_ITEM"; }
@@ -101,8 +109,41 @@ public class GerenciarItemHandler implements EtapaHandler {
             resultado.put(personagem.getId(), novaQtd);
         }
 
+        ResultadoEtapa customizacao = dispararCustomizacoes(item, ctx);
+        if (customizacao != null) return customizacao;
+
         return ResultadoEtapa.concluida(Map.of(
                 "tipo", "CRIAR", "idItem", item.getId(), "quantidades", resultado));
+    }
+
+    private ResultadoEtapa dispararCustomizacoes(EntidadeInstancia item, ExecucaoContexto ctx) {
+        JsonNode customizacoes = item.getEntidadeSistema()
+                .getPropriedades().path("customizacoes");
+        if (customizacoes.isMissingNode() || !customizacoes.isArray()) return null;
+
+        for (JsonNode c : customizacoes) {
+            String chave = c.get("chave").asString();
+            if (ctx.getContexto().containsKey(chave + "_concluida")) continue;
+
+            // Monta uma etapa RESOLVER apontando para a Resolucao do item
+            EtapaProcedimento sub = new EtapaProcedimento();
+            sub.setTipoEtapa("RESOLVER");
+            sub.setNome("Customizar " + chave);
+            sub.setParametrosEtapa(mapper.valueToTree(Map.of(
+                    "id_resolucao", c.get("id_resolucao").asLong(),
+                    "salvar_em",    chave
+            )));
+
+            ResultadoEtapa resultado = handlers.get("RESOLVER").executar(sub, ctx);
+
+            if (resultado.tipo() == ResultadoEtapa.Tipo.AGUARDANDO_INPUT
+            || resultado.tipo() == ResultadoEtapa.Tipo.ERRO) {
+                return resultado;
+            }
+
+            ctx.getContexto().put(chave + "_concluida", true);
+        }
+        return null;
     }
 
     // ── REMOVER: decrement quantity, delete relation only when it reaches zero ──
