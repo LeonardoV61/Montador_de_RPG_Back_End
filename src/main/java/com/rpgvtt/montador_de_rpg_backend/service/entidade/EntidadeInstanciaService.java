@@ -80,7 +80,8 @@ public class EntidadeInstanciaService {
         }
 
         return instanciaRepository.findAll().stream()
-                .filter(instancia -> instancia.getCampanha().getId().equals(campanhaId))
+                .filter(instancia -> instancia.getCampanha() != null
+                        && instancia.getCampanha().getId().equals(campanhaId))
                 .map(this::mapearParaDTO)
                 .toList();
     }
@@ -256,8 +257,8 @@ public class EntidadeInstanciaService {
 
     private EntidadeInstanciaResponseDTO mapearParaDTO(EntidadeInstancia instancia) {
         return new EntidadeInstanciaResponseDTO(
-                instancia.getCampanha().getId() != null ? instancia.getCampanha().getId() : null,
-                instancia.getEntidadeSistema().getId() != null ? instancia.getEntidadeSistema().getId() : null,
+                instancia.getCampanha() != null ? instancia.getCampanha().getId() : null,
+                instancia.getEntidadeSistema() != null ? instancia.getEntidadeSistema().getId() : null,
                 instancia.getTipo(),
                 instancia.getNome(),
                 instancia.getDescricao(),
