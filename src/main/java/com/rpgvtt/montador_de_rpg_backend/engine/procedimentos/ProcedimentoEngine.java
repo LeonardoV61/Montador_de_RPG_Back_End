@@ -66,7 +66,7 @@ public class ProcedimentoEngine {
         }
 
         JsonNode params = etapaPendente.getParametrosEtapa();
-        String chave = params.get("salvar_em").asString();
+        String chave = params.path("salvar_em").asString();
 
         // Armazena o valor como veio (String, Integer etc.)
         frame.getContexto().put(chave, valor);

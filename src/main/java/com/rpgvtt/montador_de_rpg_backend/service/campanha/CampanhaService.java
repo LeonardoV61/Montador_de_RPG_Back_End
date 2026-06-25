@@ -162,7 +162,8 @@ public class CampanhaService {
                 campanha.getNome(),
                 campanha.getCriadaEm(),
                 campanha.getSistema().getId(),
-                campanha.getSistema().getNome()
+                campanha.getSistema().getNome(),
+                campanha.getStatus()
         );
     }
 }

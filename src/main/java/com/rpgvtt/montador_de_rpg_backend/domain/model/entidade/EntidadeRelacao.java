@@ -20,17 +20,17 @@ public class EntidadeRelacao {
     @EmbeddedId 
     private EntidadeRelacaoKey id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @MapsId("idEntidadePai") 
     @JoinColumn(name = "id_entidade_pai")
     private EntidadeInstancia entidadePai;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @MapsId("idEntidadeFilha") 
     @JoinColumn(name = "id_entidade_filha")
     private EntidadeInstancia entidadeFilha;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_entidade_sistema_filha")
     private EntidadeSistema entidadeSistemaFilha;
 
