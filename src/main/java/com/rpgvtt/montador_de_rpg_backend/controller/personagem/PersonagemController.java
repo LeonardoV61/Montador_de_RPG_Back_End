@@ -74,7 +74,7 @@ public class PersonagemController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/meu-personagem")
+    @GetMapping("/meu-personagem/{campanhaId}")
     public ResponseEntity<PersonagemResponseDTO> meuPersonagem(@PathVariable Long campanhaId,
                                                                @AuthenticationPrincipal UsuarioPrincipal principal) {
         PersonagemResponseDTO dto = personagemService.buscarAtivoDoJogador(campanhaId, principal.getId());
