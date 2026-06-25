@@ -1,3 +1,7 @@
+server:
+  # Essencial para o OAuth2 funcionar corretamente com HTTPS por trás do proxy do Railway
+  forward-headers-strategy: framework 
+
 spring:
   application:
     name: montador-de-rpg-backend
@@ -44,8 +48,8 @@ app:
     secret: ${JWT_SECRET:SUA_CHAVE_SECRETA_SUPER_SEGURA_COM_PELO_MENOS_256_BITS_MUDAR_DEPOIS}
     expirationInMs: 86400000
   oauth2:
-    # Preparado para aceitar a URL do seu frontend de produção no Railway
-    authorizedRedirectUri: ${APP_OAUTH2_REDIRECT_URI:http://localhost:5173/oauth2/redirect}
+    # Redireciona para sua produção na Vercel por padrão se a variável não existir
+    authorizedRedirectUri: ${APP_OAUTH2_REDIRECT_URI:https://montador-de-rpg.vercel.app/oauth2/redirect}
   cors:
-    # Preparado para aceitar as origens de produção no Railway
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+    # Libera sua Vercel e os ambientes de teste locais por padrão
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:https://montador-de-rpg.vercel.app,http://localhost:5173,http://localhost:3000}
