@@ -63,6 +63,10 @@ public class CampanhaController {
 
     // ── Participantes ──────────────────────────────────────────────
 
+    /**
+     * Agora o AdicionarJogadorDTO deve conter o campo 'email' (String).
+     * O Service deverá buscar o usuário pelo e-mail e realizar o vínculo.
+     */
     @PostMapping("/{campanhaId}/jogadores")
     public ResponseEntity<CampanhaParticipanteResponseDTO> adicionarJogador(
             @PathVariable Long campanhaId,
