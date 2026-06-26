@@ -58,4 +58,10 @@ public class UsuarioController {
         UsuarioResponseDTO dto = usuarioService.buscarPorId(principal.getId());
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/id-por-email/{email}")
+    public ResponseEntity<Long> buscarIdPorEmail(@PathVariable String email) {
+        Long id = usuarioService.buscarIdPorEmail(email);
+        return ResponseEntity.ok(id);
+    }
 }

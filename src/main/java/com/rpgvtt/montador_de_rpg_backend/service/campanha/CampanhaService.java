@@ -23,7 +23,11 @@ import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaR
 import com.rpgvtt.montador_de_rpg_backend.repository.personagem.PersonagemRepository; // <-- Import adicionado
 import com.rpgvtt.montador_de_rpg_backend.repository.sessao.SessaoRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.usuario.UsuarioRepository;
+import com.rpgvtt.montador_de_rpg_backend.service.usuario.UsuarioService;
+
 import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CampanhaService {
 
     private final CampanhaRepository campanhaRepository;
@@ -42,25 +47,26 @@ public class CampanhaService {
     private final SessaoRepository sessaoRepository; 
     private final EntityManager entityManager;
     private final EntidadeInstanciaRepository instanciaRepository;
-    private final PersonagemRepository personagemRepository; // <-- Repositório adicionado
+    private final PersonagemRepository personagemRepository;
+    private final UsuarioService usuarioService;
 
 
-    public CampanhaService(CampanhaRepository campanhaRepository,
-                           CampanhaUsuarioRepository campanhaUsuarioRepository,
-                           UsuarioRepository usuarioRepository,
-                           SessaoRepository sessaoRepository, 
-                           EntityManager entityManager,
-                           EntidadeInstanciaRepository instanciaRepository,
-                           PersonagemRepository personagemRepository // <-- Injeção adicionada no construtor
-                          ) {
-        this.campanhaRepository = campanhaRepository;
-        this.campanhaUsuarioRepository = campanhaUsuarioRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.sessaoRepository = sessaoRepository; 
-        this.entityManager = entityManager;
-        this.instanciaRepository = instanciaRepository;
-        this.personagemRepository = personagemRepository; // <-- Atribuição adicionada
-    }
+    // public CampanhaService(CampanhaRepository campanhaRepository,
+    //                        CampanhaUsuarioRepository campanhaUsuarioRepository,
+    //                        UsuarioRepository usuarioRepository,
+    //                        SessaoRepository sessaoRepository, 
+    //                        EntityManager entityManager,
+    //                        EntidadeInstanciaRepository instanciaRepository,
+    //                        PersonagemRepository personagemRepository
+    //                       ) {
+    //     this.campanhaRepository = campanhaRepository;
+    //     this.campanhaUsuarioRepository = campanhaUsuarioRepository;
+    //     this.usuarioRepository = usuarioRepository;
+    //     this.sessaoRepository = sessaoRepository; 
+    //     this.entityManager = entityManager;
+    //     this.instanciaRepository = instanciaRepository;
+    //     this.personagemRepository = personagemRepository; // <-- Atribuição adicionada
+    // }
 
     @Transactional
     public CampanhaResponseDTO criar(CampanhaCreateDTO dto) {
