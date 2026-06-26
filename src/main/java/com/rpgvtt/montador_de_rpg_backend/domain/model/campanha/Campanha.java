@@ -47,7 +47,6 @@ public class Campanha {
 
         @NotNull
         @Column(name = "status")
-        @Enumerated(EnumType.STRING)
         private StatusCampanha status;
 
         @CreationTimestamp
