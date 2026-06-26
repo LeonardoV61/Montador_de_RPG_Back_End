@@ -21,6 +21,8 @@ public class CampanhaUsuario {
     @EmbeddedId
     private CampanhaUsuarioKey id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "papel")
     private PapeisUsuario papel;
 
     @CreationTimestamp
