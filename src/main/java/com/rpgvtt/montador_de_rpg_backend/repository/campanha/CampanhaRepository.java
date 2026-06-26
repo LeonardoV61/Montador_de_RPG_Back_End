@@ -22,6 +22,7 @@ public interface CampanhaRepository extends JpaRepository<Campanha, Long> {
        long countByUsuarioIdAndStatus(@Param("usuarioId") Long usuarioId,
                                @Param("status") StatusCampanha status);
 
+
        @Query("SELECT COUNT(DISTINCT cu.id.idUsuario) FROM CampanhaUsuario cu " +
               "WHERE cu.id.idCampanha IN (" +
               "  SELECT cu2.id.idCampanha FROM CampanhaUsuario cu2 " +

@@ -26,45 +26,47 @@ import java.util.List;
 @Entity
 public class Campanha {
 
-    @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "camp_seq"
-    )
-    @SequenceGenerator(
-            name = "camp_seq",
-            sequenceName = "camp_sequence",
-            allocationSize = 1
-    )
-    private Long id;
+        @Id
+        @GeneratedValue(
+                strategy = GenerationType.SEQUENCE,
+                generator = "camp_seq"
+        )
+        @SequenceGenerator(
+                name = "camp_seq",
+                sequenceName = "camp_sequence",
+                allocationSize = 1
+        )
+        private Long id;
 
-    @NotNull
-    private String nome;
+        @NotNull
+        private String nome;
 
-    private String descricao;
+        private String descricao;
 
-    private String urlImagem;
+        private String urlImagem;
 
-    @NotNull
-    private StatusCampanha Status;
+        @NotNull
+        @Column(name = "status")
+        @Enumerated(EnumType.STRING)
+        private StatusCampanha Status;
 
-    @CreationTimestamp
-    @Column(name = "criada_em")
-    private LocalDateTime criadaEm;
+        @CreationTimestamp
+        @Column(name = "criada_em")
+        private LocalDateTime criadaEm;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_sistema")
-    private Sistema sistema;
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
+        @JoinColumn(name = "id_sistema")
+        private Sistema sistema;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
-    private List<Sessao> sessoes;
+        @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+        private List<Sessao> sessoes;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
-    private List<Personagem> personagens;
+        @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+        private List<Personagem> personagens;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
-    private List<CampanhaUsuario> usuarios;
+        @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+        private List<CampanhaUsuario> usuarios;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
-    private List<EntidadeInstancia> entidadeInstancias;
+        @OneToMany(cascade = CascadeType.ALL, mappedBy = "campanha")
+        private List<EntidadeInstancia> entidadeInstancias;
 }
