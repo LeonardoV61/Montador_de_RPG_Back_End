@@ -164,7 +164,8 @@ public class CampanhaService {
                 novoVinculo.getId().getIdCampanha(),
                 novoVinculo.getId().getIdUsuario(),
                 novoVinculo.getPapel().name(),
-                novoVinculo.getEntrouEm()
+                novoVinculo.getEntrouEm(),
+                novoVinculo.getUsuario().getApelido()
         );
     }
 
@@ -195,7 +196,8 @@ public class CampanhaService {
                         cu.getId().getIdCampanha(),
                         cu.getId().getIdUsuario(),
                         cu.getPapel().name(),
-                        cu.getEntrouEm()
+                        cu.getEntrouEm(),
+                        cu.getUsuario().getApelido()
                 ))
                 .toList();
     }

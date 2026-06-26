@@ -14,4 +14,5 @@ public class CampanhaParticipanteResponseDTO {
     private Long idUsuario;
     private String papel;
     private LocalDateTime entrouEm;
+    String apelido;
 }
