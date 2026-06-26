@@ -61,6 +61,12 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    public Long buscarIdPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .map(Usuario::getId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com este e-mail"));
+    }
+
     private UsuarioResponseDTO mapearParaDTO(Usuario usuario) {
         return new UsuarioResponseDTO(
                 usuario.getId(),
