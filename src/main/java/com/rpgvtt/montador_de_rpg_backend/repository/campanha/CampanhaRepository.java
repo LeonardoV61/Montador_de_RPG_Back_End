@@ -1,5 +1,6 @@
 package com.rpgvtt.montador_de_rpg_backend.repository.campanha;
 
+import com.rpgvtt.montador_de_rpg_backend.domain.enums.StatusCampanha;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,11 +16,11 @@ public interface CampanhaRepository extends JpaRepository<Campanha, Long> {
        Optional<Campanha> findBySessoesId(Long idSessao);
 
        @Query("SELECT COUNT(c) FROM Campanha c WHERE c.id IN " +
-              "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
-              "WHERE cu.id.idUsuario = :usuarioId) " +
-              "AND c.Status = :status")
+       "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
+       "WHERE cu.id.idUsuario = :usuarioId) " +
+       "AND c.status = :status")
        long countByUsuarioIdAndStatus(@Param("usuarioId") Long usuarioId,
-                                          @Param("status") String status);
+                               @Param("status") StatusCampanha status);
 
        @Query("SELECT COUNT(DISTINCT cu.id.idUsuario) FROM CampanhaUsuario cu " +
               "WHERE cu.id.idCampanha IN (" +
