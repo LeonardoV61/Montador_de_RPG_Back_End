@@ -4,5 +4,6 @@ public enum StatusSessao {
     CRIADA,
     ATIVA,
     PAUSADA,
-    ENCERRADA
+    ENCERRADA,
+    AGENDADA
 }

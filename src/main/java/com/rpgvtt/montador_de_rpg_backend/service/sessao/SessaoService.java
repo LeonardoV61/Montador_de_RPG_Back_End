@@ -32,6 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class SessaoService {
         private final PersonagemRepository personagemRepo;
         private final EntidadeInstanciaRepository instanciaRepo;
         private final CampanhaUsuarioRepository campUsuarioRepo;
-        private final SessaoParticipanteCache participanteCache; // in-memory room roster
+        private final SessaoParticipanteCache participanteCache; 
         private final ProcedimentoEngine procedimentoEngine;
         private final CampanhaAutorizacao autorizacao;
         private final SimpMessagingTemplate messagingTemplate;
@@ -143,65 +144,111 @@ public class SessaoService {
          * On success, broadcasts the updated participant list to all room members.
          */
         public EntradaSessaoDTO entrarNaSessao(Long idSessao, Long idUsuario, String tokenConvite) {
-        Sessao sessao = exigirSessaoAtiva(idSessao);
-        Long idCampanha = sessao.getCampanha().getId();
+                Sessao sessao = exigirSessaoAtiva(idSessao);
+                Long idCampanha = sessao.getCampanha().getId();
 
-        // Must be a campaign member regardless of path
-        autorizacao.exigirMembro(idCampanha, idUsuario);
+                // Must be a campaign member regardless of path
+                autorizacao.exigirMembro(idCampanha, idUsuario);
 
-        // Masters always enter without restrictions
-        boolean isMestre = autorizacao.isMestre(idCampanha, idUsuario);
+                // Masters always enter without restrictions
+                boolean isMestre = autorizacao.isMestre(idCampanha, idUsuario);
 
-        EntidadeInstancia instanciaPersonagem = null;
+                EntidadeInstancia instanciaPersonagem = null;
 
-        if (!isMestre) {
-                if (tokenConvite != null && !tokenConvite.isBlank()) {
-                // Path A: validate invite token
-                validarTokenConvite(idSessao, idUsuario, tokenConvite);
-                } else {
-                // Path B: auto-join — must have alive personagem
-                Personagem personagem = autorizacao.exigirPersonagemVivo(idCampanha, idUsuario);
-                instanciaPersonagem = instanciaRepo
-                        .findById(personagem.getId())
-                        .orElseThrow();
+                if (!isMestre) {
+                        if (tokenConvite != null && !tokenConvite.isBlank()) {
+                        // Path A: validate invite token
+                        validarTokenConvite(idSessao, idUsuario, tokenConvite);
+                        } else {
+                        // Path B: auto-join — must have alive personagem
+                        Personagem personagem = autorizacao.exigirPersonagemVivo(idCampanha, idUsuario);
+                        instanciaPersonagem = instanciaRepo
+                                .findById(personagem.getId())
+                                .orElseThrow();
+                        }
                 }
+
+                participanteCache.adicionar(idSessao, new ParticipanteSessao(
+                        idUsuario, isMestre, instanciaPersonagem));
+
+                // Broadcast updated roster to all room members
+                broadcastParticipantes(sessao);
+
+                return new EntradaSessaoDTO(
+                        idSessao,
+                        idUsuario,
+                        isMestre,
+                        instanciaPersonagem != null ? instanciaPersonagem.getId() : null
+                );
+                }
+
+                /**
+                 * Player or master leaves the room (disconnects or explicitly leaves).
+                 * Does not end the session — master leaving pauses it.
+                 */
+                public void sairDaSessao(Long idSessao, Long idUsuario) {
+                Sessao sessao = sessaoRepo.findById(idSessao)
+                        .orElseThrow(() -> new EntityNotFoundException(Sessao.class, idSessao));
+
+                // Prestar atenção se na restauração da sessão, o participanteCache volta também
+                boolean eraMestre = participanteCache.isMestre(idSessao, idUsuario);
+                participanteCache.remover(idSessao, idUsuario);
+
+                if (eraMestre && sessao.getStatus() == StatusSessao.ATIVA) {
+                        // Master left — pause session so players can't act without GM
+                        sessao.setStatus(StatusSessao.PAUSADA);
+                        sessaoRepo.save(sessao);
+                        broadcastSessao(sessao, "SESSAO_PAUSADA",
+                                Map.of("motivo", "Mestre desconectado"));
+                }
+
+                broadcastParticipantes(sessao);
         }
 
-        participanteCache.adicionar(idSessao, new ParticipanteSessao(
-                idUsuario, isMestre, instanciaPersonagem));
+        // ── Agendamento e Listagem ────────────────────────────────────
 
-        // Broadcast updated roster to all room members
-        broadcastParticipantes(sessao);
+        /**
+         * Mestre agenda uma sessão para uma data futura.
+         * Cria a sessão no banco com o status AGENDADA.
+         */
+        public SessaoDTO agendarSessao(Long idCampanha, LocalDateTime dataInicio, Long idUsuarioMestre) {
+                // Valida se quem está agendando é realmente o mestre da campanha
+                autorizacao.exigirMestre(idCampanha, idUsuarioMestre);
 
-        return new EntradaSessaoDTO(
-                idSessao,
-                idUsuario,
-                isMestre,
-                instanciaPersonagem != null ? instanciaPersonagem.getId() : null
-        );
+                Campanha campanha = campanhaRepo.findById(idCampanha)
+                        .orElseThrow(() -> new EntityNotFoundException(Campanha.class, idCampanha));
+
+                Sessao sessao = new Sessao();
+                sessao.setCampanha(campanha);
+                sessao.setStatus(StatusSessao.AGENDADA); // Certifique-se que o enum possui AGENDADA
+                sessao.setDataInicio(dataInicio);
+                sessao.setOrdem(proximaOrdemSessao(idCampanha));
+                
+                sessaoRepo.save(sessao);
+
+                log.info("Sessão {} agendada pelo mestre {} na campanha {} para {}",
+                        sessao.getId(), idUsuarioMestre, idCampanha, dataInicio);
+
+                // Dispara um evento via WebSocket para avisar os jogadores online sobre o novo agendamento
+                broadcastSessao(sessao, "SESSAO_AGENDADA", Map.of(
+                        "idSessao", sessao.getId(),
+                        "idCampanha", idCampanha,
+                        "dataInicio", dataInicio.toString()
+                ));
+
+                return toDTO(sessao);
         }
 
         /**
-         * Player or master leaves the room (disconnects or explicitly leaves).
-         * Does not end the session — master leaving pauses it.
+         * Lista todas as sessões vinculadas a uma campanha.
          */
-        public void sairDaSessao(Long idSessao, Long idUsuario) {
-        Sessao sessao = sessaoRepo.findById(idSessao)
-                .orElseThrow(() -> new EntityNotFoundException(Sessao.class, idSessao));
-
-        // Prestar atenção se na restauração da sessão, o participanteCache volta também
-        boolean eraMestre = participanteCache.isMestre(idSessao, idUsuario);
-        participanteCache.remover(idSessao, idUsuario);
-
-        if (eraMestre && sessao.getStatus() == StatusSessao.ATIVA) {
-                // Master left — pause session so players can't act without GM
-                sessao.setStatus(StatusSessao.PAUSADA);
-                sessaoRepo.save(sessao);
-                broadcastSessao(sessao, "SESSAO_PAUSADA",
-                        Map.of("motivo", "Mestre desconectado"));
-        }
-
-        broadcastParticipantes(sessao);
+        public List<SessaoDTO> listarPorCampanha(Long idCampanha) {
+                // Busca todas as sessões da campanha ordenadas (se aplicável)
+                List<Sessao> sessoes = sessaoRepo.findByCampanhaId(idCampanha);
+                
+                return sessoes.stream()
+                        .map(this::toDTO)
+                        .toList();
         }
 
         /**
@@ -235,31 +282,31 @@ public class SessaoService {
          * Token expires in 10 minutes.
          */
         public ConviteDTO gerarConvite(Long idSessao, Long idUsuarioConvidado, Long idMestre) {
-        Sessao sessao = exigirSessaoAtiva(idSessao);
-        autorizacao.exigirMestre(sessao.getCampanha().getId(), idMestre);
+                Sessao sessao = exigirSessaoAtiva(idSessao);
+                autorizacao.exigirMestre(sessao.getCampanha().getId(), idMestre);
 
-        String token = UUID.randomUUID().toString();
-        participanteCache.registrarConvite(idSessao, idUsuarioConvidado, token,
-                LocalDateTime.now().plusMinutes(10));
+                String token = UUID.randomUUID().toString();
+                participanteCache.registrarConvite(idSessao, idUsuarioConvidado, token,
+                        LocalDateTime.now().plusMinutes(10));
 
-        // Send invite notification via WebSocket to the specific user
-        messagingTemplate.convertAndSendToUser(
-                idUsuarioConvidado.toString(),
-                "/queue/convite",
-                Map.of(
-                        "idSessao",  idSessao,
-                        "token",     token,
-                        "expiraEm",  LocalDateTime.now().plusMinutes(10)
-                )
+                // Send invite notification via WebSocket to the specific user
+                messagingTemplate.convertAndSendToUser(
+                        idUsuarioConvidado.toString(),
+                        "/queue/convite",
+                        Map.of(
+                                "idSessao",  idSessao,
+                                "token",     token,
+                                "expiraEm",  LocalDateTime.now().plusMinutes(10)
+                        )
         );
 
         return new ConviteDTO(idSessao, idUsuarioConvidado, token);
         }
 
         public String buscarApelidoDoUsuario(Long idUsuario) {
-        return usuarioRepository.findById(idUsuario)
-                .map(Usuario::getApelido)
-                .orElse("Jogador " + idUsuario);
+                return usuarioRepository.findById(idUsuario)
+                        .map(Usuario::getApelido)
+                        .orElse("Jogador " + idUsuario);
         }
 
 
@@ -275,28 +322,28 @@ public class SessaoService {
                 String atributo, Object novoValor,
                 Long idMestre) {
 
-        Sessao sessao = exigirSessaoAtiva(idSessao);
-        autorizacao.exigirMestre(sessao.getCampanha().getId(), idMestre);
+                Sessao sessao = exigirSessaoAtiva(idSessao);
+                autorizacao.exigirMestre(sessao.getCampanha().getId(), idMestre);
 
-        EntidadeInstancia inst = instanciaRepo.findById(idInstancia).orElseThrow(() ->
-                new EntityNotFoundException(EntidadeInstancia.class, idInstancia));
+                EntidadeInstancia inst = instanciaRepo.findById(idInstancia).orElseThrow(() ->
+                        new EntityNotFoundException(EntidadeInstancia.class, idInstancia));
 
-        ObjectNode atributos = (ObjectNode) inst.getAtributosAtuais();
+                ObjectNode atributos = (ObjectNode) inst.getAtributosAtuais();
 
-        JsonNode valorAnterior = atributos.get(atributo);
-        atributos.set(atributo, mapper.valueToTree(novoValor));
+                JsonNode valorAnterior = atributos.get(atributo);
+                atributos.set(atributo, mapper.valueToTree(novoValor));
 
-        inst.setAtributosAtuais(atributos);
+                inst.setAtributosAtuais(atributos);
 
-        instanciaRepo.save(inst);
+                instanciaRepo.save(inst);
 
-        // Broadcast the change so all clients update their UI immediately
-        broadcastAtributo(sessao, idInstancia, atributo, valorAnterior, novoValor);
+                // Broadcast the change so all clients update their UI immediately
+                broadcastAtributo(sessao, idInstancia, atributo, valorAnterior, novoValor);
 
-        log.info("Mestre {} alterou {}.{}: {} → {} na sessão {}",
-                idMestre, idInstancia, atributo, valorAnterior, novoValor, idSessao);
+                log.info("Mestre {} alterou {}.{}: {} → {} na sessão {}",
+                        idMestre, idInstancia, atributo, valorAnterior, novoValor, idSessao);
 
-        return new AtributoAlteradoDTO(idInstancia, atributo, valorAnterior, novoValor);
+                return new AtributoAlteradoDTO(idInstancia, atributo, valorAnterior, novoValor);
         }
 
         /**
@@ -309,33 +356,33 @@ public class SessaoService {
                 String atributo, Object novoValor,
                 Long idUsuario) {
 
-        Sessao sessao = exigirSessaoAtiva(idSessao);
-        Long idCampanha = sessao.getCampanha().getId();
-        autorizacao.exigirMembro(idCampanha, idUsuario);
+                Sessao sessao = exigirSessaoAtiva(idSessao);
+                Long idCampanha = sessao.getCampanha().getId();
+                autorizacao.exigirMembro(idCampanha, idUsuario);
 
-        // Verify this instance belongs to this player
-        Personagem personagem = personagemRepo
-                .findByInstanciaIdAndUsuarioId(idInstancia, idUsuario)
-                .orElseThrow(() -> new DeniedAcessException(
-                        "Instância " + idInstancia + " não pertence ao usuário " + idUsuario));
+                // Verify this instance belongs to this player
+                Personagem personagem = personagemRepo
+                        .findByInstanciaIdAndUsuarioId(idInstancia, idUsuario)
+                        .orElseThrow(() -> new DeniedAcessException(
+                                "Instância " + idInstancia + " não pertence ao usuário " + idUsuario));
 
-        // Block combat-controlled attributes — engine owns these
-        if (ATRIBUTOS_PROTEGIDOS.contains(atributo)) { // ???
-                throw new DeniedAcessException(
-                        "Atributo '" + atributo + "' é controlado pelo engine de combate");
-        }
+                // Block combat-controlled attributes — engine owns these
+                if (ATRIBUTOS_PROTEGIDOS.contains(atributo)) { // ???
+                        throw new DeniedAcessException(
+                                "Atributo '" + atributo + "' é controlado pelo engine de combate");
+                }
 
-        Object valorAnterior = personagem.getInstancia().getAtributosAtuais().get(atributo);
+                Object valorAnterior = personagem.getInstancia().getAtributosAtuais().get(atributo);
 
-        ObjectNode atributos = (ObjectNode) personagem.getInstancia().getAtributosAtuais();
-        atributos.set(atributo, mapper.valueToTree(novoValor));
-        personagem.getInstancia().setAtributosAtuais(atributos);
+                ObjectNode atributos = (ObjectNode) personagem.getInstancia().getAtributosAtuais();
+                atributos.set(atributo, mapper.valueToTree(novoValor));
+                personagem.getInstancia().setAtributosAtuais(atributos);
 
-        instanciaRepo.save(personagem.getInstancia());
+                instanciaRepo.save(personagem.getInstancia());
 
-        broadcastAtributo(sessao, idInstancia, atributo, valorAnterior, novoValor);
+                broadcastAtributo(sessao, idInstancia, atributo, valorAnterior, novoValor);
 
-        return new AtributoAlteradoDTO(idInstancia, atributo, valorAnterior, novoValor);
+                return new AtributoAlteradoDTO(idInstancia, atributo, valorAnterior, novoValor);
         }
 
         // Attributes the engine controls exclusively — players cannot edit these
@@ -347,77 +394,77 @@ public class SessaoService {
 
         public Long resolverInstanciaDoJogador(Long idSessao, Long idUsuario) {
 
-        Campanha campanha = campanhaRepo.findBySessoesId(idSessao).orElseThrow(
-                () -> new EntityNotFoundException(Campanha.class, idSessao)
-        );
-        Personagem personagem = personagemRepo.findAtivoByCampanhaIdAndUsuarioId(campanha.getId(), idUsuario).orElseThrow(
-                () -> new EntityNotFoundException(Personagem.class, campanha.getId())
-        );
+                Campanha campanha = campanhaRepo.findBySessoesId(idSessao).orElseThrow(
+                        () -> new EntityNotFoundException(Campanha.class, idSessao)
+                );
+                Personagem personagem = personagemRepo.findAtivoByCampanhaIdAndUsuarioId(campanha.getId(), idUsuario).orElseThrow(
+                        () -> new EntityNotFoundException(Personagem.class, campanha.getId())
+                );
 
-        // EntidadeInstancia inst = instanciaRepo.findByPersonagemId(personagem.getId()).orElseThrow(
-        //         () -> new EntityNotFoundException(EntidadeInstancia.class, personagem.getId())
-        // );
+                // EntidadeInstancia inst = instanciaRepo.findByPersonagemId(personagem.getId()).orElseThrow(
+                //         () -> new EntityNotFoundException(EntidadeInstancia.class, personagem.getId())
+                // );
 
-        EntidadeInstancia inst = personagem.getInstancia();
-        if (inst == null) throw new EntityNotFoundException(EntidadeInstancia.class, personagem.getId());
+                EntidadeInstancia inst = personagem.getInstancia();
+                if (inst == null) throw new EntityNotFoundException(EntidadeInstancia.class, personagem.getId());
 
-        return inst.getId();
+                return inst.getId();
         }
 
 
         // ── Internal helpers ──────────────────────────────────────────
 
         private Sessao exigirSessaoAtiva(Long idSessao) {
-        Sessao sessao = sessaoRepo.findById(idSessao).orElseThrow(() ->
-                new EntityNotFoundException(Sessao.class, idSessao));
-        if (sessao.getStatus() != StatusSessao.ATIVA) {
-                throw new EstadoInvalidoException(
-                        "Sessão " + idSessao + " não está ativa (status: " + sessao.getStatus() + ")");
-        }
-        return sessao;
-        }
+                Sessao sessao = sessaoRepo.findById(idSessao).orElseThrow(() ->
+                        new EntityNotFoundException(Sessao.class, idSessao));
+                if (sessao.getStatus() != StatusSessao.ATIVA) {
+                        throw new EstadoInvalidoException(
+                                "Sessão " + idSessao + " não está ativa (status: " + sessao.getStatus() + ")");
+                }
+                return sessao;
+                }
 
-        private int proximaOrdemSessao(Long idCampanha) {
-        return sessaoRepo.countByCampanhaId(idCampanha) + 1;
-        }
+                private int proximaOrdemSessao(Long idCampanha) {
+                return sessaoRepo.countByCampanhaId(idCampanha) + 1;
+                }
 
-        private void validarTokenConvite(Long idSessao, Long idUsuario, String token) {
-        participanteCache.consumirConvite(idSessao, idUsuario, token)
-                .orElseThrow(() -> new DeniedAcessException(
-                        "Token de convite inválido ou expirado"));
-        }
+                private void validarTokenConvite(Long idSessao, Long idUsuario, String token) {
+                participanteCache.consumirConvite(idSessao, idUsuario, token)
+                        .orElseThrow(() -> new DeniedAcessException(
+                                "Token de convite inválido ou expirado"));
+                }
 
-        private void broadcastSessao(Sessao sessao, String tipo, Map<String, Object> payload) {
-        messagingTemplate.convertAndSend(
-                "/topic/campanha/" + sessao.getCampanha().getId(),
-                (Object) Map.of("tipo", tipo, "payload", payload)
-        );
+                private void broadcastSessao(Sessao sessao, String tipo, Map<String, Object> payload) {
+                messagingTemplate.convertAndSend(
+                        "/topic/campanha/" + sessao.getCampanha().getId(),
+                        (Object) Map.of("tipo", tipo, "payload", payload)
+                );
         }
 
         private void broadcastParticipantes(Sessao sessao) {
-        messagingTemplate.convertAndSend(
-                "/topic/sessao/" + sessao.getId() + "/participantes",
-                participanteCache.listar(sessao.getId())
-        );
+                messagingTemplate.convertAndSend(
+                        "/topic/sessao/" + sessao.getId() + "/participantes",
+                        participanteCache.listar(sessao.getId())
+                );
         }
 
         private void broadcastAtributo(Sessao sessao, Long idInstancia,
                                         String atributo, Object antes, Object depois) {
-        messagingTemplate.convertAndSend(
-                "/topic/sessao/" + sessao.getId() + "/atributos",
-                (Object) Map.of(
-                        "tipo",        "ATRIBUTO_ALTERADO",
-                        "idInstancia", idInstancia,
-                        "atributo",    atributo,
-                        "antes",       antes,
-                        "depois",      depois
-                )
-        );
-        }
+                messagingTemplate.convertAndSend(
+                        "/topic/sessao/" + sessao.getId() + "/atributos",
+                        (Object) Map.of(
+                                "tipo",        "ATRIBUTO_ALTERADO",
+                                "idInstancia", idInstancia,
+                                "atributo",    atributo,
+                                "antes",       antes,
+                                "depois",      depois
+                        )
+                );
+                }
 
-        private SessaoDTO toDTO(Sessao s) {
-        return new SessaoDTO(s.getId(), s.getStatus(),
-                s.getDataInicio(), s.getCampanha().getId());
+                private SessaoDTO toDTO(Sessao s) {
+                return new SessaoDTO(s.getId(), s.getStatus(),
+                        s.getDataInicio(), s.getCampanha().getId());
         }
 
 

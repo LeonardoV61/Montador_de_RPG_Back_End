@@ -6,6 +6,8 @@ import com.rpgvtt.montador_de_rpg_backend.domain.enums.StatusSessao;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.Campanha;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.CampanhaUsuario;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.campanha.CampanhaUsuarioKey;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.entidade.EntidadeInstancia;
+import com.rpgvtt.montador_de_rpg_backend.domain.model.personagem.Personagem;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sessao.Sessao;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.sistema.Sistema;
 import com.rpgvtt.montador_de_rpg_backend.domain.model.usuario.Usuario;
@@ -14,8 +16,11 @@ import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaCreateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaParticipanteResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaSessaoTemporariaDTO;
+import com.rpgvtt.montador_de_rpg_backend.dto.campanha.PersonagemCampanhaDTO;
 import com.rpgvtt.montador_de_rpg_backend.repository.campanha.CampanhaRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.campanha.CampanhaUsuarioRepository;
+import com.rpgvtt.montador_de_rpg_backend.repository.entidade.EntidadeInstanciaRepository;
+import com.rpgvtt.montador_de_rpg_backend.repository.personagem.PersonagemRepository; // <-- Import adicionado
 import com.rpgvtt.montador_de_rpg_backend.repository.sessao.SessaoRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.usuario.UsuarioRepository;
 import jakarta.persistence.EntityManager;
@@ -26,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CampanhaService {
@@ -35,17 +41,25 @@ public class CampanhaService {
     private final UsuarioRepository usuarioRepository;
     private final SessaoRepository sessaoRepository; 
     private final EntityManager entityManager;
+    private final EntidadeInstanciaRepository instanciaRepository;
+    private final PersonagemRepository personagemRepository; // <-- Repositório adicionado
+
 
     public CampanhaService(CampanhaRepository campanhaRepository,
                            CampanhaUsuarioRepository campanhaUsuarioRepository,
                            UsuarioRepository usuarioRepository,
                            SessaoRepository sessaoRepository, 
-                           EntityManager entityManager) {
+                           EntityManager entityManager,
+                           EntidadeInstanciaRepository instanciaRepository,
+                           PersonagemRepository personagemRepository // <-- Injeção adicionada no construtor
+                          ) {
         this.campanhaRepository = campanhaRepository;
         this.campanhaUsuarioRepository = campanhaUsuarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.sessaoRepository = sessaoRepository; 
         this.entityManager = entityManager;
+        this.instanciaRepository = instanciaRepository;
+        this.personagemRepository = personagemRepository; // <-- Atribuição adicionada
     }
 
     @Transactional
@@ -164,6 +178,60 @@ public class CampanhaService {
                 campanha.getSistema().getId(),
                 campanha.getSistema().getNome(),
                 campanha.getStatus()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<CampanhaParticipanteResponseDTO> listarParticipantes(Long campanhaId) {
+        return campanhaUsuarioRepository.findByCampanhaId(campanhaId)
+                .stream()
+                .map(cu -> new CampanhaParticipanteResponseDTO(
+                        cu.getCampanhaId(),
+                        cu.getUsuarioId(),
+                        cu.getPapel(),
+                        cu.getEntrouEm()
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PersonagemCampanhaDTO> buscarPersonagemDoUsuario(Long campanhaId, Long usuarioId) {
+        return personagemRepository.findAtivoByCampanhaIdAndUsuarioId(campanhaId, usuarioId)
+                .map(p -> new PersonagemCampanhaDTO(
+                        p.getId(),
+                        p.getInstancia().getId(),
+                        p.getInstancia().getNome(),
+                        p.getInstancia().getTipo()
+                ));
+    }
+
+    @Transactional
+    public PersonagemCampanhaDTO vincularPersonagem(Long campanhaId, Long instanciaId, Long usuarioId) {
+        if (!campanhaRepository.existsById(campanhaId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Campanha não encontrada");
+        }
+
+        EntidadeInstancia instancia = instanciaRepository.findById(instanciaId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Instância não encontrada"));
+
+        // Verifica se o usuário já tem personagem ativo nesta campanha
+        personagemRepository.findAtivoByCampanhaIdAndUsuarioId(campanhaId, usuarioId)
+                .ifPresent(p -> { throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "Você já tem um personagem nesta campanha"); });
+
+        Personagem personagem = new Personagem();
+        personagem.setCampanha(entityManager.getReference(Campanha.class, campanhaId));
+        personagem.setUsuario(entityManager.getReference(Usuario.class, usuarioId));
+        personagem.setInstancia(instancia);
+        personagem.setAtivo(true);
+        personagemRepository.save(personagem);
+
+        return new PersonagemCampanhaDTO(
+                personagem.getId(),
+                instancia.getId(),
+                instancia.getNome(),
+                instancia.getTipo()
         );
     }
 }

@@ -16,6 +16,10 @@ public interface SessaoRepository extends JpaRepository<Sessao, Long> {
     List<Sessao> findByStatusAndProcedimentoAtivoIsNotNull(StatusSessao status);
 
     Optional<Sessao> findAtivaByCampanhaId(Long idCampanha);
+    
+    List<Sessao> findByCampanhaId(Long idCampanha);
+
+    List<Sessao> findByCampanhaIdOrderByOrdemDesc(Long campanhaId);
 
     int countByCampanhaId(Long idCampanha);
 

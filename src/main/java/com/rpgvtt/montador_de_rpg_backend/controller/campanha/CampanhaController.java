@@ -21,20 +21,11 @@ public class CampanhaController {
         this.campanhaService = campanhaService;
     }
 
-    @PostMapping("/{campanhaId}/jogadores")
-    public ResponseEntity<CampanhaParticipanteResponseDTO> adicionarJogador(
-            @PathVariable Long campanhaId,
-            @RequestBody @Valid AdicionarJogadorDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(campanhaService.adicionarJogador(campanhaId, dto));
-    }
-
     @PostMapping
     public ResponseEntity<CampanhaResponseDTO> criar(@RequestBody @Valid CampanhaCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(campanhaService.criar(dto));
     }
 
-    // Endpoint dedicado para criação de personagem — tudo em uma transação
     @PostMapping("/temporaria-com-sessao")
     public ResponseEntity<CampanhaSessaoTemporariaDTO> criarTemporariaComSessao(
             @RequestBody TemporariaRequest req,
@@ -42,8 +33,6 @@ public class CampanhaController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(campanhaService.criarTemporariaComSessao(req.sistemaId(), principal.getId()));
     }
-
-    public record TemporariaRequest(Long sistemaId) {}
 
     @GetMapping("/{id}")
     public ResponseEntity<CampanhaResponseDTO> buscarPorId(@PathVariable Long id) {
@@ -62,8 +51,7 @@ public class CampanhaController {
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<CampanhaResponseDTO>> listarPorUsuario(
-            @PathVariable Long usuarioId) {
+    public ResponseEntity<List<CampanhaResponseDTO>> listarPorUsuario(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(campanhaService.listarPorUsuario(usuarioId));
     }
 
@@ -72,4 +60,45 @@ public class CampanhaController {
             @AuthenticationPrincipal UsuarioPrincipal principal) {
         return ResponseEntity.ok(campanhaService.listarPorUsuario(principal.getId()));
     }
+
+    // ── Participantes ──────────────────────────────────────────────
+
+    @PostMapping("/{campanhaId}/jogadores")
+    public ResponseEntity<CampanhaParticipanteResponseDTO> adicionarJogador(
+            @PathVariable Long campanhaId,
+            @RequestBody @Valid AdicionarJogadorDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(campanhaService.adicionarJogador(campanhaId, dto));
+    }
+
+    @GetMapping("/{campanhaId}/jogadores")
+    public ResponseEntity<List<CampanhaParticipanteResponseDTO>> listarParticipantes(
+            @PathVariable Long campanhaId) {
+        return ResponseEntity.ok(campanhaService.listarParticipantes(campanhaId));
+    }
+
+    // ── Personagem do jogador nesta campanha ───────────────────────
+
+    @GetMapping("/{campanhaId}/meu-personagem")
+    public ResponseEntity<PersonagemCampanhaDTO> meuPersonagem(
+            @PathVariable Long campanhaId,
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        return campanhaService.buscarPersonagemDoUsuario(campanhaId, principal.getId())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/{campanhaId}/vincular-personagem")
+    public ResponseEntity<PersonagemCampanhaDTO> vincularPersonagem(
+            @PathVariable Long campanhaId,
+            @RequestBody VincularPersonagemRequest req,
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        return ResponseEntity.ok(
+                campanhaService.vincularPersonagem(campanhaId, req.instanciaId(), principal.getId()));
+    }
+
+    // ── Records de request ─────────────────────────────────────────
+
+    public record TemporariaRequest(Long sistemaId) {}
+    public record VincularPersonagemRequest(Long instanciaId) {}
 }

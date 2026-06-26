@@ -2,6 +2,16 @@ package com.rpgvtt.montador_de_rpg_backend.dto.campanha;
 
 import java.time.LocalDateTime;
 
-public record CampanhaParticipanteResponseDTO(Long campanhaId, Long usuarioId, String papel, LocalDateTime entrouEm) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CampanhaParticipanteResponseDTO {
+    private Long campanhaId;
+    private Long usuarioId;
+    private String papel;
+    private LocalDateTime entrouEm;
 }
