@@ -2,7 +2,7 @@
 
 API backend para um projeto semestral (matéria BRAAOOB) com o objetivo de criar um **ambiente unificado para rodar RPGs de mesa**. Este serviço não é apenas um CRUD — ele interpreta regras, executa procedimentos definidos pelo sistema e fornece respostas contextualizadas para o front-end, permitindo que qualquer sistema de RPG seja jogado sem alterações no código.
 
-## 🎯 O que é este projeto?
+## O que é este projeto?
 
 O **Montador de RPG Back-End** é um servidor que:
 
@@ -21,7 +21,7 @@ O **Montador de RPG Back-End** é um servidor que:
 - Durante a criação de personagem, o backend guia o jogador por etapas de escolha de classe, rolagem de atributos e concessão de itens iniciais.
 - Tudo acontece em tempo real através do WebSocket.
 
-## 🧠 Arquitetura do sistema
+## Arquitetura do sistema
 
 ### Entidades
 
@@ -96,7 +96,7 @@ O modelo de **Cena** (`Cena`) substituiu o antigo conceito de Batalha, oferecend
 - Suporte a diferentes tipos de cena (Combate, Exploração, Social, Narrativa)
 - Mapa em formato JSON com grid hexagonal
 
-## 🛠️ Funcionalidades implementadas
+## Funcionalidades implementadas
 
 ### Criação de personagem
 - Escolha do sistema e tipo de início
@@ -130,7 +130,7 @@ O modelo de **Cena** (`Cena`) substituiu o antigo conceito de Batalha, oferecend
 - Renderização de tabelas e colunas dinâmicas
 - Suporte a Markdown nos textos
 
-## 🚀 Como rodar localmente
+## Como rodar localmente
 
 ### Requisitos
 
@@ -149,7 +149,7 @@ O modelo de **Cena** (`Cena`) substituiu o antigo conceito de Batalha, oferecend
 ./mvnw clean package
 ```
 
-## 🔧 Configuração
+## Configuração
 
 A configuração principal está em `src/main/resources/application.yaml`. Ela já inclui suporte a:
 
@@ -170,7 +170,7 @@ A configuração principal está em `src/main/resources/application.yaml`. Ela j
 - `JWT_SECRET`
 - `CORS_ALLOWED_ORIGINS`
 
-## 📡 Endpoints REST principais
+## Endpoints REST principais
 
 ### Campanhas
 - `POST /api/campanhas` — cria nova campanha
@@ -199,7 +199,7 @@ A configuração principal está em `src/main/resources/application.yaml`. Ela j
 ### Importação em lote
 - `POST /api/importar` — importa múltiplas definições (entidades, procedimentos, resoluções) de uma vez usando aliases (`@nome`)
 
-## 🔌 Endpoints WebSocket
+## Endpoints WebSocket
 
 O WebSocket STOMP é registrado em:
 
@@ -217,7 +217,7 @@ O WebSocket STOMP é registrado em:
 - `/topic/sessao/{id}/chat` — mensagens do chat
 - `/user/queue/sessao/{id}` — mensagens privadas para um usuário
 
-## 🧩 Exemplo de importação de conteúdo
+## Exemplo de importação de conteúdo
 
 Você pode importar um sistema completo com classes, itens, habilidades e procedimentos usando um único JSON:
 
@@ -233,13 +233,13 @@ Você pode importar um sistema completo com classes, itens, habilidades e proced
 
 Os aliases (ex.: `@estrela`, `@cavaleiro_moeda`) são resolvidos automaticamente, permitindo referências circulares sem precisar saber IDs do banco.
 
-## 🧪 Testes
+## Testes
 
 ```bash
 ./mvnw test
 ```
 
-## 📌 Observações
+## Observações
 
 - O projeto foi pensado para rodar em VPS sem Docker, mas há arquivos Docker no repositório apenas como referência.
 - Para produção, lembre-se de não deixar `spring.jpa.hibernate.ddl-auto=update` em ambientes críticos.
