@@ -158,5 +158,3 @@ Tópicos de subscrição:
 ```
 
 ---
-
-Se quiser, posso também adicionar seções extras como um diagrama de fluxo ou exemplos de payloads JSON para os principais endpoints.
