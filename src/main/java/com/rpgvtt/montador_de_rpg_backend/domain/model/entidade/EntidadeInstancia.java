@@ -16,6 +16,7 @@ import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -78,4 +79,7 @@ public class EntidadeInstancia {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entidadeInstancia")
     private List<CenaParticipantes> cenaParticipantes;
+
+    @OneToMany(mappedBy = "instancia", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EntidadeRelacao> relacoes = new ArrayList<>();
 }
