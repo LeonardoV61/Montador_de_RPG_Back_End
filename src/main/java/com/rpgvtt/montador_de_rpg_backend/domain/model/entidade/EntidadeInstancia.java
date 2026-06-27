@@ -80,6 +80,9 @@ public class EntidadeInstancia {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entidadeInstancia")
     private List<CenaParticipantes> cenaParticipantes;
 
-    @OneToMany(mappedBy = "instancia", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EntidadeRelacao> relacoes = new ArrayList<>();
+    @OneToMany(mappedBy = "entidadePai", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EntidadeRelacao> relacoesComoPai = new ArrayList<>();
+
+    @OneToMany(mappedBy = "entidadeFilha", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EntidadeRelacao> relacoesComoFilha = new ArrayList<>();
 }
