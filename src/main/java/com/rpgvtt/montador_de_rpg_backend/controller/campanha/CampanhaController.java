@@ -52,8 +52,11 @@ public class CampanhaController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        campanhaService.deletar(id);
+    public ResponseEntity<Void> deletar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        
+        campanhaService.deletar(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -97,7 +100,7 @@ public class CampanhaController {
         campanhaService.removerJogador(campanhaId, principal.getId(), usuarioId);
         return ResponseEntity.noContent().build();
     }
-    
+
     @GetMapping("/{campanhaId}/minha-role")
     public ResponseEntity<CampanhaPapelDTO> obterMinhaRole(
             @PathVariable Long campanhaId,

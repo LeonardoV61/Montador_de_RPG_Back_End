@@ -134,22 +134,27 @@ public class CampanhaService {
     }
 
     @Transactional
-    public void deletar(Long id) {
+    public void deletar(Long id, Long usuarioLogadoId) {
         if (!campanhaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Campanha não encontrada");
         }
 
-        // 1. Remover os vínculos de jogadores com a campanha
+        CampanhaUsuarioKey keyUsuario = new CampanhaUsuarioKey(id, usuarioLogadoId);
+        CampanhaUsuario participacao = campanhaUsuarioRepository.findById(keyUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não participa desta campanha"));
+
+        if (participacao.getPapel() != PapeisUsuario.MESTRE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado: Apenas o mestre pode deletar a campanha");
+        }
+
         entityManager.createQuery("DELETE FROM CampanhaUsuario cu WHERE cu.id.idCampanha = :campanhaId")
                 .setParameter("campanhaId", id)
                 .executeUpdate();
 
-        // 2. Salvar as Instâncias: Setar id_campanha para NULL 
         entityManager.createQuery("UPDATE EntidadeInstancia e SET e.campanha = null WHERE e.campanha.id = :campanhaId")
                 .setParameter("campanhaId", id)
                 .executeUpdate();
 
-        // 3. Salvar os Personagens: Setar id_campanha para NULL
         entityManager.createQuery("UPDATE Personagem p SET p.campanha = null WHERE p.campanha.id = :campanhaId")
                 .setParameter("campanhaId", id)
                 .executeUpdate();
