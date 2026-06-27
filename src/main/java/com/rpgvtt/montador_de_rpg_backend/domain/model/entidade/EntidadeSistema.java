@@ -60,7 +60,7 @@ public class EntidadeSistema {
         @Column(columnDefinition = "jsonb")
         private JsonNode propriedades;
 
-        @OneToMany(mappedBy = "entidadeSistema", cascade = CascadeType.ALL, orphanRemoval = true)
+        @OneToMany(mappedBy = "entidadeSistema")
         private List<EntidadeInstancia> entidadeInstancias;
 
 //     @OneToMany(mappedBy = "entidadeSistema")
