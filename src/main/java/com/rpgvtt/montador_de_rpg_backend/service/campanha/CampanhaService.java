@@ -138,6 +138,26 @@ public class CampanhaService {
         if (!campanhaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Campanha não encontrada");
         }
+
+        // 1. Remover os vínculos de jogadores com a campanha
+        entityManager.createQuery("DELETE FROM CampanhaUsuario cu WHERE cu.id.idCampanha = :campanhaId")
+                .setParameter("campanhaId", id)
+                .executeUpdate();
+
+        // 2. Salvar as Instâncias: Setar id_campanha para NULL 
+        entityManager.createQuery("UPDATE EntidadeInstancia e SET e.campanha = null WHERE e.campanha.id = :campanhaId")
+                .setParameter("campanhaId", id)
+                .executeUpdate();
+
+        // 3. Salvar os Personagens: Setar id_campanha para NULL
+        entityManager.createQuery("UPDATE Personagem p SET p.campanha = null WHERE p.campanha.id = :campanhaId")
+                .setParameter("campanhaId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM Sessao s WHERE s.campanha.id = :campanhaId")
+                .setParameter("campanhaId", id)
+                .executeUpdate();
+
         campanhaRepository.deleteById(id);
     }
 
