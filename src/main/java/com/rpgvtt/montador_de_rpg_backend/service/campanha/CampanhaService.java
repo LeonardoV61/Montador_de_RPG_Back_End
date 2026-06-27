@@ -236,6 +236,11 @@ public class CampanhaService {
         if (dto.status() != null) {
             campanha.setStatus(StatusCampanha.valueOf(dto.status().toUpperCase()));
         }
+        if (dto.sistemaId() != null) {
+            campanha.setSistema(
+                entityManager.getReference(Sistema.class, dto.sistemaId())
+            );
+        }
 
         campanha = campanhaRepository.save(campanha);
         return mapToResponseDTO(campanha);

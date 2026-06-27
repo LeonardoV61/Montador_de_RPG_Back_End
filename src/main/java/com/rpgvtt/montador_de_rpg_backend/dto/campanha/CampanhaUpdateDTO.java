@@ -4,5 +4,6 @@ public record CampanhaUpdateDTO(
     String nome,
     String descricao,
     String urlImagem,
-    String status
+    String status,
+    Long sistemaId
 ) {}
