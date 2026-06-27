@@ -34,6 +34,13 @@ public class CampanhaController {
                 .body(campanhaService.criarTemporariaComSessao(req.sistemaId(), principal.getId()));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CampanhaResponseDTO> atualizar(
+            @PathVariable Long id, 
+            @RequestBody @Valid CampanhaUpdateDTO dto) {
+        return ResponseEntity.ok(campanhaService.atualizar(id, dto));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CampanhaResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(campanhaService.buscarPorId(id));
@@ -79,6 +86,17 @@ public class CampanhaController {
     public ResponseEntity<List<CampanhaParticipanteResponseDTO>> listarParticipantes(
             @PathVariable Long campanhaId) {
         return ResponseEntity.ok(campanhaService.listarParticipantes(campanhaId));
+    }
+
+    // Adicione este método ao seu CampanhaController
+    @DeleteMapping("/{campanhaId}/jogadores/{usuarioId}")
+    public ResponseEntity<Void> removerJogador(
+            @PathVariable Long campanhaId,
+            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        
+        campanhaService.removerJogador(campanhaId, principal.getId(), usuarioId);
+        return ResponseEntity.noContent().build();
     }
 
     // ── Personagem do jogador nesta campanha ───────────────────────

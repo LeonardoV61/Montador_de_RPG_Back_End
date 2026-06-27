@@ -16,6 +16,7 @@ import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaCreateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaParticipanteResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaResponseDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaSessaoTemporariaDTO;
+import com.rpgvtt.montador_de_rpg_backend.dto.campanha.CampanhaUpdateDTO;
 import com.rpgvtt.montador_de_rpg_backend.dto.campanha.PersonagemCampanhaDTO;
 import com.rpgvtt.montador_de_rpg_backend.repository.campanha.CampanhaRepository;
 import com.rpgvtt.montador_de_rpg_backend.repository.campanha.CampanhaUsuarioRepository;
@@ -167,6 +168,43 @@ public class CampanhaService {
                 novoVinculo.getEntrouEm(),
                 novoVinculo.getUsuario().getApelido()
         );
+    }
+
+    @Transactional
+    public void removerJogador(Long campanhaId, Long usuarioLogadoId, Long usuarioParaRemoverId) {
+        
+        CampanhaUsuarioKey keyMestre = new CampanhaUsuarioKey(campanhaId, usuarioLogadoId);
+        CampanhaUsuario mestre = campanhaUsuarioRepository.findById(keyMestre)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não participa desta campanha"));
+
+        if (mestre.getPapel() != PapeisUsuario.MESTRE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas o mestre pode remover jogadores");
+        }
+
+        
+        CampanhaUsuarioKey keyRemover = new CampanhaUsuarioKey(campanhaId, usuarioParaRemoverId);
+        if (!campanhaUsuarioRepository.existsById(keyRemover)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Jogador não encontrado nesta campanha");
+        }
+
+       
+        campanhaUsuarioRepository.deleteById(keyRemover);
+    }
+
+    @Transactional
+    public CampanhaResponseDTO atualizar(Long id, CampanhaUpdateDTO dto) {
+        Campanha campanha = campanhaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campanha não encontrada"));
+
+        if (dto.nome() != null) campanha.setNome(dto.nome());
+        if (dto.descricao() != null) campanha.setDescricao(dto.descricao());
+        if (dto.urlImagem() != null) campanha.setUrlImagem(dto.urlImagem());
+        if (dto.status() != null) {
+            campanha.setStatus(StatusCampanha.valueOf(dto.status().toUpperCase()));
+        }
+
+        campanha = campanhaRepository.save(campanha);
+        return mapToResponseDTO(campanha);
     }
 
     @Transactional(readOnly = true)
