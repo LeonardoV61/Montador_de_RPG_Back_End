@@ -21,6 +21,8 @@ public interface SessaoRepository extends JpaRepository<Sessao, Long> {
 
     List<Sessao> findByCampanhaIdOrderByOrdemDesc(Long campanhaId);
 
+    Optional<Sessao> findFirstByCampanhaIdAndStatusOrderByDataInicioDesc(Long campanhaId, StatusSessao status);
+
     int countByCampanhaId(Long idCampanha);
 
     @Query("SELECT COUNT(s) FROM Sessao s WHERE s.campanha.id IN " +

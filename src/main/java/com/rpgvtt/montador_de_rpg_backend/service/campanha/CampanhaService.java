@@ -119,6 +119,26 @@ public class CampanhaService {
         return new CampanhaSessaoTemporariaDTO(campanha.getId(), sessao.getId());
     }
 
+    @Transactional
+    public Long obterOuCriarSessaoParaCriacao(Long campanhaId) {
+        Campanha campanha = campanhaRepository.findById(campanhaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campanha não encontrada"));
+
+        Optional<Sessao> sessaoAtiva = sessaoRepository.findFirstByCampanhaIdAndStatusOrderByDataInicioDesc(campanhaId, StatusSessao.ATIVA);
+
+        if (sessaoAtiva.isPresent()) {
+            return sessaoAtiva.get().getId();
+        }
+
+        Sessao novaSessao = new Sessao();
+        novaSessao.setCampanha(campanha);
+        novaSessao.setStatus(StatusSessao.ATIVA);
+        novaSessao.setDataInicio(LocalDateTime.now());
+
+        novaSessao = sessaoRepository.save(novaSessao);
+        return novaSessao.getId();
+    }
+
     @Transactional(readOnly = true)
     public CampanhaResponseDTO buscarPorId(Long id) {
         Campanha campanha = campanhaRepository.findById(id)

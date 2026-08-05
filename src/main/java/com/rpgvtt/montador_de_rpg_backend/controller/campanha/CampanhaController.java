@@ -34,6 +34,8 @@ public class CampanhaController {
                 .body(campanhaService.criarTemporariaComSessao(req.sistemaId(), principal.getId()));
     }
 
+    
+
     @PutMapping("/{id}")
     public ResponseEntity<CampanhaResponseDTO> atualizar(
             @PathVariable Long id, 
