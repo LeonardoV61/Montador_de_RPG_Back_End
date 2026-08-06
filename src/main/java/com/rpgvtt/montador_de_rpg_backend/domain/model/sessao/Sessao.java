@@ -54,7 +54,7 @@ public class Sessao {
         private JsonNode sessaoSnapshot;
 
         @NotNull
-        @Enumerated(EnumType.STRING)
+        // @Enumerated(EnumType.STRING)
         @Column(name = "status")
         private StatusSessao status;
 
