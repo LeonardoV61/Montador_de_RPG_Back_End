@@ -7,10 +7,10 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.6</version>
 		<relativePath/> </parent>
-	<groupId>com.rpgvtt</groupId>
-	<artifactId>montador-de-rpg-backend</artifactId>
+	<groupId>com.draftstd</groupId>
+	<artifactId>hydraforge</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>montador-de-rpg-backend</name>
+	<name>hydraforge</name>
 	<description>Backend para o projeto Montador de RPG</description>
 	
 	<properties>
@@ -35,18 +35,10 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.7.3</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

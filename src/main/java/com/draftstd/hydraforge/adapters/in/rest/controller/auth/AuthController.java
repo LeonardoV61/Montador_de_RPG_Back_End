@@ -1,0 +1,58 @@
+package com.draftstd.hydraforge.adapters.in.rest.controller.auth;
+
+import com.draftstd.hydraforge.domain.model.usuario.Usuario;
+import com.draftstd.hydraforge.adapters.out.repository.usuario.UsuarioRepository;
+import com.draftstd.hydraforge.config.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
+        Usuario usuario = usuarioRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
+        if (!passwordEncoder.matches(request.senha(), usuario.getSenha())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
+        }
+        String token = jwtTokenProvider.generateToken(usuario.getEmail());
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> registrar(@RequestBody RegistroRequest request) {
+        if (usuarioRepository.findByEmail(request.email()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado.");
+        }
+        Usuario usuario = new Usuario();
+        usuario.setEmail(request.email());
+        usuario.setApelido(request.apelido());
+        usuario.setSenha(passwordEncoder.encode(request.senha()));
+        usuario.setE_admin(false);
+        usuarioRepository.save(usuario);
+
+        String token = jwtTokenProvider.generateToken(usuario.getEmail());
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+}
+
+// DTO interno (pode ficar no mesmo arquivo ou em um package dto)
+record LoginRequest(String email, String senha) {}
+
+record RegistroRequest(String email, String apelido, String senha) {}

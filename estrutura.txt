@@ -1,8 +1,11 @@
 .
 ├── Backend.dockerfile
 ├── HELP.md
+├── MBRegras.TXT
 ├── README.md
+├── SobreImportJackson.md
 ├── TutorialImageDocker.txt
+├── a.txt
 ├── docker-compose.yml
 ├── estrutura.txt
 ├── mvnw
@@ -12,48 +15,299 @@
 │   ├── main
 │   │   ├── java
 │   │   │   └── com
-│   │   │       └── rpgvtt
-│   │   │           └── montador_de_rpg_backend
+│   │   │       └── draftstd
+│   │   │           └── hydraforge
 │   │   │               ├── MontadorDeRpgBackendApplication.java
-│   │   │               ├── controller
-│   │   │               │   ├── campanha
-│   │   │               │   │   └── CampanhaController.java
-│   │   │               │   └── sessao
-│   │   │               │       └── SessaoController.java
+│   │   │               ├── adapters
+│   │   │               │   ├── in
+│   │   │               │   │   ├── dto
+│   │   │               │   │   │   ├── batalha
+│   │   │               │   │   │   │   ├── BatalhaDTO.java
+│   │   │               │   │   │   │   └── IniciarBatalhaRequestDTO.java
+│   │   │               │   │   │   ├── campanha
+│   │   │               │   │   │   │   ├── AdicionarJogadorDTO.java
+│   │   │               │   │   │   │   ├── CampanhaCreateDTO.java
+│   │   │               │   │   │   │   ├── CampanhaPapelDTO.java
+│   │   │               │   │   │   │   ├── CampanhaParticipanteResponseDTO.java
+│   │   │               │   │   │   │   ├── CampanhaResponseDTO.java
+│   │   │               │   │   │   │   ├── CampanhaSessaoTemporariaDTO.java
+│   │   │               │   │   │   │   ├── CampanhaUpdateDTO.java
+│   │   │               │   │   │   │   └── PersonagemCampanhaDTO.java
+│   │   │               │   │   │   ├── entidade
+│   │   │               │   │   │   │   ├── EntidadeInstanciaCreateDTO.java
+│   │   │               │   │   │   │   ├── EntidadeInstanciaResponseDTO.java
+│   │   │               │   │   │   │   ├── EntidadeInstanciaUpadteDTO.java
+│   │   │               │   │   │   │   ├── EntidadeRelacaoCreateDTO.java
+│   │   │               │   │   │   │   ├── EntidadeRelacaoResponseDTO.java
+│   │   │               │   │   │   │   ├── EntidadeRelacaoUpdateDTO.java
+│   │   │               │   │   │   │   ├── EntidadeSistemaCreateDTO.java
+│   │   │               │   │   │   │   ├── EntidadeSistemaResponseDTO.java
+│   │   │               │   │   │   │   └── EntidadeSistemaUpdateDTO.java
+│   │   │               │   │   │   ├── importacao
+│   │   │               │   │   │   │   ├── DefinicaoDTO.java
+│   │   │               │   │   │   │   └── ImportacaoRequestDTO.java
+│   │   │               │   │   │   ├── mecanica
+│   │   │               │   │   │   │   ├── EntidadeProcedimentoCreateDTO.java
+│   │   │               │   │   │   │   ├── EntidadeProcedimentoResponseDTO.java
+│   │   │               │   │   │   │   ├── EntidadeProcedimentoUpdateDTO.java
+│   │   │               │   │   │   │   ├── ResolucaoCreateDTO.java
+│   │   │               │   │   │   │   ├── ResolucaoExecucaoDTO.java
+│   │   │               │   │   │   │   ├── ResolucaoResponseDTO.java
+│   │   │               │   │   │   │   ├── ResolucaoUpdateDTO.java
+│   │   │               │   │   │   │   ├── ResultadoPoolDTO.java
+│   │   │               │   │   │   │   ├── TesteLivreDTO.java
+│   │   │               │   │   │   │   └── TesteLivreRequestDTO.java
+│   │   │               │   │   │   ├── personagem
+│   │   │               │   │   │   │   ├── PersonagemCompletoCreateDTO.java
+│   │   │               │   │   │   │   ├── PersonagemCreateDTO.java
+│   │   │               │   │   │   │   ├── PersonagemResponseDTO.java
+│   │   │               │   │   │   │   ├── PersonagemUpdateDTO.java
+│   │   │               │   │   │   │   └── UsoItemDTO.java
+│   │   │               │   │   │   ├── sessao
+│   │   │               │   │   │   │   ├── AnotacaoCreateDTO.java
+│   │   │               │   │   │   │   ├── AnotacaoResponseDTO.java
+│   │   │               │   │   │   │   ├── AnotacaoUpdateDTO.java
+│   │   │               │   │   │   │   ├── AtributoAlteradoDTO.java
+│   │   │               │   │   │   │   ├── CenaCombateDTO.java
+│   │   │               │   │   │   │   ├── CenaCreateDTO.java
+│   │   │               │   │   │   │   ├── CenaResponseDTO.java
+│   │   │               │   │   │   │   ├── CenaUpdateDTO.java
+│   │   │               │   │   │   │   ├── ConviteDTO.java
+│   │   │               │   │   │   │   ├── EntradaSessaoDTO.java
+│   │   │               │   │   │   │   ├── IniciarCenaRequestDTO.java
+│   │   │               │   │   │   │   ├── MensagemCreateDTO.java
+│   │   │               │   │   │   │   ├── MensagemResponseDTO.java
+│   │   │               │   │   │   │   ├── ParticipanteDTO.java
+│   │   │               │   │   │   │   ├── SessaoCreateDTO.java
+│   │   │               │   │   │   │   ├── SessaoDTO.java
+│   │   │               │   │   │   │   └── SessaoResponseDTO.java
+│   │   │               │   │   │   ├── sistema
+│   │   │               │   │   │   │   ├── EtapaProcedimentoCreateDTO.java
+│   │   │               │   │   │   │   ├── EtapaProcedimentoResponseDTO.java
+│   │   │               │   │   │   │   ├── EtapaProcedimentoUpdateDTO.java
+│   │   │               │   │   │   │   ├── EventoSistemaCreateDTO.java
+│   │   │               │   │   │   │   ├── EventoSistemaResponseDTO.java
+│   │   │               │   │   │   │   ├── EventoSistemaUpdateDTO.java
+│   │   │               │   │   │   │   ├── ProcedimentoContextoDTO.java
+│   │   │               │   │   │   │   ├── ProcedimentoCreateDTO.java
+│   │   │               │   │   │   │   ├── ProcedimentoResponseDTO.java
+│   │   │               │   │   │   │   ├── ProcedimentoUpdateDTO.java
+│   │   │               │   │   │   │   ├── RespostaEtapaDTO.java
+│   │   │               │   │   │   │   ├── SistemaCreateDTO.java
+│   │   │               │   │   │   │   ├── SistemaResponseDTO.java
+│   │   │               │   │   │   │   └── SistemaUpdateDTO.java
+│   │   │               │   │   │   ├── usuario
+│   │   │               │   │   │   │   ├── AmizadeResponseDTO.java
+│   │   │               │   │   │   │   ├── AmizadeSolicitarDTO.java
+│   │   │               │   │   │   │   ├── UsuarioResponseDTO.java
+│   │   │               │   │   │   │   └── UsuarioUpdateDTO.java
+│   │   │               │   │   │   └── websocket
+│   │   │               │   │   │       ├── ChatEventDTO.java
+│   │   │               │   │   │       └── ChatMessageDTO.java
+│   │   │               │   │   ├── mapper
+│   │   │               │   │   ├── messaging
+│   │   │               │   │   ├── rest
+│   │   │               │   │   │   └── controller
+│   │   │               │   │   │       ├── AcaoLivreController.java
+│   │   │               │   │   │       ├── DadosFront
+│   │   │               │   │   │       │   └── DashboardController.java
+│   │   │               │   │   │       ├── auth
+│   │   │               │   │   │       │   └── AuthController.java
+│   │   │               │   │   │       ├── batalha
+│   │   │               │   │   │       │   └── BatalhaController.java
+│   │   │               │   │   │       ├── campanha
+│   │   │               │   │   │       │   └── CampanhaController.java
+│   │   │               │   │   │       ├── entidade
+│   │   │               │   │   │       │   ├── EntidadeInstanciaController.java
+│   │   │               │   │   │       │   └── EntidadeSistemaController.java
+│   │   │               │   │   │       ├── importacao
+│   │   │               │   │   │       │   └── ImportacaoController.java
+│   │   │               │   │   │       ├── mecanica
+│   │   │               │   │   │       │   └── ResolucaoController.java
+│   │   │               │   │   │       ├── personagem
+│   │   │               │   │   │       │   └── PersonagemController.java
+│   │   │               │   │   │       ├── sessao
+│   │   │               │   │   │       │   ├── AnotacaoController.java
+│   │   │               │   │   │       │   ├── CenaController.java
+│   │   │               │   │   │       │   ├── MensagemLogController.java
+│   │   │               │   │   │       │   └── SessaoController.java
+│   │   │               │   │   │       ├── sistema
+│   │   │               │   │   │       │   ├── ProcedimentoController.java
+│   │   │               │   │   │       │   └── SistemaController.java
+│   │   │               │   │   │       └── usuario
+│   │   │               │   │   │           ├── AmigoController.java
+│   │   │               │   │   │           └── UsuarioController.java
+│   │   │               │   │   └── websocket
+│   │   │               │   │       ├── BattleController.java
+│   │   │               │   │       ├── PresencaManager.java
+│   │   │               │   │       └── SessaoWebSocketController.java
+│   │   │               │   └── out
+│   │   │               │       ├── eventstore
+│   │   │               │       │   ├── jpa
+│   │   │               │       │   │   ├── EventStoreEntity.java
+│   │   │               │       │   │   └── JpaEventStoreAdapter.java
+│   │   │               │       │   └── serializer
+│   │   │               │       ├── messaging
+│   │   │               │       │   ├── WebSocketMessagingAdapter.java
+│   │   │               │       │   └── config
+│   │   │               │       ├── projections
+│   │   │               │       │   ├── adapter
+│   │   │               │       │   │   ├── BatalhaProjectionAdapter.java
+│   │   │               │       │   │   ├── PersonagemProjectionAdapter.java
+│   │   │               │       │   │   └── SessaoProjectionAdapter.java
+│   │   │               │       │   └── persistence
+│   │   │               │       │       ├── batalha
+│   │   │               │       │       │   └── BatalhaPersistenceAdapter.java
+│   │   │               │       │       ├── campanha
+│   │   │               │       │       │   └── CampanhaPersistenceAdapter.java
+│   │   │               │       │       ├── entidade
+│   │   │               │       │       │   ├── EntidadeInstanciaPersistenceAdapter.java
+│   │   │               │       │       │   └── EntidadeSistemaPersistenceAdapter.java
+│   │   │               │       │       ├── importacao
+│   │   │               │       │       │   └── ImportacaoPersistenceAdapter.java
+│   │   │               │       │       ├── mecanica
+│   │   │               │       │       │   └── ResolucaoPersistenceAdapter.java
+│   │   │               │       │       ├── personagem
+│   │   │               │       │       │   └── PersonagemPersistenceAdapter.java
+│   │   │               │       │       ├── sessao
+│   │   │               │       │       │   ├── AnotacaoPersistenceAdapter.java
+│   │   │               │       │       │   ├── CenaPersistenceAdapter.java
+│   │   │               │       │       │   ├── MensagemLogPersistenceAdapter.java
+│   │   │               │       │       │   └── SessaoPersistenceAdapter.java
+│   │   │               │       │       ├── sistema
+│   │   │               │       │       │   ├── EtapaProcedimentoPersistenceAdapter.java
+│   │   │               │       │       │   ├── ProcedimentoPersistenceAdapter.java
+│   │   │               │       │       │   └── SistemaPersistenceAdapter.java
+│   │   │               │       │       └── usuario
+│   │   │               │       │           └── UsuarioPersistenceAdapter.java
+│   │   │               │       └── repository
+│   │   │               │           ├── AnotacaoRepository.java
+│   │   │               │           ├── batalha
+│   │   │               │           │   ├── BatalhaParticipantesRepository.java
+│   │   │               │           │   └── BatalhaRepository.java
+│   │   │               │           ├── campanha
+│   │   │               │           │   ├── CampanhaRepository.java
+│   │   │               │           │   └── CampanhaUsuarioRepository.java
+│   │   │               │           ├── entidade
+│   │   │               │           │   ├── EntidadeInstanciaRepository.java
+│   │   │               │           │   ├── EntidadeRelacaoRepository.java
+│   │   │               │           │   └── EntidadeSistemaRepository.java
+│   │   │               │           ├── mecanica
+│   │   │               │           │   ├── EntidadeProcedimentoRepository.java
+│   │   │               │           │   ├── PrimitivoRepository.java
+│   │   │               │           │   └── ResolucaoRepository.java
+│   │   │               │           ├── personagem
+│   │   │               │           │   └── PersonagemRepository.java
+│   │   │               │           ├── sessao
+│   │   │               │           │   ├── AnotacaoRepository.java
+│   │   │               │           │   ├── CenaParticipantesRepository.java
+│   │   │               │           │   ├── CenaRepository.java
+│   │   │               │           │   ├── EfeitoAtivoRepository.java
+│   │   │               │           │   ├── HistoricoAcoesRepository.java
+│   │   │               │           │   ├── MensagemLogRepository.java
+│   │   │               │           │   └── SessaoRepository.java
+│   │   │               │           ├── sistema
+│   │   │               │           │   ├── EtapaProcedimentoRepository.java
+│   │   │               │           │   ├── EventoSistemaRepository.java
+│   │   │               │           │   ├── ProcedimentoRepository.java
+│   │   │               │           │   └── SistemaRepository.java
+│   │   │               │           └── usuario
+│   │   │               │               ├── AmizadeRepository.java
+│   │   │               │               └── UsuarioRepository.java
+│   │   │               ├── application
+│   │   │               │   └── usecase
+│   │   │               │       ├── batalha
+│   │   │               │       │   ├── EncerrarBatalhaUseCaseImpl.java
+│   │   │               │       │   ├── GerenciarParticipantesBatalhaUseCaseImpl.java
+│   │   │               │       │   └── IniciarBatalhaUseCaseImpl.java
+│   │   │               │       ├── campanha
+│   │   │               │       │   ├── AtualizarCampanhaUseCaseImpl.java
+│   │   │               │       │   ├── CriarCampanhaUseCaseImpl.java
+│   │   │               │       │   ├── GerenciarParticipantesCampanhaUseCaseImpl.java
+│   │   │               │       │   └── ObterCampanhaUseCaseImpl.java
+│   │   │               │       ├── importacao
+│   │   │               │       │   └── ProcessarImportacaoUseCaseImpl.java
+│   │   │               │       ├── mecanica
+│   │   │               │       │   ├── GerenciarResolucaoUseCaseImpl.java
+│   │   │               │       │   └── RolarTesteLivreUseCaseImpl.java
+│   │   │               │       ├── personagem
+│   │   │               │       │   ├── AtualizarPersonagemUseCaseImpl.java
+│   │   │               │       │   ├── CriarPersonagemUseCaseImpl.java
+│   │   │               │       │   ├── DeletarPersonagemUseCaseImpl.java
+│   │   │               │       │   ├── ObterPersonagemUseCaseImpl.java
+│   │   │               │       │   ├── RealizarDescansoUseCaseImpl.java
+│   │   │               │       │   └── UsarItemConsumivelUseCaseImpl.java
+│   │   │               │       ├── sessao
+│   │   │               │       │   ├── CriarSessaoUseCaseImpl.java
+│   │   │               │       │   ├── GerenciarEfeitosManuaisUseCaseImpl.java
+│   │   │               │       │   ├── GerenciarParticipantesSessaoUseCaseImpl.java
+│   │   │               │       │   ├── GerenciarStatusSessaoUseCaseImpl.java
+│   │   │               │       │   ├── ObterDetalhesSessaoUseCaseImpl.java
+│   │   │               │       │   ├── anotacao
+│   │   │               │       │   │   ├── CriarAnotacaoUseCaseImpl.java
+│   │   │               │       │   │   ├── GerenciarAnotacaoUseCaseImpl.java
+│   │   │               │       │   │   └── ObterAnotacaoUseCaseImpl.java
+│   │   │               │       │   └── cena
+│   │   │               │       │       ├── CriarCenaUseCaseImpl.java
+│   │   │               │       │       ├── GerenciarCenaUseCaseImpl.java
+│   │   │               │       │       └── ObterCenaUseCaseImpl.java
+│   │   │               │       └── sistema
+│   │   │               │           ├── AtualizarSistemaUseCaseImpl.java
+│   │   │               │           ├── CriarSistemaUseCaseImpl.java
+│   │   │               │           ├── GerenciarProcedimentoUseCaseImpl.java
+│   │   │               │           ├── ObterSistemaUseCaseImpl.java
+│   │   │               │           └── entidade
+│   │   │               │               ├── GerenciarEntidadeInstanciaUseCaseImpl.java
+│   │   │               │               └── GerenciarEntidadeSistemaUseCaseImpl.java
+│   │   │               ├── config
+│   │   │               │   ├── Jackson3JsonFormatMapper.java
+│   │   │               │   ├── JacksonHibernateConfig.java
+│   │   │               │   ├── WebSocketConfig.java
+│   │   │               │   └── security
+│   │   │               │       ├── CustomOAuth2UserService.java
+│   │   │               │       ├── JwtAuthenticationFilter.java
+│   │   │               │       ├── JwtTokenProvider.java
+│   │   │               │       ├── OAuth2AuthenticationSuccessHandler.java
+│   │   │               │       ├── SecurityConfig.java
+│   │   │               │       └── UsuarioPrincipal.java
 │   │   │               ├── domain
-│   │   │               │   ├── engine
-│   │   │               │   │   ├── EngineBattleMaster.java
-│   │   │               │   │   ├── components
-│   │   │               │   │   │   ├── FormulaReferencer.java
-│   │   │               │   │   │   ├── FormulaSolver.java
-│   │   │               │   │   │   └── InterpretadorJson.java
-│   │   │               │   │   ├── primitivos
-│   │   │               │   │   │   ├── EstadoSessao.java
-│   │   │               │   │   │   ├── PrimitivoExecutor.java
-│   │   │               │   │   │   ├── RegistroPrimitivos.java
-│   │   │               │   │   │   ├── Suspensao.java
-│   │   │               │   │   │   └── executores
-│   │   │               │   │   │       ├── AplicarEfeitoAtivoExecutor.java
-│   │   │               │   │   │       ├── DispararEventoExecutor.java
-│   │   │               │   │   │       ├── ModificarAtributoExecutor.java
-│   │   │               │   │   │       └── SolicitarEscolhaExecutor.java
-│   │   │               │   │   └── utils
-│   │   │               │   │       ├── Alvo.java
-│   │   │               │   │       ├── Contexto.java
-│   │   │               │   │       ├── ContextoComposto.java
-│   │   │               │   │       ├── ContextoJsonNode.java
-│   │   │               │   │       ├── DiceExtractor.java
-│   │   │               │   │       ├── InterpretadorMd
-│   │   │               │   │       │   └── interpretaor.md
-│   │   │               │   │       ├── Operations.java
-│   │   │               │   │       ├── Procedures.java
-│   │   │               │   │       └── ResultadoExpressao.java
+│   │   │               │   ├── commands
 │   │   │               │   ├── enums
+│   │   │               │   │   ├── BatalhaStatus.java
 │   │   │               │   │   ├── PapeisUsuario.java
+│   │   │               │   │   ├── StatusAmizade.java
 │   │   │               │   │   ├── StatusCampanha.java
-│   │   │               │   │   └── TipoVantagem.java
+│   │   │               │   │   ├── StatusProcedimento.java
+│   │   │               │   │   └── StatusSessao.java
+│   │   │               │   ├── events
+│   │   │               │   │   ├── DomainEvent.java
+│   │   │               │   │   ├── evaluation
+│   │   │               │   │   ├── rules
+│   │   │               │   │   ├── sessao
+│   │   │               │   │   │   ├── Sessao.java
+│   │   │               │   │   │   ├── SessaoCriadaEvent.java
+│   │   │               │   │   │   └── StatusSessaoAlteradoEvent.java
+│   │   │               │   │   └── workflow
+│   │   │               │   ├── exceptions
+│   │   │               │   │   ├── ConfiguracaoException.java
+│   │   │               │   │   ├── DeniedAcessException.java
+│   │   │               │   │   ├── EstadoInvalidoException.java
+│   │   │               │   │   └── RecursoNaoEncontradoException.java
+│   │   │               │   ├── exemplos
+│   │   │               │   │   ├── AlterarGuardaEtapaProcedimento.json
+│   │   │               │   │   ├── AplicarEfeitoAtivo.json
+│   │   │               │   │   ├── GuardaCalc.json
+│   │   │               │   │   ├── GuardaEtapaProcedimento.json
+│   │   │               │   │   ├── ProcTotalExemple.json
+│   │   │               │   │   ├── VerificarFimCombateEtapaProcedimento.json
+│   │   │               │   │   ├── VigorCalc.json
+│   │   │               │   │   └── VigorEtapaProcedimento.json
 │   │   │               │   ├── model
-│   │   │               │   │   ├── TipoPersonagem.java
+│   │   │               │   │   ├── AggregateRoot.java
+│   │   │               │   │   ├── batalha
+│   │   │               │   │   │   ├── Batalha.java
+│   │   │               │   │   │   ├── BatalhaParticipantes.java
+│   │   │               │   │   │   └── BatalhaParticipantesKey.java
 │   │   │               │   │   ├── campanha
 │   │   │               │   │   │   ├── Campanha.java
 │   │   │               │   │   │   ├── CampanhaUsuario.java
@@ -63,15 +317,14 @@
 │   │   │               │   │   │   ├── EntidadeRelacao.java
 │   │   │               │   │   │   ├── EntidadeRelacaoKey.java
 │   │   │               │   │   │   └── EntidadeSistema.java
+│   │   │               │   │   ├── evaluation
 │   │   │               │   │   ├── mecanica
-│   │   │               │   │   │   ├── EfeitosPrimitivos.java
-│   │   │               │   │   │   ├── EfeitosPrimitivosKey.java
-│   │   │               │   │   │   ├── EntidadeEfeito.java
+│   │   │               │   │   │   ├── EntidadeProcedimento.java
 │   │   │               │   │   │   ├── Primitivo.java
-│   │   │               │   │   │   ├── Resolucao.java
-│   │   │               │   │   │   └── Rolagem.java
+│   │   │               │   │   │   └── Resolucao.java
 │   │   │               │   │   ├── personagem
 │   │   │               │   │   │   └── Personagem.java
+│   │   │               │   │   ├── rules
 │   │   │               │   │   ├── sessao
 │   │   │               │   │   │   ├── Anotacao.java
 │   │   │               │   │   │   ├── Cena.java
@@ -86,8 +339,94 @@
 │   │   │               │   │   │   ├── EventoSistema.java
 │   │   │               │   │   │   ├── Procedimento.java
 │   │   │               │   │   │   └── Sistema.java
-│   │   │               │   │   └── usuario
-│   │   │               │   │       └── Usuario.java
+│   │   │               │   │   ├── usuario
+│   │   │               │   │   │   ├── Amizade.java
+│   │   │               │   │   │   ├── AmizadeKey.java
+│   │   │               │   │   │   └── Usuario.java
+│   │   │               │   │   └── workflow
+│   │   │               │   ├── service
+│   │   │               │   │   ├── CampanhaAutorizacaoService.java
+│   │   │               │   │   └── engine
+│   │   │               │   │       ├── components
+│   │   │               │   │       │   ├── FormulaReferencer.java
+│   │   │               │   │       │   ├── FormulaSolver.java
+│   │   │               │   │       │   ├── InterpretadorJson.java
+│   │   │               │   │       │   ├── ItemResolver.java
+│   │   │               │   │       │   └── ParametroResolver.java
+│   │   │               │   │       ├── exceptions
+│   │   │               │   │       │   ├── EntityNotFoundException.java
+│   │   │               │   │       │   └── JsonFieldNotFoundException.java
+│   │   │               │   │       ├── primitivos
+│   │   │               │   │       │   ├── HandlerRegistry.java
+│   │   │               │   │       │   ├── PrimitivoExecutor.java
+│   │   │               │   │       │   ├── VerificadorAtributo.java
+│   │   │               │   │       │   └── handlers
+│   │   │               │   │       │       ├── AcumularValorHandler.java
+│   │   │               │   │       │       ├── AgruparPorHandler.java
+│   │   │               │   │       │       ├── AlterarAtributoHandler.java
+│   │   │               │   │       │       ├── CalculadorHandler.java
+│   │   │               │   │       │       ├── CalcularAtributoHandler.java
+│   │   │               │   │       │       ├── ChamarProcedimentoHandler.java
+│   │   │               │   │       │       ├── ColetarDeclaracoesParalelasHandler.java
+│   │   │               │   │       │       ├── ConcederClasseHandler.java
+│   │   │               │   │       │       ├── CustomizarEntidadeHandler.java
+│   │   │               │   │       │       ├── DefinirAlvoHandler.java
+│   │   │               │   │       │       ├── DefinirVariavelHandler.java
+│   │   │               │   │       │       ├── ForEachHandler.java
+│   │   │               │   │       │       ├── GerenciarItemHandler.java
+│   │   │               │   │       │       ├── ProcessarGambitsHandler.java
+│   │   │               │   │       │       ├── ResolverAtaquesAgrupadosHandler.java
+│   │   │               │   │       │       ├── ResolverHandler.java
+│   │   │               │   │       │       ├── RolarPoolHandler.java
+│   │   │               │   │       │       ├── RolarSimplesHandler.java
+│   │   │               │   │       │       ├── SelecionarEntidadeHandler.java
+│   │   │               │   │       │       ├── SolicitadorRolagemHandler.java
+│   │   │               │   │       │       ├── SolicitarInputHandler.java
+│   │   │               │   │       │       ├── UsarHabilidadeHandler.java
+│   │   │               │   │       │       ├── VerificarCondicaoHandler.java
+│   │   │               │   │       │       └── VerificarRepeticaoHandler.java
+│   │   │               │   │       ├── procedimentos
+│   │   │               │   │       │   ├── EtapaAvulsa.java
+│   │   │               │   │       │   ├── ProcedimentoEngine.java
+│   │   │               │   │       │   ├── contexto
+│   │   │               │   │       │   │   ├── ContextoAccessor.java
+│   │   │               │   │       │   │   ├── ContextoAvulso.java
+│   │   │               │   │       │   │   ├── InstanciaResolver.java
+│   │   │               │   │       │   │   ├── InterpretadorContexto.java
+│   │   │               │   │       │   │   ├── LoadRequest.java
+│   │   │               │   │       │   │   ├── ProcedimentoContexto.java
+│   │   │               │   │       │   │   ├── ProcedimentoLoader.java
+│   │   │               │   │       │   │   ├── ResultadoEfeito.java
+│   │   │               │   │       │   │   ├── ResultadoEtapa.java
+│   │   │               │   │       │   │   └── SessaoContexto.java
+│   │   │               │   │       │   ├── interfaces
+│   │   │               │   │       │   │   ├── EscopoInstancias.java
+│   │   │               │   │       │   │   ├── EtapaExecutavel.java
+│   │   │               │   │       │   │   ├── EtapaHandler.java
+│   │   │               │   │       │   │   └── ExecucaoContexto.java
+│   │   │               │   │       │   └── snapshot
+│   │   │               │   │       │       ├── ProcedimentoSnapshot.java
+│   │   │               │   │       │       ├── SessaoRehydrator.java
+│   │   │               │   │       │       └── SessaoSnapshot.java
+│   │   │               │   │       └── utils
+│   │   │               │   │           ├── ColetaParcialUtil.java
+│   │   │               │   │           ├── FonteListaResolver.java
+│   │   │               │   │           ├── interpretador
+│   │   │               │   │           │   ├── InterpretadorMd
+│   │   │               │   │           │   │   └── interpretaor.md
+│   │   │               │   │           │   ├── Operations.java
+│   │   │               │   │           │   ├── Procedures.java
+│   │   │               │   │           │   ├── ResultadoExpressao.java
+│   │   │               │   │           │   └── contexto
+│   │   │               │   │           │       ├── Alvo.java
+│   │   │               │   │           │       ├── Contexto.java
+│   │   │               │   │           │       ├── ContextoComposto.java
+│   │   │               │   │           │       └── ContextoJsonNode.java
+│   │   │               │   │           └── rolagemEngine
+│   │   │               │   │               ├── ResultadoRolagem.java
+│   │   │               │   │               ├── Rolagem.java
+│   │   │               │   │               ├── RolagemEngine.java
+│   │   │               │   │               └── VantagemTipo.java
 │   │   │               │   └── validation
 │   │   │               │       ├── SchemaValidator.java
 │   │   │               │       ├── exception
@@ -99,223 +438,212 @@
 │   │   │               │           ├── AtributoSchema.java
 │   │   │               │           ├── CampoCompostoSchema.java
 │   │   │               │           └── TipoEntidadeSchema.java
-│   │   │               ├── dto
-│   │   │               │   ├── campanha
-│   │   │               │   │   ├── AdicionarJogadorDTO.java
-│   │   │               │   │   ├── CampanhaCreateDTO.java
-│   │   │               │   │   ├── CampanhaParticipanteResponseDTO.java
-│   │   │               │   │   └── CampanhaResponseDTO.java
-│   │   │               │   └── sessao
-│   │   │               │       ├── SessaoCreateDTO.java
-│   │   │               │       └── SessaoResponseDTO.java
-│   │   │               ├── repository
-│   │   │               │   ├── AnotacaoRepository.java
-│   │   │               │   ├── campanha
-│   │   │               │   │   ├── CampanhaRepository.java
-│   │   │               │   │   └── CampanhaUsuarioRepository.java
-│   │   │               │   ├── entidade
-│   │   │               │   │   ├── EntidadeEfeitoRepository.java
-│   │   │               │   │   ├── EntidadeInstanciaRepository.java
-│   │   │               │   │   ├── EntidadeRelacaoRepository.java
-│   │   │               │   │   └── EntidadeSistemaRepository.java
-│   │   │               │   ├── mecanica
-│   │   │               │   │   ├── EfeitosPrimitivosRepository.java
-│   │   │               │   │   ├── EntidadeEfeitoRepository.java
-│   │   │               │   │   ├── PrimitivoRepository.java
-│   │   │               │   │   ├── ResolucaoRepository.java
-│   │   │               │   │   └── RolagemRepository.java
-│   │   │               │   ├── personagem
-│   │   │               │   │   └── PersonagemRepository.java
-│   │   │               │   ├── sessao
-│   │   │               │   │   ├── CenaParticipantesRepository.java
-│   │   │               │   │   ├── CenaRepository.java
-│   │   │               │   │   ├── EfeitoAtivoRepository.java
-│   │   │               │   │   ├── HistoricoAcoesRepository.java
-│   │   │               │   │   ├── MensagemLogRepository.java
-│   │   │               │   │   └── SessaoRepository.java
-│   │   │               │   ├── sistema
-│   │   │               │   │   ├── EtapaProcedimentoRepository.java
-│   │   │               │   │   ├── EventoSistemaRepository.java
-│   │   │               │   │   ├── ProcedimentoRepository.java
-│   │   │               │   │   └── SistemaRepository.java
-│   │   │               │   └── usuario
-│   │   │               │       └── UsuarioRepository.java
-│   │   │               ├── security
-│   │   │               │   ├── CustomOAuth2UserService.java
-│   │   │               │   ├── JwtAuthenticationFilter.java
-│   │   │               │   ├── JwtTokenProvider.java
-│   │   │               │   ├── OAuth2AuthenticationSuccessHandler.java
-│   │   │               │   └── SecurityConfig.java
-│   │   │               └── service
-│   │   │                   ├── campanha
-│   │   │                   │   └── CampanhaService.java
-│   │   │                   └── sessao
-│   │   │                       └── SessaoService.java
+│   │   │               ├── ports
+│   │   │               │   ├── in
+│   │   │               │   │   ├── batalha
+│   │   │               │   │   │   ├── EncerrarBatalhaUseCase.java
+│   │   │               │   │   │   ├── GerenciarParticipantesBatalhaUseCase.java
+│   │   │               │   │   │   └── IniciarBatalhaUseCase.java
+│   │   │               │   │   ├── campanha
+│   │   │               │   │   │   ├── AtualizarCampanhaUseCase.java
+│   │   │               │   │   │   ├── CriarCampanhaUseCase.java
+│   │   │               │   │   │   ├── GerenciarParticipantesCampanhaUseCase.java
+│   │   │               │   │   │   └── ObterCampanhaUseCase.java
+│   │   │               │   │   ├── command
+│   │   │               │   │   │   ├── batalha
+│   │   │               │   │   │   │   ├── AdicionarParticipanteBatalhaCommand.java
+│   │   │               │   │   │   │   ├── EncerrarBatalhaCommand.java
+│   │   │               │   │   │   │   ├── IniciarBatalhaCommand.java
+│   │   │               │   │   │   │   └── RemoverParticipanteBatalhaCommand.java
+│   │   │               │   │   │   ├── campanha
+│   │   │               │   │   │   │   ├── AdicionarJogadorCampanhaCommand.java
+│   │   │               │   │   │   │   ├── AlterarPapelJogadorCommand.java
+│   │   │               │   │   │   │   ├── AtualizarCampanhaCommand.java
+│   │   │               │   │   │   │   ├── CriarCampanhaCommand.java
+│   │   │               │   │   │   │   └── RemoverJogadorCampanhaCommand.java
+│   │   │               │   │   │   ├── importacao
+│   │   │               │   │   │   │   ├── ExportarPersonagemCommand.java
+│   │   │               │   │   │   │   ├── ExportarSistemaCommand.java
+│   │   │               │   │   │   │   ├── ImportarPersonagemCommand.java
+│   │   │               │   │   │   │   └── ImportarSistemaCommand.java
+│   │   │               │   │   │   ├── mecanica
+│   │   │               │   │   │   │   └── RolarDadosCommand.java
+│   │   │               │   │   │   ├── personagem
+│   │   │               │   │   │   │   ├── AtualizarPersonagemCommand.java
+│   │   │               │   │   │   │   ├── CriarPersonagemCommand.java
+│   │   │               │   │   │   │   ├── DeletarPersonagemCommand.java
+│   │   │               │   │   │   │   ├── RealizarDescansoCommand.java
+│   │   │               │   │   │   │   └── UsarItemConsumivelCommand.java
+│   │   │               │   │   │   ├── sessao
+│   │   │               │   │   │   │   ├── AdicionarEfeitoManualCommand.java
+│   │   │               │   │   │   │   ├── AlterarStatusSessaoCommand.java
+│   │   │               │   │   │   │   ├── AtualizarAnotacaoCommand.java
+│   │   │               │   │   │   │   ├── AtualizarCenaCommand.java
+│   │   │               │   │   │   │   ├── CriarAnotacaoCommand.java
+│   │   │               │   │   │   │   ├── CriarCenaCommand.java
+│   │   │               │   │   │   │   ├── CriarSessaoCommand.java
+│   │   │               │   │   │   │   ├── EntrarSessaoCommand.java
+│   │   │               │   │   │   │   └── RemoverEfeitoManualCommand.java
+│   │   │               │   │   │   └── sistema
+│   │   │               │   │   │       ├── AtualizarEntidadeInstanciaCommand.java
+│   │   │               │   │   │       ├── AtualizarEntidadeSistemaCommand.java
+│   │   │               │   │   │       ├── AtualizarSistemaCommand.java
+│   │   │               │   │   │       ├── CriarEntidadeInstanciaCommand.java
+│   │   │               │   │   │       ├── CriarEntidadeSistemaCommand.java
+│   │   │               │   │   │       ├── CriarSistemaCommand.java
+│   │   │               │   │   │       └── ExecutarProcedimentoCommand.java
+│   │   │               │   │   ├── importacao
+│   │   │               │   │   │   ├── ExportarPersonagemUseCase.java
+│   │   │               │   │   │   ├── ExportarSistemaUseCase.java
+│   │   │               │   │   │   ├── ImportarPersonagemUseCase.java
+│   │   │               │   │   │   └── ImportarSistemaUseCase.java
+│   │   │               │   │   ├── mecanica
+│   │   │               │   │   │   ├── ObterHistoricoRolagensUseCase.java
+│   │   │               │   │   │   └── RolarDadosUseCase.java
+│   │   │               │   │   ├── personagem
+│   │   │               │   │   │   ├── AtualizarPersonagemUseCase.java
+│   │   │               │   │   │   ├── CriarPersonagemUseCase.java
+│   │   │               │   │   │   ├── DeletarPersonagemUseCase.java
+│   │   │               │   │   │   ├── ObterPersonagemUseCase.java
+│   │   │               │   │   │   ├── RealizarDescansoUseCase.java
+│   │   │               │   │   │   └── UsarItemConsumivelUseCase.java
+│   │   │               │   │   ├── query
+│   │   │               │   │   │   ├── batalha
+│   │   │               │   │   │   │   ├── BatalhaQueryResponse.java
+│   │   │               │   │   │   │   └── ObterBatalhaQuery.java
+│   │   │               │   │   │   ├── campanha
+│   │   │               │   │   │   │   ├── CampanhaParticipanteQueryResponse.java
+│   │   │               │   │   │   │   ├── CampanhaQueryResponse.java
+│   │   │               │   │   │   │   ├── ListarCampanhasPorUsuarioQuery.java
+│   │   │               │   │   │   │   └── ObterCampanhaQuery.java
+│   │   │               │   │   │   ├── importacao
+│   │   │               │   │   │   │   └── ArquivoExportadoQueryResponse.java
+│   │   │               │   │   │   ├── mecanica
+│   │   │               │   │   │   │   ├── ObterHistoricoRolagensQuery.java
+│   │   │               │   │   │   │   └── ResultadoRolagemQueryResponse.java
+│   │   │               │   │   │   ├── personagem
+│   │   │               │   │   │   │   ├── ListarPersonagensPorUsuarioQuery.java
+│   │   │               │   │   │   │   ├── ObterPersonagemQuery.java
+│   │   │               │   │   │   │   └── PersonagemQueryResponse.java
+│   │   │               │   │   │   ├── sessao
+│   │   │               │   │   │   │   ├── AnotacaoQueryResponse.java
+│   │   │               │   │   │   │   ├── CenaQueryResponse.java
+│   │   │               │   │   │   │   ├── ObterAnotacaoQuery.java
+│   │   │               │   │   │   │   ├── ObterCenaQuery.java
+│   │   │               │   │   │   │   ├── ObterDetalhesSessaoQuery.java
+│   │   │               │   │   │   │   └── SessaoQueryResponse.java
+│   │   │               │   │   │   └── sistema
+│   │   │               │   │   │       ├── EntidadeInstanciaQueryResponse.java
+│   │   │               │   │   │       ├── EntidadeSistemaQueryResponse.java
+│   │   │               │   │   │       ├── ListarSistemasQuery.java
+│   │   │               │   │   │       ├── ObterEntidadeInstanciaQuery.java
+│   │   │               │   │   │       ├── ObterEntidadeSistemaQuery.java
+│   │   │               │   │   │       ├── ObterSistemaQuery.java
+│   │   │               │   │   │       └── SistemaQueryResponse.java
+│   │   │               │   │   ├── sessao
+│   │   │               │   │   │   ├── CriarAnotacaoUseCase.java
+│   │   │               │   │   │   ├── CriarCenaUseCase.java
+│   │   │               │   │   │   ├── CriarSessaoUseCase.java
+│   │   │               │   │   │   ├── GerenciarAnotacaoUseCase.java
+│   │   │               │   │   │   ├── GerenciarCenaUseCase.java
+│   │   │               │   │   │   ├── GerenciarEfeitosManuaisUseCase.java
+│   │   │               │   │   │   ├── GerenciarStatusSessaoUseCase.java
+│   │   │               │   │   │   ├── ObterAnotacaoUseCase.java
+│   │   │               │   │   │   ├── ObterCenaUseCase.java
+│   │   │               │   │   │   └── ObterDetalhesSessaoUseCase.java
+│   │   │               │   │   ├── sistema
+│   │   │               │   │   │   ├── AtualizarSistemaUseCase.java
+│   │   │               │   │   │   ├── CriarSistemaUseCase.java
+│   │   │               │   │   │   ├── GerenciarEntidadeInstanciaUseCase.java
+│   │   │               │   │   │   ├── GerenciarEntidadeSistemaUseCase.java
+│   │   │               │   │   │   ├── GerenciarProcedimentoUseCase.java
+│   │   │               │   │   │   └── ObterSistemaUseCase.java
+│   │   │               │   │   └── usuario
+│   │   │               │   │       └── GerenciarAmizadeUseCase.java
+│   │   │               │   └── out
+│   │   │               │       ├── campanha
+│   │   │               │       │   ├── ObterCampanhaPort.java
+│   │   │               │       │   └── SalvarCampanhaPort.java
+│   │   │               │       ├── eventstore
+│   │   │               │       │   ├── EventStorePort.java
+│   │   │               │       │   ├── jpa
+│   │   │               │       │   └── serializer
+│   │   │               │       ├── mecanica
+│   │   │               │       │   └── SalvarHistoricoRolagemPort.java
+│   │   │               │       ├── messaging
+│   │   │               │       │   └── SessaoMessagingOutputPort.java
+│   │   │               │       ├── persistence
+│   │   │               │       │   ├── batalha
+│   │   │               │       │   │   └── BatalhaOutputPort.java
+│   │   │               │       │   ├── entidade
+│   │   │               │       │   │   ├── EntidadeInstanciaOutputPort.java
+│   │   │               │       │   │   └── EntidadeSistemaOutputPort.java
+│   │   │               │       │   ├── importacao
+│   │   │               │       │   │   └── ImportacaoOutputPort.java
+│   │   │               │       │   ├── mecanica
+│   │   │               │       │   │   └── ResolucaoOutputPort.java
+│   │   │               │       │   ├── sessao
+│   │   │               │       │   │   ├── AnotacaoOutputPort.java
+│   │   │               │       │   │   ├── CenaOutputPort.java
+│   │   │               │       │   │   ├── MensagemLogOutputPort.java
+│   │   │               │       │   │   └── SessaoOutputPort.java
+│   │   │               │       │   └── sistema
+│   │   │               │       │       ├── EtapaProcedimentoOutputPort.java
+│   │   │               │       │       └── ProcedimentoOutputPort.java
+│   │   │               │       ├── personagem
+│   │   │               │       │   ├── DeletarPersonagemPort.java
+│   │   │               │       │   ├── ObterPersonagemPort.java
+│   │   │               │       │   └── SalvarPersonagemPort.java
+│   │   │               │       ├── sessao
+│   │   │               │       │   ├── ObterAnotacaoPort.java
+│   │   │               │       │   ├── ObterCenaPort.java
+│   │   │               │       │   ├── ObterSessaoPort.java
+│   │   │               │       │   ├── SalvarAnotacaoPort.java
+│   │   │               │       │   ├── SalvarCenaPort.java
+│   │   │               │       │   └── SalvarSessaoPort.java
+│   │   │               │       ├── sistema
+│   │   │               │       │   ├── ObterSistemaPort.java
+│   │   │               │       │   ├── SalvarEntidadeInstanciaPort.java
+│   │   │               │       │   ├── SalvarEntidadeSistemaPort.java
+│   │   │               │       │   └── SalvarSistemaPort.java
+│   │   │               │       └── usuario
+│   │   │               │           ├── ObterUsuarioPort.java
+│   │   │               │           └── SalvarUsuarioPort.java
+│   │   │               └── usecase
+│   │   │                   └── SessaoEventSourcingIntegrationTest.java
 │   │   └── resources
-│   │       ├── application-dev.yaml
-│   │       ├── application-prod.yaml
-│   │       └── application.yaml
+│   │       ├── application-dev.yml
+│   │       ├── application.yml
+│   │       └── db
+│   │           └── migration
 │   └── test
-│       └── java
-│           └── com
-│               └── rpgvtt
-│                   └── montador_de_rpg_backend
-│                       └── MontadorDeRpgBackendApplicationTests.java
+│       ├── java
+│       │   └── com
+│       │       └── draftstd
+│       │           └── hydraforge
+│       │               ├── MontadorDeRpgBackendApplicationTests.java
+│       │               ├── config
+│       │               │   ├── IntegrationTestBase.java
+│       │               │   └── TestFixtures.java
+│       │               └── engine
+│       │                   ├── integration
+│       │                   │   └── procedimentos
+│       │                   │       └── ProcedimentoEngineTest.java
+│       │                   └── unit
+│       │                       └── InterpretadorJsonTest.java
+│       └── resources
+│           └── teste.json
 └── target
     ├── classes
-    │   ├── application-dev.yaml
-    │   ├── application-prod.yaml
-    │   ├── application.yaml
-    │   └── com
-    │       └── rpgvtt
-    │           └── montador_de_rpg_backend
-    │               ├── MontadorDeRpgBackendApplication.class
-    │               ├── controller
-    │               │   ├── campanha
-    │               │   │   └── CampanhaController.class
-    │               │   └── sessao
-    │               │       └── SessaoController.class
-    │               ├── domain
-    │               │   ├── engine
-    │               │   │   ├── EngineBattleMaster.class
-    │               │   │   ├── components
-    │               │   │   │   ├── FormulaReferencer.class
-    │               │   │   │   ├── FormulaSolver.class
-    │               │   │   │   └── InterpretadorJson.class
-    │               │   │   ├── primitivos
-    │               │   │   │   ├── EstadoSessao.class
-    │               │   │   │   ├── PrimitivoExecutor.class
-    │               │   │   │   ├── RegistroPrimitivos.class
-    │               │   │   │   ├── Suspensao$TipoSuspensao.class
-    │               │   │   │   ├── Suspensao.class
-    │               │   │   │   └── executores
-    │               │   │   │       ├── AplicarEfeitoAtivoExecutor.class
-    │               │   │   │       ├── DispararEventoExecutor.class
-    │               │   │   │       ├── ModificarAtributoExecutor.class
-    │               │   │   │       └── SolicitarEscolhaExecutor.class
-    │               │   │   └── utils
-    │               │   │       ├── Alvo.class
-    │               │   │       ├── Contexto.class
-    │               │   │       ├── ContextoComposto.class
-    │               │   │       ├── ContextoJsonNode.class
-    │               │   │       ├── DiceExtractor.class
-    │               │   │       ├── InterpretadorMd
-    │               │   │       │   └── interpretaor.md
-    │               │   │       ├── Operations.class
-    │               │   │       ├── Procedures.class
-    │               │   │       ├── ResultadoExpressao$TipoResultado.class
-    │               │   │       └── ResultadoExpressao.class
-    │               │   ├── enums
-    │               │   │   ├── PapeisUsuario.class
-    │               │   │   ├── StatusCampanha.class
-    │               │   │   └── TipoVantagem.class
-    │               │   ├── model
-    │               │   │   ├── campanha
-    │               │   │   │   ├── Campanha.class
-    │               │   │   │   ├── CampanhaUsuario.class
-    │               │   │   │   └── CampanhaUsuarioKey.class
-    │               │   │   ├── entidade
-    │               │   │   │   ├── EntidadeInstancia.class
-    │               │   │   │   ├── EntidadeRelacao.class
-    │               │   │   │   ├── EntidadeRelacaoKey.class
-    │               │   │   │   └── EntidadeSistema.class
-    │               │   │   ├── mecanica
-    │               │   │   │   ├── EfeitosPrimitivos.class
-    │               │   │   │   ├── EfeitosPrimitivosKey.class
-    │               │   │   │   ├── EntidadeEfeito.class
-    │               │   │   │   ├── Primitivo.class
-    │               │   │   │   ├── Resolucao.class
-    │               │   │   │   └── Rolagem.class
-    │               │   │   ├── personagem
-    │               │   │   │   └── Personagem.class
-    │               │   │   ├── sessao
-    │               │   │   │   ├── Cena.class
-    │               │   │   │   ├── CenaParticipantes.class
-    │               │   │   │   ├── CenaParticipantesKey.class
-    │               │   │   │   ├── EfeitoAtivo.class
-    │               │   │   │   ├── HistoricoAcoes.class
-    │               │   │   │   ├── MensagemLog.class
-    │               │   │   │   └── Sessao.class
-    │               │   │   ├── sistema
-    │               │   │   │   ├── EtapaProcedimento.class
-    │               │   │   │   ├── EventoSistema.class
-    │               │   │   │   ├── Procedimento.class
-    │               │   │   │   └── Sistema.class
-    │               │   │   └── usuario
-    │               │   │       └── Usuario.class
-    │               │   └── validation
-    │               │       ├── SchemaValidator$1.class
-    │               │       ├── SchemaValidator$2.class
-    │               │       ├── SchemaValidator$3.class
-    │               │       ├── SchemaValidator.class
-    │               │       ├── exception
-    │               │       │   ├── AtributoInvalidoException.class
-    │               │       │   ├── SchemaInconsistenteException.class
-    │               │       │   ├── TipoEntidadeInvalidoException.class
-    │               │       │   └── ValidacaoSchemaException.class
-    │               │       └── schema
-    │               │           ├── AtributoSchema.class
-    │               │           ├── CampoCompostoSchema.class
-    │               │           └── TipoEntidadeSchema.class
-    │               ├── dto
-    │               │   ├── campanha
-    │               │   │   ├── AdicionarJogadorDTO.class
-    │               │   │   ├── CampanhaCreateDTO.class
-    │               │   │   ├── CampanhaParticipanteResponseDTO.class
-    │               │   │   └── CampanhaResponseDTO.class
-    │               │   └── sessao
-    │               │       ├── SessaoCreateDTO.class
-    │               │       └── SessaoResponseDTO.class
-    │               ├── repository
-    │               │   ├── campanha
-    │               │   │   ├── CampanhaRepository.class
-    │               │   │   └── CampanhaUsuarioRepository.class
-    │               │   ├── entidade
-    │               │   │   ├── EntidadeEfeitoRepository.class
-    │               │   │   ├── EntidadeInstanciaRepository.class
-    │               │   │   ├── EntidadeRelacaoRepository.class
-    │               │   │   └── EntidadeSistemaRepository.class
-    │               │   ├── mecanica
-    │               │   │   ├── EfeitosPrimitivosRepository.class
-    │               │   │   ├── EntidadeEfeitoRepository.class
-    │               │   │   ├── PrimitivoRepository.class
-    │               │   │   ├── ResolucaoRepository.class
-    │               │   │   └── RolagemRepository.class
-    │               │   ├── personagem
-    │               │   │   └── PersonagemRepository.class
-    │               │   ├── sessao
-    │               │   │   ├── CenaParticipantesRepository.class
-    │               │   │   ├── CenaRepository.class
-    │               │   │   ├── EfeitoAtivoRepository.class
-    │               │   │   ├── HistoricoAcoesRepository.class
-    │               │   │   ├── MensagemLogRepository.class
-    │               │   │   └── SessaoRepository.class
-    │               │   ├── sistema
-    │               │   │   ├── EtapaProcedimentoRepository.class
-    │               │   │   ├── EventoSistemaRepository.class
-    │               │   │   ├── ProcedimentoRepository.class
-    │               │   │   └── SistemaRepository.class
-    │               │   └── usuario
-    │               │       └── UsuarioRepository.class
-    │               ├── security
-    │               │   ├── CustomOAuth2UserService.class
-    │               │   ├── JwtAuthenticationFilter.class
-    │               │   ├── JwtTokenProvider.class
-    │               │   ├── OAuth2AuthenticationSuccessHandler.class
-    │               │   └── SecurityConfig.class
-    │               └── service
-    │                   ├── campanha
-    │                   │   └── CampanhaService.class
-    │                   └── sessao
-    │                       └── SessaoService.class
+    │   ├── application-dev.yml
+    │   └── application.yml
     ├── generated-sources
     │   └── annotations
-    ├── generated-test-sources
-    │   └── test-annotations
-    └── test-classes
-        └── com
-            └── rpgvtt
-                └── montador_de_rpg_backend
-                    └── MontadorDeRpgBackendApplicationTests.class
+    └── maven-status
+        └── maven-compiler-plugin
+            └── compile
+                └── default-compile
+                    ├── createdFiles.lst
+                    └── inputFiles.lst
 
-100 directories, 219 files
+184 directories, 463 files

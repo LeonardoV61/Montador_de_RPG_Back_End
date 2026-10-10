@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.rpgvtt.montador-de-rpg-backend' is invalid and this project uses 'com.rpgvtt.montador_de_rpg_backend' instead.
+* The original package name 'com.rpgvtt.montador-de-rpg-backend' is invalid and this project uses 'com.draftstd.hydraforge' instead.
 
 # Getting Started
 
