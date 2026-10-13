@@ -9,6 +9,9 @@ import com.draftstd.hydraforge.ports.out.sessao.ObterCenaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @Transactional(readOnly = true)
 public class ObterCenaUseCaseImpl implements ObterCenaUseCase {
@@ -21,16 +24,14 @@ public class ObterCenaUseCaseImpl implements ObterCenaUseCase {
 
     @Override
     public CenaQueryResponse obterPorId(ObterCenaQuery query) {
-        Cena cena = obterCenaPort.buscarPorId(query.cenaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Cena não encontrada: " + query.cenaId()));
+        Cena cena = obterCenaPort.buscarPorId(query.cenaId()).orElseThrow(() -> new RecursoNaoEncontradoException("Cena não encontrada: " + query.cenaId()));
 
-        return new CenaQueryResponse(
-                cena.getId(),
-                cena.getSessaoId(),
-                cena.getTitulo(),
-                cena.getAmbiente(),
-                cena.getMapaUrl(),
-                cena.isAtiva()
-        );
+        // Conversão segura do ID Long para UUID
+        UUID cenaUuid = cena.getId() != null ? UUID.nameUUIDFromBytes(cena.getId().toString().getBytes()) : UUID.randomUUID();
+
+        // Extração segura do ID da sessão a partir da relação JPA
+        UUID sessaoId = (cena.getSessao() != null && cena.getSessao().getId() != null) ? UUID.nameUUIDFromBytes(cena.getSessao().getId().toString().getBytes()) : null;
+
+        return new CenaQueryResponse(cenaUuid, sessaoId, null, cena.getTipo(), cena.getUrlMapa(), true, LocalDateTime.now());
     }
 }

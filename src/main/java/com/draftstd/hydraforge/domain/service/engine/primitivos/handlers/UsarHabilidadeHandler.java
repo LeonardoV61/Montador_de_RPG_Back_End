@@ -14,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class UsarHabilidadeHandler implements EtapaHandler {
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
         JsonNode params = etapa.getParametrosEtapa();
-        Long idInstancia = params.get("id_instancia").asLong();
+        UUID idInstancia = UUID.fromString(params.get("id_instancia").asText());
 
         EntidadeInstancia instanciaHabilidade = instanciaRepo.findById(idInstancia)
                 .orElseThrow(() -> new IllegalArgumentException(

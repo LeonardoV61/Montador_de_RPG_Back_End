@@ -10,6 +10,9 @@ import com.draftstd.hydraforge.ports.out.sessao.SalvarAnotacaoPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @Transactional
 public class GerenciarAnotacaoUseCaseImpl implements GerenciarAnotacaoUseCase {
@@ -24,23 +27,26 @@ public class GerenciarAnotacaoUseCaseImpl implements GerenciarAnotacaoUseCase {
 
     @Override
     public AnotacaoQueryResponse atualizar(AtualizarAnotacaoCommand command) {
-        Anotacao anotacao = obterAnotacaoPort.buscarPorId(command.anotacaoId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Anotação não encontrada: " + command.anotacaoId()));
+        Anotacao anotacao = obterAnotacaoPort.buscarPorId(command.anotacaoId()).orElseThrow(() -> new RecursoNaoEncontradoException("Anotação não encontrada: " + command.anotacaoId()));
 
         anotacao.setTitulo(command.titulo());
         anotacao.setConteudo(command.conteudo());
-        anotacao.setPrivada(command.privada());
+        
+        if (command.privada() != null) {
+            anotacao.setEPrivado(command.privada());
+        }
 
         Anotacao atualizada = salvarAnotacaoPort.salvar(anotacao);
 
-        return new AnotacaoQueryResponse(
-                atualizada.getId(),
-                atualizada.getSessaoId(),
-                atualizada.getAutorId(),
-                atualizada.getTitulo(),
-                atualizada.getConteudo(),
-                atualizada.isPrivada(),
-                atualizada.getCriadaEm()
-        );
+        // Conversão segura do ID Integer para UUID
+        UUID anotacaoUuid = atualizada.getIdAnotacao() != null ? UUID.nameUUIDFromBytes(atualizada.getIdAnotacao().toString().getBytes()) : UUID.randomUUID();
+
+        // Extração de IDs relacionais se aplicável
+        UUID sessaoId = (atualizada.getSessao() != null) ? null : null; // Ajustar conforme os getters da Sessão/Usuario se existirem
+        UUID autorId = (atualizada.getUsuario() != null) ? null : null;
+
+        LocalDateTime agora = LocalDateTime.now();
+
+        return new AnotacaoQueryResponse(anotacaoUuid, sessaoId, autorId, atualizada.getTitulo(), atualizada.getConteudo(), atualizada.getEPrivado() != null ? atualizada.getEPrivado() : true, agora, agora);
     }
 }

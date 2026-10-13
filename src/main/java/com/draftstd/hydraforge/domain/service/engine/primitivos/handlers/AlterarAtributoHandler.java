@@ -14,13 +14,11 @@ import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanci
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -64,8 +62,6 @@ public class AlterarAtributoHandler implements EtapaHandler {
                     "Operação desconhecida em ALTERAR_ATRIBUTO: '" + op + "'");
         };
 
-        // Mantém o tipo numérico original (a maioria dos atributos é inteira);
-        // só div pode legitimamente produzir fração.
         boolean manterInteiro = !"div".equals(op);
 
         if (!verificador.verificarAtributo(ctx.getIdSistema(), atributo, resultadoBruto)) {
@@ -95,7 +91,6 @@ public class AlterarAtributoHandler implements EtapaHandler {
         if (params.has("source_key")) {
             String sourceKey = params.get("source_key").asString();
     
-            // Lê como Object — aceita Integer, Double, String, Long etc.
             Object raw = ctx.getContexto().get(sourceKey, Object.class).orElse(null);
             if (raw == null) {
                 throw new JsonFieldNotFoundException(sourceKey, etapa.getNome());
@@ -119,7 +114,7 @@ public class AlterarAtributoHandler implements EtapaHandler {
         if (idNode.isMissingNode() || idNode.isNull()) {
             return instanciaResolver.retornarAtiva(ctx);
         }
-        Long idEntidade = idNode.asLong();
+        UUID idEntidade = UUID.fromString(idNode.asString());
         return instanciaRepo.findById(idEntidade)
                 .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idEntidade));
     }
@@ -130,7 +125,3 @@ public class AlterarAtributoHandler implements EtapaHandler {
         return v.asString();
     }
 }
-
-
-
-

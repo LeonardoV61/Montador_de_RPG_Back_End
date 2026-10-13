@@ -6,11 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ProcedimentoRepository extends JpaRepository<Procedimento, Long> {
+public interface ProcedimentoRepository extends JpaRepository<Procedimento, UUID> {
 
-    List<Procedimento> findBySistemaId(Long sistemaId);
-    Optional<Procedimento> findByTipoAndSistemaId(String tipo, Long sistemaId);
+    List<Procedimento> findBySistemaId(UUID sistemaId);
+    Optional<Procedimento> findByTipoAndSistemaId(String tipo, UUID sistemaId);
 
 }

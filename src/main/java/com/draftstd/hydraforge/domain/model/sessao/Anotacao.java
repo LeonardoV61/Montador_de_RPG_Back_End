@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
+
+import java.time.LocalDateTime;
+
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Getter
@@ -69,4 +72,9 @@ public class Anotacao {
 
     @Column(name = "e_privado", nullable = false, columnDefinition = "boolean default true")
     private Boolean ePrivado = true;
+
+    public void setCriadaEm(LocalDateTime now) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setCriadaEm'");
+    }
 }

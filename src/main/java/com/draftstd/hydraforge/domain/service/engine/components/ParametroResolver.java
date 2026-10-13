@@ -7,6 +7,8 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.Inst
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
 import tools.jackson.databind.JsonNode;
 
+import java.util.UUID;
+
 public class ParametroResolver {
 
     private final InstanciaResolver instanciaResolver;
@@ -35,8 +37,8 @@ public class ParametroResolver {
                     .path(origem.path("chave").asString())
                     .asDouble(0);
             case "item_equipado" -> {
-                Long idInst = origem.has("id_entidade")
-                        ? origem.get("id_entidade").asLong()
+                UUID idInst = origem.has("id_entidade")
+                        ? UUID.fromString(origem.get("id_entidade").asString())
                         : ctx.idInstanciaAtiva();
                 JsonNode val = itemResolver.atributoDoEquipado(
                         idInst, origem.path("slot").asString(), origem.path("chave").asString());
@@ -58,7 +60,9 @@ public class ParametroResolver {
             case "atributo" -> resolverInstancia(origem, ctx)
                     .getAtributosAtuais().path(origem.path("chave").asString()).asString(null);
             case "item_equipado" -> {
-                Long idInst = origem.has("id_entidade") ? origem.get("id_entidade").asLong() : ctx.idInstanciaAtiva();
+                UUID idInst = origem.has("id_entidade") 
+                        ? UUID.fromString(origem.get("id_entidade").asString()) 
+                        : ctx.idInstanciaAtiva();
                 JsonNode val = itemResolver.atributoDoEquipado(
                         idInst, origem.path("slot").asString(), origem.path("chave").asString());
                 yield val != null ? val.asString(null) : null;
@@ -80,7 +84,7 @@ public class ParametroResolver {
 
     private EntidadeInstancia resolverInstancia(JsonNode origem, ExecucaoContexto ctx) {
         if (origem.has("id_entidade")) {
-            Long id = origem.get("id_entidade").asLong();
+            UUID id = UUID.fromString(origem.get("id_entidade").asString());
             return instanciaPort.buscarPorId(id)
                     .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, id));
         }

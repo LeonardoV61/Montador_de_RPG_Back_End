@@ -2,10 +2,9 @@ package com.draftstd.hydraforge.domain.events.sessao;
 
 import com.draftstd.hydraforge.domain.enums.StatusSessao;
 import com.draftstd.hydraforge.domain.events.DomainEvent;
-import com.draftstd.hydraforge.domain.events.sessao.SessaoCriadaEvent;
-import com.draftstd.hydraforge.domain.events.sessao.StatusSessaoAlteradoEvent;
 import com.draftstd.hydraforge.domain.model.AggregateRoot;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +17,7 @@ public class Sessao extends AggregateRoot<UUID> {
     private StatusSessao status;
     private List<UUID> participantesIds = new ArrayList<>();
 
-    // Construtor privado para reconstrução via Event Sourcing
+    // Construtor vazio obrigatório para reidratação
     public Sessao() {}
 
     // Construtor de Negócio (Comando de Criação)
@@ -27,34 +26,50 @@ public class Sessao extends AggregateRoot<UUID> {
             throw new IllegalArgumentException("O nome da sessão é obrigatório.");
         }
         
-        SessaoCriadaEvent event = new SessaoCriadaEvent(id, nome, campanhaId, mestreId);
+        SessaoCriadaEvent event = new SessaoCriadaEvent(
+            UUID.randomUUID(),
+            id.toString(),
+            id,
+            campanhaId,
+            nome,
+            1L,
+            Instant.now()
+        );
         raiseEvent(event);
     }
 
     // Regra de Negócio: Iniciar Sessão
     public void iniciarSessao() {
-        if (this.status == StatusSessao.EM_ANDAMENTO) {
+        if (this.status == StatusSessao.ATIVA) {
             throw new IllegalStateException("A sessão já está em andamento.");
         }
         
+        long proximaVersao = getVersion() + 1;
         StatusSessaoAlteradoEvent event = new StatusSessaoAlteradoEvent(
-            getId(), 
-            StatusSessao.EM_ANDAMENTO, 
-            getVersion() + 1
+            UUID.randomUUID(),
+            getId().toString(),
+            getId(),
+            StatusSessao.ATIVA,
+            proximaVersao,
+            Instant.now()
         );
         raiseEvent(event);
     }
 
     // Regra de Negócio: Encerrar Sessão
     public void encerrarSessao() {
-        if (this.status == StatusSessao.FINALIZADA) {
+        if (this.status == StatusSessao.ENCERRADA) {
             throw new IllegalStateException("A sessão já foi encerrada.");
         }
 
+        long proximaVersao = getVersion() + 1;
         StatusSessaoAlteradoEvent event = new StatusSessaoAlteradoEvent(
-            getId(), 
-            StatusSessao.FINALIZADA, 
-            getVersion() + 1
+            UUID.randomUUID(),
+            getId().toString(),
+            getId(),
+            StatusSessao.ENCERRADA,
+            proximaVersao,
+            Instant.now()
         );
         raiseEvent(event);
     }
@@ -64,10 +79,9 @@ public class Sessao extends AggregateRoot<UUID> {
     protected void apply(DomainEvent event) {
         if (event instanceof SessaoCriadaEvent e) {
             setId(UUID.fromString(e.aggregateId()));
-            this.nome = e.nome();
+            this.nome = e.titulo();
             this.campanhaId = e.campanhaId();
-            this.mestreId = e.mestreId();
-            this.status = StatusSessao.PLANEJADA; // ou status inicial padrão
+            this.status = StatusSessao.AGENDADA;
         } else if (event instanceof StatusSessaoAlteradoEvent e) {
             this.status = e.novoStatus();
         }

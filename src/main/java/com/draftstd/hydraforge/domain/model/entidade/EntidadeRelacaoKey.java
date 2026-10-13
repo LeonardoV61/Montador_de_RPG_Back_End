@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.*;
 import java.io.Serializable;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,9 +14,9 @@ import java.io.Serializable;
 @Embeddable 
 public class EntidadeRelacaoKey implements Serializable {
 
-    @Column(name = "id_entidade_pai")
-    private Long idEntidadePai;
+    @Column(name = "id_entidade_pai", columnDefinition = "UUID")
+    private UUID idEntidadePai;
 
-    @Column(name = "id_entidade_filha")
-    private Long idEntidadeFilha;
+    @Column(name = "id_entidade_filha", columnDefinition = "UUID")
+    private UUID idEntidadeFilha;
 }

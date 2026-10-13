@@ -13,11 +13,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -26,16 +28,10 @@ import java.util.List;
 @Entity
 public class Sessao {
         @Id
-        @GeneratedValue(
-                strategy = GenerationType.SEQUENCE,
-                generator = "sessao_seq"
-        )
-        @SequenceGenerator(
-                name = "sessao_seq",
-                sequenceName = "sessao_sequence",
-                allocationSize = 1
-        )
-        private Long id;
+        @GeneratedValue
+        @UuidGenerator
+        @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+        private UUID id;
 
         @ManyToOne(optional = false, fetch = FetchType.LAZY)
         @JoinColumn(name = "id_campanha")
@@ -72,6 +68,4 @@ public class Sessao {
 
         @OneToMany(cascade = CascadeType.ALL, mappedBy = "sessao")
         private List<MensagemLog> mensagens;
-
-
 }

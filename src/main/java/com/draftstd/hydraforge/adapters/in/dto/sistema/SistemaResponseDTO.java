@@ -1,5 +1,5 @@
 // SistemaResponseDTO.java
-package com.draftstd.hydraforge.dto.sistema;
+package com.draftstd.hydraforge.adapters.in.dto.sistema;
 
 import tools.jackson.databind.JsonNode;
 import java.time.LocalDateTime;

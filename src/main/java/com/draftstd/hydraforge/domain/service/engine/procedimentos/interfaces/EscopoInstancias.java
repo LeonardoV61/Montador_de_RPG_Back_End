@@ -1,6 +1,7 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces;
 
 import java.util.List;
+import java.util.UUID;
 
 // The three possible scopes as a sealed hierarchy
 public sealed interface EscopoInstancias
@@ -10,19 +11,19 @@ public sealed interface EscopoInstancias
 
     record Nenhuma() implements EscopoInstancias {}
 
-    record Unica(Long idInstancia) implements EscopoInstancias {
-        public Long id() { return idInstancia; }
+    record Unica(UUID idInstancia) implements EscopoInstancias {
+        public UUID id() { return idInstancia; }
     }
 
-    record Multiplas(List<Long> ids) implements EscopoInstancias {
+    record Multiplas(List<UUID> ids) implements EscopoInstancias {
         // ordered — matters for sequential area resolution
-        public Multiplas(List<Long> ids) {
+        public Multiplas(List<UUID> ids) {
             this.ids = List.copyOf(ids);
         }
     }
 
     // Factory methods for call sites
     static EscopoInstancias nenhuma() { return new Nenhuma(); }
-    static EscopoInstancias unica(Long id) { return new Unica(id); }
-    static EscopoInstancias multiplas(List<Long> ids) { return new Multiplas(ids); }
+    static EscopoInstancias unica(UUID id) { return new Unica(id); }
+    static EscopoInstancias multiplas(List<UUID> ids) { return new Multiplas(ids); }
 }

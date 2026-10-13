@@ -20,22 +20,18 @@ public class MensagemLogController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MensagemResponseDTO>> listarMensagens(@PathVariable UUID sessaoId,
-                                                                     @RequestParam(defaultValue = "50") Integer limite) {
+    public ResponseEntity<List<MensagemResponseDTO>> listarMensagens(@PathVariable UUID sessaoId, @RequestParam(defaultValue = "50") Integer limite) {
         ObterDetalhesSessaoQuery query = new ObterDetalhesSessaoQuery(sessaoId);
         var detalhes = obterDetalhesSessaoUseCase.obterPorId(query);
         
         // Mapeamento das mensagens armazenadas na sessão para o DTO de resposta
-        List<MensagemResponseDTO> mensagens = detalhes.mensagens().stream()
-                .limit(limite)
-                .map(m -> new MensagemResponseDTO(
-                        m.id(),
-                        m.sessaoId(),
-                        m.emissorId(),
-                        m.conteudo(),
-                        m.enviadaEm()
-                ))
-                .toList();
+        List<MensagemResponseDTO> mensagens = detalhes.mensagens().stream().limit(limite).map(m -> new MensagemResponseDTO(
+            m.id(), 
+            m.sessaoId(), 
+            m.emissorId(), 
+            m.conteudo(), 
+            m.enviadaEm())
+        ).toList();
 
         return ResponseEntity.ok(mensagens);
     }

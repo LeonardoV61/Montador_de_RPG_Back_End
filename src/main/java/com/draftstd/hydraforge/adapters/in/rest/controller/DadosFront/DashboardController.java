@@ -14,7 +14,7 @@ import com.draftstd.hydraforge.domain.enums.StatusCampanha;
 import com.draftstd.hydraforge.adapters.out.repository.campanha.CampanhaRepository;
 import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
 import com.draftstd.hydraforge.adapters.out.repository.sessao.SessaoRepository;
-import com.draftstd.hydraforge.security.UsuarioPrincipal;
+import com.draftstd.hydraforge.config.security.UsuarioPrincipal;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ public class DashboardController {
     public ResponseEntity<Map<String, Object>> getIndicadores() {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long idUsuario = ((UsuarioPrincipal) auth.getPrincipal()).getId();
+        UUID idUsuario = ((UsuarioPrincipal) auth.getPrincipal()).getId(); // Alterado de Long para UUID
 
         long campanhasAtivas = campanhaRepo.countByUsuarioIdAndStatus(idUsuario, StatusCampanha.ATIVA);
         LocalDate hoje = LocalDate.now();

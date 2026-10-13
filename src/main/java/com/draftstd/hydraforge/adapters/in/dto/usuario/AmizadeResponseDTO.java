@@ -1,14 +1,8 @@
+package com.draftstd.hydraforge.adapters.in.dto.usuario;
 
-package com.draftstd.hydraforge.dto.usuario;
-
+import java.util.UUID;
 import java.time.LocalDateTime;
 
-public record AmizadeResponseDTO(
-        Long remetenteId,
-        String remetenteApelido,
-        Long destinatarioId,
-        String destinatarioApelido,
-        String status,
-        LocalDateTime criadaEm,
-        LocalDateTime aceitoEm
-) {}
+public record AmizadeResponseDTO(UUID remetenteId, String remetenteApelido, UUID destinatarioId, String destinatarioApelido, String status, LocalDateTime criadaEm, LocalDateTime aceitoEm) {
+
+}

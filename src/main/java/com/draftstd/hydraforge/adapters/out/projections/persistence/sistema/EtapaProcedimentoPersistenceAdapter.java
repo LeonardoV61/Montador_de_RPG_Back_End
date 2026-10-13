@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -21,27 +22,27 @@ public class EtapaProcedimentoPersistenceAdapter implements EtapaProcedimentoOut
     }
 
     @Override
-    public Optional<EtapaProcedimento> buscarPorId(Long id) {
+    public Optional<EtapaProcedimento> buscarPorId(UUID id) {
         return etapaRepository.findById(id);
     }
 
     @Override
-    public List<EtapaProcedimento> buscarPorProcedimentoIdOrdenado(Long procedimentoId) {
+    public List<EtapaProcedimento> buscarPorProcedimentoIdOrdenado(UUID procedimentoId) {
         return etapaRepository.findByProcedimentoIdOrderByOrdem(procedimentoId);
     }
 
     @Override
-    public boolean existePorProcedimentoEOrdem(Long procedimentoId, Integer ordem) {
+    public boolean existePorProcedimentoEOrdem(UUID procedimentoId, Integer ordem) {
         return etapaRepository.existsByProcedimentoIdAndOrdem(procedimentoId, ordem);
     }
 
     @Override
-    public void deletarPorId(Long id) {
+    public void deletarPorId(UUID id) {
         etapaRepository.deleteById(id);
     }
 
     @Override
-    public boolean existePorId(Long id) {
+    public boolean existePorId(UUID id) {
         return etapaRepository.existsById(id);
     }
 }

@@ -20,31 +20,19 @@ public class ResolucaoController {
     private final RolarDadosUseCase rolarDadosUseCase;
     private final ObterHistoricoRolagensUseCase obterHistoricoRolagensUseCase;
 
-    public ResolucaoController(RolarDadosUseCase rolarDadosUseCase,
-                               ObterHistoricoRolagensUseCase obterHistoricoRolagensUseCase) {
+    public ResolucaoController(RolarDadosUseCase rolarDadosUseCase, ObterHistoricoRolagensUseCase obterHistoricoRolagensUseCase) {
         this.rolarDadosUseCase = rolarDadosUseCase;
         this.obterHistoricoRolagensUseCase = obterHistoricoRolagensUseCase;
     }
 
     @PostMapping("/rolar")
-    public ResponseEntity<ResultadoRolagemQueryResponse> rolarDados(@Valid @RequestBody TesteLivreRequestDTO dto,
-                                                                   @RequestHeader("X-Usuario-Id") UUID usuarioId) {
-        RolarDadosCommand command = new RolarDadosCommand(
-                dto.sessaoId(),
-                usuarioId,
-                dto.personagemId(),
-                dto.expressaoDados(),
-                dto.motivo(),
-                dto.contextoAdicional()
-        );
+    public ResponseEntity<ResultadoRolagemQueryResponse> rolarDados(@Valid @RequestBody TesteLivreRequestDTO dto, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
+        RolarDadosCommand command = new RolarDadosCommand(dto.sessaoId(), usuarioId, dto.personagemId(), dto.expressaoDados(), dto.motivo(), dto.contextoAdicional());
         return ResponseEntity.ok(rolarDadosUseCase.executar(command));
     }
 
     @GetMapping("/historico/sessao/{sessaoId}")
-    public ResponseEntity<List<ResultadoRolagemQueryResponse>> obterHistoricoSessao(
-            @PathVariable UUID sessaoId,
-            @RequestParam(required = false) UUID personagemId,
-            @RequestParam(defaultValue = "50") Integer limite) {
+    public ResponseEntity<List<ResultadoRolagemQueryResponse>> obterHistoricoSessao(@PathVariable UUID sessaoId, @RequestParam(required = false) UUID personagemId, @RequestParam(defaultValue = "50") Integer limite) {
         ObterHistoricoRolagensQuery query = new ObterHistoricoRolagensQuery(sessaoId, personagemId, limite);
         return ResponseEntity.ok(obterHistoricoRolagensUseCase.executar(query));
     }

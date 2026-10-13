@@ -5,10 +5,11 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.Es
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public record LoadRequest(
-        Long idProcedimento,
-        Long idSessao,
+        UUID idProcedimento,
+        UUID idSessao,
         EscopoInstancias escopo,
         String               retornoContexto,      // null for root procedures
         Map<String, Object> contextoInicial,      // keys to seed from parent
@@ -19,8 +20,8 @@ public record LoadRequest(
     }
 
 
-    public static LoadRequest raiz(Long idProcedimento,
-                                   Long idSessao,
+    public static LoadRequest raiz(UUID idProcedimento,
+                                   UUID idSessao,
                                    EscopoInstancias escopo) {
         return new LoadRequest(
                 idProcedimento, idSessao, escopo,
@@ -28,8 +29,8 @@ public record LoadRequest(
         );
     }
 
-    public static LoadRequest raiz(Long idProcedimento,
-                                   Long idSessao,
+    public static LoadRequest raiz(UUID idProcedimento,
+                                   UUID idSessao,
                                    EscopoInstancias escopo,
                                    Map<String, Object> contextoInicial) {
         return new LoadRequest(
@@ -38,8 +39,8 @@ public record LoadRequest(
         );
     }
 
-    public static LoadRequest semInstancia(Long idProcedimento,
-                                           Long idSessao) {
+    public static LoadRequest semInstancia(UUID idProcedimento,
+                                           UUID idSessao) {
         return new LoadRequest(
                 idProcedimento, idSessao,
                 EscopoInstancias.nenhuma(),
@@ -47,7 +48,7 @@ public record LoadRequest(
         );
     }
 
-    public static LoadRequest filho(Long idProcedimento,
+    public static LoadRequest filho(UUID idProcedimento,
                                     ProcedimentoContexto paiCtx,
                                     EscopoInstancias escopo,
                                     String retornoContexto,

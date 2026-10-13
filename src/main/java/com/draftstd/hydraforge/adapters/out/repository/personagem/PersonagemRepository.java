@@ -6,15 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface PersonagemRepository extends JpaRepository<Personagem, Long> {
-
-    List<Personagem> findByCampanha_Sessoes_Id(Long sessaoId);
-
-    Optional<Personagem> findAtivoByCampanhaIdAndUsuarioId(Long idCampanha, Long idUsuario);
-
-    Optional<Personagem> findByInstanciaIdAndUsuarioId(Long idInstancia, Long idUsuario);
-
-    Optional<Personagem> findByUsuarioId(Long idSessao, Long idUsuario);
+public interface PersonagemRepository extends JpaRepository<Personagem, UUID> {
+    List<Personagem> findAllByUsuarioId(UUID usuarioId);
+    List<Personagem> findAllByCampanhaId(UUID campanhaId);
+    List<Personagem> findByCampanha_Sessoes_Id(UUID sessaoId);
+    Optional<Personagem> findAtivoByCampanhaIdAndUsuarioId(UUID idCampanha, UUID idUsuario);
+    Optional<Personagem> findByInstanciaIdAndUsuarioId(UUID idInstancia, UUID idUsuario);
 }

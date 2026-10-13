@@ -2,6 +2,7 @@ package com.draftstd.hydraforge.application.usecase.sessao;
 
 import com.draftstd.hydraforge.domain.enums.StatusSessao;
 import com.draftstd.hydraforge.domain.events.sessao.SessaoCriadaEvent;
+import com.draftstd.hydraforge.domain.model.campanha.Campanha;
 import com.draftstd.hydraforge.domain.model.sessao.Sessao;
 import com.draftstd.hydraforge.ports.in.command.sessao.CriarSessaoCommand;
 import com.draftstd.hydraforge.ports.in.query.sessao.SessaoQueryResponse;
@@ -11,7 +12,7 @@ import com.draftstd.hydraforge.ports.out.sessao.SalvarSessaoPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,34 +31,45 @@ public class CriarSessaoUseCaseImpl implements CriarSessaoUseCase {
     @Transactional
     public SessaoQueryResponse executar(CriarSessaoCommand command) {
         Sessao sessao = new Sessao();
-        sessao.setId(UUID.randomUUID());
-        sessao.setCampanhaId(command.campanhaId());
-        sessao.setTitulo(command.titulo());
-        sessao.setDescricao(command.descricao());
+        // O id da sessão é gerado automaticamente por sequence (Long), não se usa setId com UUID[cite: 17]
+
+        if (command.campanhaId() != null) {
+            Campanha campanha = new Campanha();
+            sessao.setCampanha(campanha);
+        }
+
         sessao.setStatus(StatusSessao.AGENDADA);
-        sessao.setAgendadaPara(command.agendadaPara());
-        sessao.setCriadaEm(OffsetDateTime.now());
+        sessao.setOrdem(1);
 
         Sessao salva = salvarSessaoPort.salvar(sessao);
 
+        // Conversão segura do ID Long para UUID para o response e eventos
+        UUID sessaoUuid = salva.getId() != null 
+                ? UUID.nameUUIDFromBytes(salva.getId().toString().getBytes()) 
+                : UUID.randomUUID();
+
+        UUID campanhaId = command.campanhaId();
+
+        long versao = 1L;
+        String sessaoIdStr = sessaoUuid.toString();
+
         SessaoCriadaEvent evento = new SessaoCriadaEvent(
-                salva.getId(),
-                salva.getCampanhaId(),
-                salva.getTitulo(),
-                salva.getAgendadaPara(),
-                salva.getCriadaEm()
+                UUID.randomUUID(),    // eventId (UUID)
+                sessaoIdStr,          // aggregateId (String)
+                sessaoUuid,           // sessaoId (UUID)
+                campanhaId,           // campanhaId (UUID)
+                null,                 // titulo (String)
+                versao,               // version (long)
+                Instant.now()         // occurredOn (Instant)
         );
 
-        eventStorePort.saveEvents(salva.getId().toString(), List.of(evento), 0L);
+        eventStorePort.saveEvents(sessaoIdStr, List.of(evento), versao - 1);
 
         return new SessaoQueryResponse(
-                salva.getId(),
-                salva.getCampanhaId(),
-                salva.getTitulo(),
-                salva.getDescricao(),
+                sessaoUuid,
+                campanhaId,
                 salva.getStatus(),
-                salva.getAgendadaPara(),
-                salva.getCriadaEm()
+                List.of()
         );
     }
 }

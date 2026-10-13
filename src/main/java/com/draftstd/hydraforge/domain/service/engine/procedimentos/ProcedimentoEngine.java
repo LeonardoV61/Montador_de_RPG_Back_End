@@ -12,6 +12,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,35 +23,34 @@ public class ProcedimentoEngine {
     private final HandlerRegistry registry;
     private final InstanciaResolver instanciaResolver;
 
-    public ProcedimentoContexto getContextoAtivo(Long idSessao) {
-        
+    public ProcedimentoContexto getContextoAtivo(UUID idSessao) {
         return null;
     }
 
-    public ProcedimentoContexto iniciarComInstancia(Long idProcedimento, Long idSessao, Long idInstancia) {
+    public ProcedimentoContexto iniciarComInstancia(UUID idProcedimento, UUID idSessao, UUID idInstancia) {
         ProcedimentoContexto raiz = loader.carregar(
                 LoadRequest.raiz(idProcedimento, idSessao, EscopoInstancias.unica(idInstancia)));
         sessaoContexto.empurrar(idSessao, raiz);
         return avancar(idSessao);
     }
 
-    public ProcedimentoContexto iniciarComMultiplos(Long idProcedimento, Long idSessao, List<Long> ids) {
+    public ProcedimentoContexto iniciarComMultiplos(UUID idProcedimento, UUID idSessao, List<UUID> ids) {
         return iniciarComMultiplos(idProcedimento, idSessao, ids, Map.of());
     }
 
-    public ProcedimentoContexto iniciarComMultiplos(Long idProcedimento, Long idSessao,
-                                                    List<Long> ids, Map<String, Object> contextoInicial) {
+    public ProcedimentoContexto iniciarComMultiplos(UUID idProcedimento, UUID idSessao,
+                                                    List<UUID> ids, Map<String, Object> contextoInicial) {
         ProcedimentoContexto raiz = loader.carregar(
                 LoadRequest.raiz(idProcedimento, idSessao, EscopoInstancias.multiplas(ids), contextoInicial));
         sessaoContexto.empurrar(idSessao, raiz);
         return avancar(idSessao);
     }
 
-    public ProcedimentoContexto iniciarSemInstancia(Long idProcedimento, Long idSessao) {
+    public ProcedimentoContexto iniciarSemInstancia(UUID idProcedimento, UUID idSessao) {
         return iniciarSemInstancia(idProcedimento, idSessao, Map.of());
     }
 
-    public ProcedimentoContexto iniciarSemInstancia(Long idProcedimento, Long idSessao,
+    public ProcedimentoContexto iniciarSemInstancia(UUID idProcedimento, UUID idSessao,
                                                     Map<String, Object> contextoInicial) {
         ProcedimentoContexto raiz = loader.carregar(
                 LoadRequest.raiz(idProcedimento, idSessao, EscopoInstancias.nenhuma(), contextoInicial));
@@ -58,7 +58,7 @@ public class ProcedimentoEngine {
         return avancar(idSessao);
     }
 
-    public ProcedimentoContexto responder(Long idSessao, Object valor) {
+    public ProcedimentoContexto responder(UUID idSessao, Object valor) {
         ProcedimentoContexto frame = sessaoContexto.frameAtivo(idSessao);
         EtapaProcedimento etapaPendente = frame.getEtapaPendente();
         if (etapaPendente == null) {
@@ -77,21 +77,7 @@ public class ProcedimentoEngine {
         return avancar(idSessao);
     }
 
-
-    // public ProcedimentoContexto responder(Long idSessao, Long idPersonagem, Map<String, Object> input) {
-    //     ProcedimentoContexto frame = sessaoContexto.frameAtivo(idSessao);
-
-    //     frame.getContexto().put("respondente_id", idPersonagem);
-    //     frame.getContexto().putAll(input);
-    //     frame.setAguardandoInput(false);
-    //     frame.setEtapaPendente(null);
-
-    //     // NÃO avança manualmente – o avancar() fará isso ao reprocessar a etapa
-    //     return avancar(idSessao);
-    // }
-
-
-    private ProcedimentoContexto avancar(Long idSessao) {
+    private ProcedimentoContexto avancar(UUID idSessao) {
         while (sessaoContexto.temProcedimentoAtivo(idSessao)) {
             ProcedimentoContexto frame = sessaoContexto.frameAtivo(idSessao);
 
@@ -104,7 +90,6 @@ public class ProcedimentoEngine {
                     pai.getContexto().put(frame.getRetornoContexto(), frame.getHistorico());
                 }
                 pai.avancarEtapa();
-//               sessaoContexto.persistirEstadoAtual(idSessao);
                 continue;
             }
 
@@ -128,26 +113,21 @@ public class ProcedimentoEngine {
 
                 case CONCLUIDA -> {
                     frame.avancarEtapa();
-//                    sessaoContexto.persistirEstadoAtual(idSessao);
                 }
 
                 case AGUARDANDO_INPUT, AGUARDANDO_INPUT_MULTIPLO -> {
-                    frame.setStatus(ProcedimentoContexto.Status.AGUARDANDO_INPUT_MULTIPLO); // distinguishes single vs. group wait
+                    frame.setStatus(ProcedimentoContexto.Status.AGUARDANDO_INPUT_MULTIPLO);
                     frame.setAguardandoInput(true);
                     frame.setEtapaPendente(etapa);
-//                    sessaoContexto.persistirEstadoAtual(idSessao);
                     return frame;
                 }
 
                 case SUB_PROCEDIMENTO_INICIADO -> {
                     // Child frame was already pushed by ChamarProcedimentoHandler.
-                    // Loop continues; next iteration reads the child off the stack top.
-//                    sessaoContexto.persistirEstadoAtual(idSessao);
                 }
 
                 case REPETINDO -> {
-                    // etapaAtual was already rewritten by RepetirSeHandler — don't re-advance.
-//                    sessaoContexto.persistirEstadoAtual(idSessao);
+                    // etapaAtual already rewritten.
                 }
 
                 case PULAR_ETAPAS -> {
@@ -155,12 +135,10 @@ public class ProcedimentoEngine {
                     for (int i = 0; i < n && !frame.etapasConcluidas(); i++) {
                         frame.pularEtapa("skipped by previous etapa");
                     }
-//                    sessaoContexto.persistirEstadoAtual(idSessao);
                 }
 
                 case ERRO -> {
                     frame.setStatus(ProcedimentoContexto.Status.ERRO);
-//                  sessaoContexto.persistirEstadoAtual(idSessao);
                     return frame;
                 }
             }

@@ -1,6 +1,7 @@
 package com.draftstd.hydraforge.adapters.out.projections.persistence.batalha;
 
 import com.draftstd.hydraforge.adapters.out.repository.batalha.BatalhaRepository;
+import com.draftstd.hydraforge.domain.enums.BatalhaStatus;
 import com.draftstd.hydraforge.domain.model.batalha.Batalha;
 import com.draftstd.hydraforge.ports.out.persistence.batalha.BatalhaOutputPort;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,6 @@ public class BatalhaPersistenceAdapter implements BatalhaOutputPort {
 
     @Override
     public Optional<Batalha> buscarAtivaPorCenaId(UUID cenaId) {
-        return batalhaRepository.findByCenaIdAndStatusAtivo(cenaId);
+        return batalhaRepository.findByCenaIdAndStatus(cenaId, BatalhaStatus.EM_ANDAMENTO);
     }
 }

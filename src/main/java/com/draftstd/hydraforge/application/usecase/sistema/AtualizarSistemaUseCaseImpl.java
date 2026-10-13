@@ -10,6 +10,10 @@ import com.draftstd.hydraforge.ports.out.sistema.SalvarSistemaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @Transactional
 public class AtualizarSistemaUseCaseImpl implements AtualizarSistemaUseCase {
@@ -24,20 +28,40 @@ public class AtualizarSistemaUseCaseImpl implements AtualizarSistemaUseCase {
 
     @Override
     public SistemaQueryResponse executar(AtualizarSistemaCommand command) {
-        Sistema sistema = obterSistemaPort.buscarPorId(command.sistemaId())
+        Sistema s = obterSistemaPort.buscarPorId(command.sistemaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Sistema não encontrado: " + command.sistemaId()));
 
-        sistema.setNome(command.nome());
-        sistema.setDescricao(command.descricao());
-        sistema.setVersao(command.versao());
+        s.setNome(command.nome());
+        s.setDescricao(command.descricao());
+        
+        if (command.versao() != null) {
+            s.setVersaoSchemas(Integer.valueOf(command.versao()));
+        }
 
-        Sistema atualizado = salvarSistemaPort.salvar(sistema);
+        Sistema atualizado = salvarSistemaPort.salvar(s);
+
+        UUID sistemaUuid = atualizado.getId() != null 
+                ? UUID.nameUUIDFromBytes(atualizado.getId().toString().getBytes()) 
+                : UUID.randomUUID();
+
+        UUID autorId = (atualizado.getUsuario() != null && atualizado.getUsuario().getId() != null)
+                ? UUID.nameUUIDFromBytes(atualizado.getUsuario().getId().toString().getBytes())
+                : null;
+
+        String versaoStr = atualizado.getVersaoSchemas() != null 
+                ? String.valueOf(atualizado.getVersaoSchemas()) 
+                : "1";
 
         return new SistemaQueryResponse(
-                atualizado.getId(),
-                atualizado.getNome(),
-                atualizado.getDescricao(),
-                atualizado.getVersao()
+                sistemaUuid, 
+                atualizado.getNome(), 
+                atualizado.getDescricao(), 
+                versaoStr,
+                autorId,
+                null,
+                List.of(),
+                atualizado.getCriadoEm(),
+                LocalDateTime.now()
         );
     }
 }

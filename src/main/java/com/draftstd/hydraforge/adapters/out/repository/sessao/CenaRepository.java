@@ -9,26 +9,27 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface CenaRepository extends JpaRepository<Cena, Long> {
+public interface CenaRepository extends JpaRepository<Cena, UUID> {
 
-    Optional<Cena> findTopBySessao_IdOrderByOrdemDesc(Long idSessao);
+    Optional<Cena> findTopBySessao_IdOrderByOrdemDesc(UUID idSessao);
 
-    List<Cena> findBySessao_IdOrderByOrdemDesc(Long idSessao);
+    List<Cena> findBySessao_IdOrderByOrdemDesc(UUID idSessao);
 
-    // Cenas onde o usuário é mestre da campanha da sessão da cena
+    List<Cena> findAllBySessaoId(UUID sessaoId);
+
     @Query("SELECT COUNT(c) FROM Cena c WHERE c.sessao.campanha.id IN " +
            "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
            "WHERE cu.id.idUsuario = :usuarioId AND cu.papel = :papel)")
-    long countByCriadorId(@Param("usuarioId") Long usuarioId, 
+    long countByCriadorId(@Param("usuarioId") UUID usuarioId, 
                           @Param("papel") PapeisUsuario papel);
 
-    // Cenas com campos nulos (exemplo: mapaJson ou urlMapa nulos)
     @Query("SELECT COUNT(c) FROM Cena c WHERE c.sessao.campanha.id IN " +
            "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
            "WHERE cu.id.idUsuario = :usuarioId AND cu.papel = :papel) " +
            "AND (c.mapaJson IS NULL OR c.urlMapa IS NULL)")
-    long countByCriadorIdAndCamposNulos(@Param("usuarioId") Long usuarioId, 
+    long countByCriadorIdAndCamposNulos(@Param("usuarioId") UUID usuarioId, 
                                         @Param("papel") PapeisUsuario papel);
 }

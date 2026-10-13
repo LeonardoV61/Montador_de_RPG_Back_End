@@ -8,11 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import com.draftstd.hydraforge.domain.model.mecanica.EntidadeProcedimento;
 import tools.jackson.databind.JsonNode;
 
 import java.util.List;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -22,16 +24,10 @@ import java.util.List;
 public class Procedimento {
 
     @Id
-    @GeneratedValue (
-        strategy = GenerationType.SEQUENCE,
-        generator = "proced_seq"
-    )
-    @SequenceGenerator (
-        name = "proced_seq",
-        sequenceName = "proced_sequence",
-        allocationSize = 1
-    )
-    private Long id;
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+    private UUID id;
 
     @ManyToOne (optional = false, fetch = FetchType.LAZY)
     @JoinColumn (name = "id_sistema")

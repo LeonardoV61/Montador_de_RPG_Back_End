@@ -14,10 +14,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -27,16 +29,10 @@ import java.util.List;
 public class Campanha {
 
         @Id
-        @GeneratedValue(
-                strategy = GenerationType.SEQUENCE,
-                generator = "camp_seq"
-        )
-        @SequenceGenerator(
-                name = "camp_seq",
-                sequenceName = "camp_sequence",
-                allocationSize = 1
-        )
-        private Long id;
+        @GeneratedValue
+        @UuidGenerator
+        @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+        private UUID id;
 
         @NotNull
         private String nome;

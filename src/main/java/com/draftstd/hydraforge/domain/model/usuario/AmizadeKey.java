@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 @Embeddable
 @Getter
@@ -16,6 +17,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class AmizadeKey implements Serializable {
-    private Long idRemetente;
-    private Long idDestinatario;
+    private UUID idRemetente;
+    private UUID idDestinatario;
 }

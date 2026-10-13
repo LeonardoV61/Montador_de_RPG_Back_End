@@ -6,7 +6,7 @@ import com.draftstd.hydraforge.ports.in.command.sistema.AtualizarEntidadeInstanc
 import com.draftstd.hydraforge.ports.in.command.sistema.CriarEntidadeInstanciaCommand;
 import com.draftstd.hydraforge.ports.in.query.sistema.EntidadeInstanciaQueryResponse;
 import com.draftstd.hydraforge.ports.in.query.sistema.ObterEntidadeInstanciaQuery;
-import com.draftstd.hydraforge.ports.in.sistema.entidade.GerenciarEntidadeInstanciaUseCase;
+import com.draftstd.hydraforge.ports.in.sistema.GerenciarEntidadeInstanciaUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,25 +25,14 @@ public class EntidadeInstanciaController {
     }
 
     @PostMapping
-    public ResponseEntity<EntidadeInstanciaQueryResponse> criar(@Valid @RequestBody EntidadeInstanciaCreateDTO dto,
-                                                                @RequestHeader("X-Usuario-Id") UUID donoId) {
-        CriarEntidadeInstanciaCommand command = new CriarEntidadeInstanciaCommand(
-                dto.entidadeSistemaId(),
-                donoId,
-                dto.nome(),
-                dto.valoresAtributosJson()
-        );
+    public ResponseEntity<EntidadeInstanciaQueryResponse> criar(@Valid @RequestBody EntidadeInstanciaCreateDTO dto, @RequestHeader("X-Usuario-Id") UUID donoId) {
+        CriarEntidadeInstanciaCommand command = new CriarEntidadeInstanciaCommand(dto.entidadeSistemaId(), donoId, dto.nome(), dto.valoresAtributosJson());
         return ResponseEntity.status(HttpStatus.CREATED).body(gerenciarEntidadeInstanciaUseCase.criar(command));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EntidadeInstanciaQueryResponse> atualizar(@PathVariable UUID id,
-                                                                    @Valid @RequestBody EntidadeInstanciaUpadteDTO dto) {
-        AtualizarEntidadeInstanciaCommand command = new AtualizarEntidadeInstanciaCommand(
-                id,
-                dto.nome(),
-                dto.valoresAtributosJson()
-        );
+    public ResponseEntity<EntidadeInstanciaQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody EntidadeInstanciaUpadteDTO dto) {
+        AtualizarEntidadeInstanciaCommand command = new AtualizarEntidadeInstanciaCommand(id, dto.nome(), dto.valoresAtributosJson());
         return ResponseEntity.ok(gerenciarEntidadeInstanciaUseCase.atualizar(command));
     }
 

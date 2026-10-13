@@ -26,17 +26,14 @@ public class SistemaController {
     private final AtualizarSistemaUseCase atualizarSistemaUseCase;
     private final ObterSistemaUseCase obterSistemaUseCase;
 
-    public SistemaController(CriarSistemaUseCase criarSistemaUseCase,
-                             AtualizarSistemaUseCase atualizarSistemaUseCase,
-                             ObterSistemaUseCase obterSistemaUseCase) {
+    public SistemaController(CriarSistemaUseCase criarSistemaUseCase, AtualizarSistemaUseCase atualizarSistemaUseCase, ObterSistemaUseCase obterSistemaUseCase) {
         this.criarSistemaUseCase = criarSistemaUseCase;
         this.atualizarSistemaUseCase = atualizarSistemaUseCase;
         this.obterSistemaUseCase = obterSistemaUseCase;
     }
 
     @PostMapping
-    public ResponseEntity<SistemaQueryResponse> criar(@Valid @RequestBody SistemaCreateDTO dto,
-                                                      @RequestHeader("X-Usuario-Id") UUID autorId) {
+    public ResponseEntity<SistemaQueryResponse> criar(@Valid @RequestBody SistemaCreateDTO dto, @RequestHeader("X-Usuario-Id") UUID autorId) {
         CriarSistemaCommand command = new CriarSistemaCommand(
                 dto.nome(),
                 dto.descricao(),
@@ -48,8 +45,7 @@ public class SistemaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SistemaQueryResponse> atualizar(@PathVariable UUID id,
-                                                           @Valid @RequestBody SistemaUpdateDTO dto) {
+    public ResponseEntity<SistemaQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody SistemaUpdateDTO dto) {
         AtualizarSistemaCommand command = new AtualizarSistemaCommand(
                 id,
                 dto.nome(),

@@ -5,10 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface EtapaProcedimentoRepository extends JpaRepository<EtapaProcedimento, Long> {
+public interface EtapaProcedimentoRepository extends JpaRepository<EtapaProcedimento, UUID> {
 
-    List<EtapaProcedimento> findByProcedimentoIdOrderByOrdem(Long idFilho);
-    boolean existsByProcedimentoIdAndOrdem(Long procedimentoId, Integer ordem);
+    List<EtapaProcedimento> findByProcedimentoIdOrderByOrdem(UUID idFilho);
+    boolean existsByProcedimentoIdAndOrdem(UUID procedimentoId, Integer ordem);
 }

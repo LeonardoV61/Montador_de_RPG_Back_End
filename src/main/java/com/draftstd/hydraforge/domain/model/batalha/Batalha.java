@@ -1,47 +1,54 @@
 package com.draftstd.hydraforge.domain.model.batalha;
 
 import com.draftstd.hydraforge.domain.enums.BatalhaStatus;
-import com.draftstd.hydraforge.domain.model.sessao.Sessao;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "batalha")
 public class Batalha {
-    @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "batalha_seq"
-    )
-    @SequenceGenerator(
-            name = "batalha_seq",
-            sequenceName = "batalha_sequence",
-            allocationSize = 1
-    )
-    private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_sessao")
-    private Sessao sessao;
+    @Id
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    @Column(name = "sessao_id", nullable = false)
+    private UUID sessaoId;
+
+    @Column(name = "cena_id")
+    private UUID cenaId;
+
+    @Column(name = "versao")
+    private Long versao;
 
     @Column(name = "rodada_atual")
     private int rodadaAtual;
 
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private BatalhaStatus status;
 
-    @OneToMany(mappedBy = "batalha", cascade =  CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "iniciada_em")
+    private LocalDateTime iniciadaEm;
+
+    @OneToMany(mappedBy = "batalha", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordemIniciativa ASC")
     private List<BatalhaParticipantes> participantes;
+    
+    public List<BatalhaParticipantes> getParticipantes() {
+        return this.participantes;
+    }
 
     public List<BatalhaParticipantes> participantesAtivos() {
         return participantes.stream()
@@ -55,8 +62,14 @@ public class Batalha {
                 .toList();
     }
 
+
     public boolean haParticipanteAtivoNoLado(int lado) {
         return participantes.stream()
                 .anyMatch(p -> p.getLado() == lado && p.isAtivo());
+    }
+
+    public Object toDomain() {
+        // Método de mapeamento opcional para o domínio puro se necessário
+        return this;
     }
 }

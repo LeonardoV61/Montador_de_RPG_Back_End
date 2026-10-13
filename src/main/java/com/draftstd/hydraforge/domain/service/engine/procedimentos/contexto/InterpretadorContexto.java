@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public class InterpretadorContexto implements Contexto {
@@ -105,8 +106,21 @@ public class InterpretadorContexto implements Contexto {
     }
 
     private Object resolverCena(String sub) {
-        Long idCena = ctx.getContexto().getLong("id_cena").orElse(null);
-        if (idCena == null) return null;
+        // Lê o id_cena como String ou UUID do contexto e converte adequadamente
+        Object idCenaObj = ctx.getContexto().get("id_cena", Object.class).orElse(null);
+        if (idCenaObj == null) return null;
+        
+        UUID idCena = null;
+        if (idCenaObj instanceof UUID u) {
+            idCena = u;
+        } else {
+            try {
+                idCena = UUID.fromString(idCenaObj.toString());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
         Cena cena = cenaRepo.findById(idCena).orElse(null);
         if (cena == null) return null;
         JsonNode estado = cena.getEstado();
@@ -125,21 +139,35 @@ public class InterpretadorContexto implements Contexto {
             }
             // 🆕 Novos campos
             case "turnoAtualId" -> estado.has("turnoAtualId") && !estado.get("turnoAtualId").isNull()
-                    ? estado.get("turnoAtualId").asLong() : null;
+                    ? converterParaUuidOpcional(estado.get("turnoAtualId")) : null;
             case "jaAgiramIds" -> estado.has("jaAgiramIds")
-                    ? converterJsonArrayParaListaDeLong(estado.get("jaAgiramIds")) : null;
+                    ? converterJsonArrayParaListaDeUuid(estado.get("jaAgiramIds")) : null;
             case "dadosDisponiveis" -> estado.has("dadosDisponiveis")
                     ? estado.get("dadosDisponiveis") : null;
             default -> null;
         };
     }
 
-    // Método auxiliar para converter um JsonNode array em List<Long>
-    private List<Long> converterJsonArrayParaListaDeLong(JsonNode arrayNode) {
-        List<Long> lista = new ArrayList<>();
+    // Método auxiliar para converter um JsonNode em UUID (caso o ID da entidade/turno seja UUID)
+    private UUID converterParaUuidOpcional(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        try {
+            return UUID.fromString(node.asText());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // Método auxiliar para converter um JsonNode array em List<UUID>
+    private List<UUID> converterJsonArrayParaListaDeUuid(JsonNode arrayNode) {
+        List<UUID> lista = new ArrayList<>();
         if (arrayNode != null && arrayNode.isArray()) {
             for (JsonNode n : arrayNode) {
-                if (n.isNumber()) lista.add(n.asLong());
+                try {
+                    UUID uuid = UUID.fromString(n.asText());
+                    lista.add(uuid);
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
         return lista;

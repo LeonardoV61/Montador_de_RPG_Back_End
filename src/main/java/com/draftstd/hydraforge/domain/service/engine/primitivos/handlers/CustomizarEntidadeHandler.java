@@ -22,6 +22,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 // @RequiredArgsConstructor
@@ -55,7 +56,12 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
         JsonNode params = etapa.getParametrosEtapa();
-        Long idEntidadeSistema = params.get("id_entidade_sistema").asLong();
+        
+        JsonNode idSistemaNode = params.get("id_entidade_sistema");
+        UUID idEntidadeSistema = idSistemaNode != null && !idSistemaNode.isNull() 
+                ? UUID.fromString(idSistemaNode.asText()) 
+                : null;
+
         String chaveRolagem = params.path("chave_rolagem").asString("customizacao_rolagem");
 
         EntidadeSistema entidade = entidadeSistemaRepo.findById(idEntidadeSistema)
@@ -155,7 +161,7 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
                 sub.setParametrosEtapa(mapper.valueToTree(Map.of(
                     "tipo", acao.get("modo").asString("CRIAR"),
                     "opcao_fonte_item", "estatico",
-                    "opcao_item", acao.get("item_id").asString(),
+                    "opcao_item", acao.get("item_id").asText(),
                     "fonte_qtd", "estatico",
                     "opcao_qtd", "1",
                     "opcao_fonte_personagem", "instancia_ativa"
@@ -166,10 +172,15 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
                 if (!(ctx instanceof ProcedimentoContexto procedimentoCtx)) {
                     yield ResultadoEtapa.erro("Precisa ser um ProcedimentoContexto");
                 }
+                JsonNode idProcNode = acao.get("id_procedimento");
+                UUID idProcedimento = idProcNode != null && !idProcNode.isNull() 
+                        ? UUID.fromString(idProcNode.asText()) 
+                        : null;
+
                 EtapaProcedimento sub = new EtapaProcedimento();
                 sub.setTipoEtapa("CHAMAR_PROCEDIMENTO");
                 sub.setParametrosEtapa(mapper.valueToTree(Map.of(
-                    "id_procedimento", acao.get("id_procedimento").asLong(),
+                    "id_procedimento", idProcedimento,
                     "salvar_em", "resultado_custom",
                     "escopo", "HERDAR"
                 )));

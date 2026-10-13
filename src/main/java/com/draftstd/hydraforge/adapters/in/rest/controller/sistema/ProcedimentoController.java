@@ -1,6 +1,5 @@
 package com.draftstd.hydraforge.adapters.in.rest.controller.sistema;
 
-import com.draftstd.hydraforge.adapters.in.dto.sistema.ProcedimentoContextoDTO;
 import com.draftstd.hydraforge.adapters.in.dto.sistema.RespostaEtapaDTO;
 import com.draftstd.hydraforge.ports.in.command.sistema.ExecutarProcedimentoCommand;
 import com.draftstd.hydraforge.ports.in.sistema.GerenciarProcedimentoUseCase;
@@ -24,9 +23,7 @@ public class ProcedimentoController {
     }
 
     @PostMapping("/{id}/iniciar")
-    public ResponseEntity<Object> iniciarProcedimento(@PathVariable UUID id,
-                                                      @RequestParam UUID sessaoId,
-                                                      @RequestBody(required = false) List<UUID> instanciasIds) {
+    public ResponseEntity<Object> iniciarProcedimento(@PathVariable UUID id, @RequestParam UUID sessaoId, @RequestBody(required = false) List<UUID> instanciasIds) {
         ExecutarProcedimentoCommand command = new ExecutarProcedimentoCommand(
                 id,
                 sessaoId,
@@ -39,15 +36,13 @@ public class ProcedimentoController {
     }
 
     @PostMapping("/{id}/responder")
-    public ResponseEntity<Object> responderEtapa(@PathVariable UUID id,
-                                                 @RequestParam UUID sessaoId,
-                                                 @Valid @RequestBody RespostaEtapaDTO dto) {
+    public ResponseEntity<Object> responderEtapa(@PathVariable UUID id, @RequestParam UUID sessaoId, @Valid @RequestBody RespostaEtapaDTO dto) {
         ExecutarProcedimentoCommand command = new ExecutarProcedimentoCommand(
                 id,
                 sessaoId,
                 List.of(),
                 "RESPONDER",
-                Map.of("resposta", dto.getValor())
+                Map.of("resposta", dto.valor())
         );
         Object resultado = gerenciarProcedimentoUseCase.executarProcedimento(command);
         return ResponseEntity.ok(resultado);

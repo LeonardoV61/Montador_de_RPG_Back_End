@@ -1,9 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.personagem;
 
-public record PersonagemUpdateDTO(
-        String historia,
-        String aparencia,
-        String urlImagem,
-        String notasJogador,
-        boolean ativo
-) {}
+import tools.jackson.databind.JsonNode;
+
+public record PersonagemUpdateDTO(String nome, String conceito, JsonNode dadosJson, String historia, String aparencia, String urlImagem, String notasJogador, boolean ativo) {
+
+}

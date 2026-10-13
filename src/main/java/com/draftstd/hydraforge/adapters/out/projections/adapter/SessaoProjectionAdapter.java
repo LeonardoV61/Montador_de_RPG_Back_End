@@ -7,6 +7,8 @@ import com.draftstd.hydraforge.ports.out.messaging.SessaoMessagingOutputPort;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class SessaoProjectionAdapter {
 
@@ -24,8 +26,12 @@ public class SessaoProjectionAdapter {
         // 1. Atualiza a tabela SQL relacional de leitura
         sessaoReadModelAdapter.criarVisaoLeitura(event);
 
-        // 2. Dispara a notificação via WebSocket
-        messagingOutputPort.notificarStatusSessao(event.sessaoId().toString(), "SESSAO_CRIADA");
+        // 2. Dispara a notificação via WebSocket usando o contrato correto
+        messagingOutputPort.broadcastSessao(
+                event.sessaoId(),
+                "SESSAO_CRIADA",
+                Map.of("titulo", event.titulo(), "campanhaId", event.campanhaId().toString())
+        );
     }
 
     @EventListener
@@ -33,7 +39,11 @@ public class SessaoProjectionAdapter {
         // 1. Atualiza o status na tabela SQL de leitura
         sessaoReadModelAdapter.atualizarStatusVisao(event);
 
-        // 2. Notifica a mesa em tempo real
-        messagingOutputPort.notificarStatusSessao(event.sessaoId().toString(), event.novoStatus().name());
+        // 2. Notifica a mesa em tempo real usando o contrato correto
+        messagingOutputPort.broadcastSessao(
+                event.sessaoId(),
+                "STATUS_SESSAO_ALTERADO",
+                Map.of("novoStatus", event.novoStatus().name())
+        );
     }
 }

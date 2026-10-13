@@ -22,33 +22,54 @@ public class CampanhaAutorizacaoService {
         this.personagemRepository = personagemRepository;
     }
 
+    private Long uuidParaLong(UUID uuid) {
+        if (uuid == null) return null;
+        return Math.abs(uuid.getMostSignificantBits());
+    }
+
     public CampanhaUsuario exigirMestre(UUID idCampanha, UUID idUsuario) {
+        Long campanhaIdLong = uuidParaLong(idCampanha);
+        Long usuarioIdLong = uuidParaLong(idUsuario);
+
         return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioIdAndPapel(idCampanha, idUsuario, PapeisUsuario.MESTRE)
+                .findByCampanhaIdAndUsuarioIdAndPapel(campanhaIdLong, usuarioIdLong, PapeisUsuario.MESTRE)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Usuário " + idUsuario + " não é mestre da campanha " + idCampanha));
     }
 
     public CampanhaUsuario exigirMembro(UUID idCampanha, UUID idUsuario) {
+        Long campanhaIdLong = uuidParaLong(idCampanha);
+        Long usuarioIdLong = uuidParaLong(idUsuario);
+
         return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioIdAndPapel(idCampanha, idUsuario, PapeisUsuario.JOGADOR)
+                .findByCampanhaIdAndUsuarioIdAndPapel(campanhaIdLong, usuarioIdLong, PapeisUsuario.JOGADOR)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Usuário " + idUsuario + " não é membro da campanha " + idCampanha));
     }
 
     public boolean isMestre(UUID idCampanha, UUID idUsuario) {
+        Long campanhaIdLong = uuidParaLong(idCampanha);
+        Long usuarioIdLong = uuidParaLong(idUsuario);
+
         return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioId(idCampanha, idUsuario)
+                .findByCampanhaIdAndUsuarioId(campanhaIdLong, usuarioIdLong)
                 .map(cu -> cu.getPapel() == PapeisUsuario.MESTRE)
                 .orElse(false);
     }
 
     public CampanhaUsuario exigirAcessoPersonagem(Personagem personagem, UUID idUsuario) {
-        UUID idCampanha = personagem.getCampanha().getId();
-        if (personagem.getUsuario().getId().equals(idUsuario)) {
-            return exigirMembro(idCampanha, idUsuario);
+        UUID idCampanhaLong = (personagem.getCampanha() != null) ? personagem.getCampanha().getId() : null;
+        
+        UUID idCampanhaUuid = idCampanhaLong != null 
+                ? UUID.nameUUIDFromBytes(idCampanhaLong.toString().getBytes()) 
+                : null;
+
+        UUID usuarioIdEntidade = (personagem.getUsuario() != null) ? personagem.getUsuario().getId() : null;
+
+        if (usuarioIdEntidade != null && usuarioIdEntidade.equals(idUsuario)) {
+            return exigirMembro(idCampanhaUuid, idUsuario);
         }
-        return exigirMestre(idCampanha, idUsuario);
+        return exigirMestre(idCampanhaUuid, idUsuario);
     }
 
     public Personagem exigirPersonagemVivo(UUID idCampanha, UUID idUsuario) {

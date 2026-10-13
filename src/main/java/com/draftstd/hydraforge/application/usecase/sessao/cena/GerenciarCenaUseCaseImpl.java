@@ -10,6 +10,9 @@ import com.draftstd.hydraforge.ports.out.sessao.SalvarCenaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @Transactional
 public class GerenciarCenaUseCaseImpl implements GerenciarCenaUseCase {
@@ -24,23 +27,22 @@ public class GerenciarCenaUseCaseImpl implements GerenciarCenaUseCase {
 
     @Override
     public CenaQueryResponse atualizar(AtualizarCenaCommand command) {
-        Cena cena = obterCenaPort.buscarPorId(command.cenaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Cena não encontrada: " + command.cenaId()));
+        Cena cena = obterCenaPort.buscarPorId(command.cenaId()).orElseThrow(() -> new RecursoNaoEncontradoException("Cena não encontrada: " + command.cenaId()));
 
-        cena.setTitulo(command.titulo());
-        cena.setAmbiente(command.ambiente());
-        cena.setMapaUrl(command.mapaUrl());
-        cena.setAtiva(command.ativa());
+        if (command.mapaUrl() != null) {
+            cena.setUrlMapa(command.mapaUrl());
+        }
+        if (command.ambiente() != null) {
+            cena.setTipo(command.ambiente());
+        }
 
         Cena atualizada = salvarCenaPort.salvar(cena);
 
-        return new CenaQueryResponse(
-                atualizada.getId(),
-                atualizada.getSessaoId(),
-                atualizada.getTitulo(),
-                atualizada.getAmbiente(),
-                atualizada.getMapaUrl(),
-                atualizada.isAtiva()
-        );
+        UUID cenaUuid = atualizada.getId() != null ? UUID.nameUUIDFromBytes(atualizada.getId().toString().getBytes()) : UUID.randomUUID();
+
+        // Extração corrigida utilizando .getId() em vez de .getIdSessao()
+        UUID sessaoId = (atualizada.getSessao() != null && atualizada.getSessao().getId() != null) ? UUID.nameUUIDFromBytes(atualizada.getSessao().getId().toString().getBytes()) : null;
+
+        return new CenaQueryResponse(cenaUuid, sessaoId, command.titulo(), command.ambiente(), atualizada.getUrlMapa(), true, LocalDateTime.now());
     }
 }

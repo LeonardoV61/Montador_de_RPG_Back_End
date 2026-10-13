@@ -1,10 +1,5 @@
-// Novo DTO simples para encapsular a resposta
-// Crie o arquivo: dto/sistema/RespostaEtapaDTO.java
-package com.draftstd.hydraforge.dto.sistema;
+package com.draftstd.hydraforge.adapters.in.dto.sistema;
 
-import lombok.Data;
+public record RespostaEtapaDTO(Object valor) {
 
-@Data
-public class RespostaEtapaDTO {
-    private Object valor;
 }

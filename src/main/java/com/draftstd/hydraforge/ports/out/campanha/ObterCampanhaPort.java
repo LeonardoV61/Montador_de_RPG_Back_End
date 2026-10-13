@@ -9,3 +9,6 @@ public interface ObterCampanhaPort {
     Optional<Campanha> buscarPorId(UUID id);
     List<Campanha> listarPorUsuarioId(UUID usuarioId);
 }
+
+
+

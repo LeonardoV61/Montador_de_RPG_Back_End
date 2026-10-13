@@ -5,6 +5,9 @@ import com.draftstd.hydraforge.ports.out.messaging.SessaoMessagingOutputPort;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Component
 public class BatalhaProjectionAdapter {
 
@@ -16,13 +19,14 @@ public class BatalhaProjectionAdapter {
 
     @EventListener
     public void onEvent(DomainEvent event) {
-        // Escuta os eventos despachados no barramento interno do Spring
-        // Ex: BatalhaIniciadaEvent, TurnoAlteradoEvent, BatalhaEncerradaEvent
-        
-        // Exemplo: Notificar a mesa via WebSocket sobre atualizações no combate
         if (event.getClass().getSimpleName().contains("Batalha")) {
-            // Dispara para os clientes conectados no canal da sessão/batalha
-            sessaoMessagingOutputPort.notificarStatusSessao("batalha-id", event.getClass().getSimpleName());
+            // Conversão segura do aggregateId para UUID e uso do método correto broadcastSessao
+            UUID uuidAgregado = UUID.fromString(event.getAggregateId());
+            sessaoMessagingOutputPort.broadcastSessao(
+                    uuidAgregado,
+                    event.getClass().getSimpleName(),
+                    Map.of("eventoId", event.getEventId().toString(), "versao", event.getVersion())
+            );
         }
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -21,12 +22,12 @@ public class ProcedimentoPersistenceAdapter implements ProcedimentoOutputPort {
     }
 
     @Override
-    public Optional<Procedimento> buscarPorId(Long id) {
+    public Optional<Procedimento> buscarPorId(UUID id) {
         return procedimentoRepository.findById(id);
     }
 
     @Override
-    public List<Procedimento> listarPorSistema(Long sistemaId) {
+    public List<Procedimento> listarPorSistema(UUID sistemaId) {
         return procedimentoRepository.findBySistemaId(sistemaId);
     }
 
@@ -36,12 +37,12 @@ public class ProcedimentoPersistenceAdapter implements ProcedimentoOutputPort {
     }
 
     @Override
-    public void deletarPorId(Long id) {
+    public void deletarPorId(UUID id) {
         procedimentoRepository.deleteById(id);
     }
 
     @Override
-    public boolean existePorId(Long id) {
+    public boolean existePorId(UUID id) {
         return procedimentoRepository.existsById(id);
     }
 }

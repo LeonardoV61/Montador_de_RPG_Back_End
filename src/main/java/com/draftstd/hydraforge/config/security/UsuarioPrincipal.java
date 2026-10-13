@@ -8,11 +8,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID; 
 
 @Getter
 public class UsuarioPrincipal implements UserDetails {
 
-    private final Long id;
+    private final UUID id; 
     private final String email;
     private final String senha;
     private final boolean admin;
@@ -23,7 +24,6 @@ public class UsuarioPrincipal implements UserDetails {
         this.senha = usuario.getSenha();
         this.admin = usuario.isE_admin();
     }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

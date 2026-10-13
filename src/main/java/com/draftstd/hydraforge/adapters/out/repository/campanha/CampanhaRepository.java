@@ -9,17 +9,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID; // Import necessário para UUID
 
 @Repository
-public interface CampanhaRepository extends JpaRepository<Campanha, Long> {
+public interface CampanhaRepository extends JpaRepository<Campanha, UUID> { // Alterado de Long para UUID
 
-       Optional<Campanha> findBySessoesId(Long idSessao);
+       Optional<Campanha> findBySessoesId(UUID idSessao); // Alterado de Long para UUID
 
        @Query("SELECT COUNT(c) FROM Campanha c WHERE c.id IN " +
        "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
        "WHERE cu.id.idUsuario = :usuarioId) " +
        "AND c.status = :status")
-       long countByUsuarioIdAndStatus(@Param("usuarioId") Long usuarioId,
+       long countByUsuarioIdAndStatus(@Param("usuarioId") UUID usuarioId, // Alterado para UUID
                                @Param("status") StatusCampanha status);
 
 
@@ -29,10 +30,10 @@ public interface CampanhaRepository extends JpaRepository<Campanha, Long> {
               "  WHERE cu2.id.idUsuario = :idUsuario" +
               ") " +
               "AND cu.id.idUsuario <> :idUsuario")
-       long countJogadoresNasMesmasCampanhas(@Param("idUsuario") Long idUsuario);
+       long countJogadoresNasMesmasCampanhas(@Param("idUsuario") UUID idUsuario); // Alterado para UUID
 
        @Query("SELECT c FROM Campanha c JOIN CampanhaUsuario cu ON cu.id.idCampanha = c.id " +
               "WHERE cu.id.idUsuario = :usuarioId")
-       List<Campanha> findByUsuarioId(@Param("usuarioId") Long usuarioId);
+       List<Campanha> findByUsuarioId(@Param("usuarioId") UUID usuarioId); // Alterado para UUID
 
 }

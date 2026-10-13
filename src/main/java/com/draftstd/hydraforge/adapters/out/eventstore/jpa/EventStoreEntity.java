@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "event_store")
+@Table(name = "event_store", uniqueConstraints = {@UniqueConstraint(columnNames = {"aggregateId", "version"})})
 public class EventStoreEntity {
 
     @Id

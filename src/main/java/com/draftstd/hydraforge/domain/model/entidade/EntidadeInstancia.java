@@ -18,6 +18,7 @@ import tools.jackson.databind.JsonNode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -37,7 +38,7 @@ public class EntidadeInstancia {
         allocationSize = 1
     )
     @Column(name = "id_instancia")
-    private Long id;
+    private UUID id;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn (name = "id_campanha")

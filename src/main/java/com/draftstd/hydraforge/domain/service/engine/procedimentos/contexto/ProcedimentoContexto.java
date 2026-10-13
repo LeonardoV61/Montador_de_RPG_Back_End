@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
@@ -36,7 +37,7 @@ public class ProcedimentoContexto implements ExecucaoContexto {
 
     private EscopoInstancias escopo;
 
-    private Long idSessao;
+    private UUID idSessao; // Alterado de Long para UUID
     public enum Status {EM_ANDAMENTO, CONCLUIDO, ERRO, AGUARDANDO_INPUT_MULTIPLO, AGUARDANDO_INPUT}
     private Status status;
     private List<ResultadoEtapa> historico = new ArrayList<>();
@@ -66,7 +67,7 @@ public class ProcedimentoContexto implements ExecucaoContexto {
         return etapas.get(etapaAtual);
     }
 
-    public Long getIdSistema() {
+    public UUID getIdSistema() {
         return sistema.getId();
     }
 
@@ -81,7 +82,8 @@ public class ProcedimentoContexto implements ExecucaoContexto {
         etapaAtual++;
     }
 
-    public List<Long> idsInstancias() {
+    @Override
+    public List<UUID> idsInstancias() {
         return switch (escopo) {
             case EscopoInstancias.Nenhuma n      -> List.of();
             case EscopoInstancias.Unica u        -> List.of(u.id());
@@ -89,7 +91,8 @@ public class ProcedimentoContexto implements ExecucaoContexto {
         };
     }
 
-    public Long idInstanciaAtiva() {
+    @Override
+    public UUID idInstanciaAtiva() {
         if (escopo instanceof EscopoInstancias.Unica u) return u.id();
         throw new IllegalStateException(
                 "Procedimento '" + procedimento.getNome() + "' não tem escopo UNICA" +

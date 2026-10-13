@@ -1,6 +1,7 @@
 package com.draftstd.hydraforge.adapters.out.projections.persistence.entidade;
 
 import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeSistemaRepository;
+import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.ports.out.persistence.entidade.EntidadeSistemaOutputPort;
 import com.draftstd.hydraforge.ports.out.sistema.SalvarEntidadeSistemaPort;
@@ -33,4 +34,5 @@ public class EntidadeSistemaPersistenceAdapter implements SalvarEntidadeSistemaP
     public List<EntidadeSistema> listarPorSistemaId(UUID sistemaId) {
         return entidadeSistemaRepository.findAllBySistemaId(sistemaId);
     }
+
 }

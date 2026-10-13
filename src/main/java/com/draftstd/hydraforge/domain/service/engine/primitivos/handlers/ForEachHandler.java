@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 // In DB:
 // {
@@ -75,8 +76,8 @@ public class ForEachHandler implements EtapaHandler {
         subEtapa.setTipoEtapa(subTipo);
         subEtapa.setParametrosEtapa(mapper.valueToTree(subParams));
 
-        List<Long> idsPasaram = new ArrayList<>();
-        Map<Long, Object> resultadosPorId = new LinkedHashMap<>();
+        List<UUID> idsPasaram = new ArrayList<>();
+        Map<UUID, Object> resultadosPorId = new LinkedHashMap<>();
 
         for (EntidadeInstancia instancia : instancias) {
             // Temporarily set scope to this single instance for the sub-handler

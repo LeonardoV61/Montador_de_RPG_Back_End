@@ -1,22 +1,12 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import tools.jackson.databind.JsonNode;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AnotacaoCreateDTO {
-    private Long usuarioId;
-    private Long campanhaId;
-    private Long sessaoId;
-    private String titulo;
-    private String conteudo;
-    private String categoria;
-    private JsonNode anotacaoComplexa;
-    private Boolean ePrivado = true;
+public record AnotacaoCreateDTO(@NotNull(message = "O ID da sessão é obrigatório") UUID sessaoId, @NotBlank(message = "O título é obrigatório") String titulo, @NotBlank(message = "O conteúdo é obrigatório") String conteudo, Boolean privada) {
+    // Método de conveniência caso algum local espere o nome antigo
+    public Boolean ePrivado() {
+        return privada;
+    }
 }

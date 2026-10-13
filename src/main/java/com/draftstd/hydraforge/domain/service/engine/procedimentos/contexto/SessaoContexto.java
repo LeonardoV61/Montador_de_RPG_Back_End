@@ -13,6 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -21,23 +22,23 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SessaoContexto {
 
-    private final ConcurrentHashMap<Long, Deque<ProcedimentoContexto>> sessoes
+    private final ConcurrentHashMap<UUID, Deque<ProcedimentoContexto>> sessoes
             = new ConcurrentHashMap<>();
 
     private final SessaoRepository sessaoRepo;
     private final JsonMapper mapper;
 
-    public void iniciarSessao(Long idSessao) {
+    public void iniciarSessao(UUID idSessao) {
         sessoes.put(idSessao, new ArrayDeque<>());
     }
 
-    public void empurrar(Long idSessao, ProcedimentoContexto ctx) {
+    public void empurrar(UUID idSessao, ProcedimentoContexto ctx) {
         Deque<ProcedimentoContexto> pilha = sessoes.computeIfAbsent(idSessao, _ -> new ArrayDeque<>());
         pilha.push(ctx);
         persistirSnapshot(idSessao, pilha);
     }
 
-    public ProcedimentoContexto concluirFrame(Long idSessao) {
+    public ProcedimentoContexto concluirFrame(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = exigirPilha(idSessao);
         pilha.pop();
 
@@ -50,24 +51,24 @@ public class SessaoContexto {
         return pilha.peek();
     }
 
-    public ProcedimentoContexto frameAtivo(Long idSessao) {
+    public ProcedimentoContexto frameAtivo(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = sessoes.get(idSessao);
         if (pilha == null || pilha.isEmpty())
             throw new IllegalStateException("Nenhum procedimento ativo na sessão " + idSessao);
         return pilha.peek();
     }
 
-    public boolean temProcedimentoAtivo(Long idSessao) {
+    public boolean temProcedimentoAtivo(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = sessoes.get(idSessao);
         return pilha != null && !pilha.isEmpty();
     }
 
-    public int profundidade(Long idSessao) {
+    public int profundidade(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = sessoes.get(idSessao);
         return pilha == null ? 0 : pilha.size();
     }
 
-    public void persistirSnapshot(Long idSessao,
+    public void persistirSnapshot(UUID idSessao,
                                    Deque<ProcedimentoContexto> pilha) {
         try {
             SessaoSnapshot snapshot = new SessaoSnapshot();
@@ -90,7 +91,7 @@ public class SessaoContexto {
         }
     }
 
-    private void limparSnapshot(Long idSessao) {
+    private void limparSnapshot(UUID idSessao) {
         sessaoRepo.findById(idSessao).ifPresent(s -> {
             s.setSessaoSnapshot(null);
             sessaoRepo.save(s);
@@ -126,7 +127,7 @@ public class SessaoContexto {
         return snap;
     }
 
-    private Deque<ProcedimentoContexto> exigirPilha(Long idSessao) {
+    private Deque<ProcedimentoContexto> exigirPilha(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = sessoes.get(idSessao);
         if (pilha == null || pilha.isEmpty())
             throw new IllegalStateException(
@@ -134,7 +135,7 @@ public class SessaoContexto {
         return pilha;
     }
 
-    public void empurrarSemPersistir(Long idSessao, ProcedimentoContexto ctx) {
+    public void empurrarSemPersistir(UUID idSessao, ProcedimentoContexto ctx) {
         sessoes.computeIfAbsent(idSessao, id -> new ArrayDeque<>()).push(ctx);
     }
 }

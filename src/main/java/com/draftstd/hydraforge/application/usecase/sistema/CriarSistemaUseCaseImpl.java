@@ -8,6 +8,8 @@ import com.draftstd.hydraforge.ports.out.sistema.SalvarSistemaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,19 +24,40 @@ public class CriarSistemaUseCaseImpl implements CriarSistemaUseCase {
 
     @Override
     public SistemaQueryResponse executar(CriarSistemaCommand command) {
-        Sistema sistema = new Sistema();
-        sistema.setId(UUID.randomUUID());
-        sistema.setNome(command.nome());
-        sistema.setDescricao(command.descricao());
-        sistema.setVersao(command.versao());
+        Sistema s = new Sistema();
+        // O ID Long é gerado por sequence, não chamamos setId com UUID
+        s.setNome(command.nome());
+        s.setDescricao(command.descricao());
+        
+        if (command.versao() != null) {
+            s.setVersaoSchemas(Integer.valueOf(command.versao()));
+        }
 
-        Sistema salvo = salvarSistemaPort.salvar(sistema);
+        Sistema salvo = salvarSistemaPort.salvar(s);
+
+        // Conversão segura do ID Long da entidade salva para UUID
+        UUID sistemaUuid = salvo.getId() != null 
+                ? UUID.nameUUIDFromBytes(salvo.getId().toString().getBytes()) 
+                : UUID.randomUUID();
+
+        UUID autorId = (salvo.getUsuario() != null && salvo.getUsuario().getId() != null)
+                ? UUID.nameUUIDFromBytes(salvo.getUsuario().getId().toString().getBytes())
+                : null;
+
+        String versaoStr = salvo.getVersaoSchemas() != null 
+                ? String.valueOf(salvo.getVersaoSchemas()) 
+                : "1";
 
         return new SistemaQueryResponse(
-                salvo.getId(),
-                salvo.getNome(),
-                salvo.getDescricao(),
-                salvo.getVersao()
+                sistemaUuid, 
+                salvo.getNome(), 
+                salvo.getDescricao(), 
+                versaoStr,
+                autorId,
+                null,
+                List.of(),
+                salvo.getCriadoEm() != null ? salvo.getCriadoEm() : LocalDateTime.now(),
+                LocalDateTime.now()
         );
     }
 }

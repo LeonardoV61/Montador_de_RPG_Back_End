@@ -19,6 +19,7 @@ import tools.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,7 +37,7 @@ public class ConcederClasseHandler implements EtapaHandler {
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
         JsonNode params = etapa.getParametrosEtapa();
 
-        Long idCavaleiro = resolverIdCavaleiro(params, ctx);
+        UUID idCavaleiro = resolverIdCavaleiro(params, ctx);
 
         EntidadeSistema cavaleiro = entidadeSistemaRepo.findById(idCavaleiro)
                 .orElseThrow(() -> new IllegalArgumentException("Cavaleiro não encontrado: " + idCavaleiro));
@@ -48,10 +49,10 @@ public class ConcederClasseHandler implements EtapaHandler {
         vincularRelacao(personagem, cavaleiro, "CLASSE");
 
         // 2. Instancia e vincula os itens iniciais
-        List<Long> itensGranted = new ArrayList<>();
+        List<UUID> itensGranted = new ArrayList<>();
         if (propriedades != null && propriedades.has("itens_iniciais")) {
             for (JsonNode idNode : propriedades.get("itens_iniciais")) {
-                Long idTemplate = idNode.asLong();
+                UUID idTemplate = converterParaUuid(idNode);
                 EntidadeInstancia instanciaItem = instanciarDeTemplate(idTemplate, personagem);
                 vincularRelacao(personagem, instanciaItem, "ITEM");
                 itensGranted.add(instanciaItem.getId());
@@ -59,10 +60,10 @@ public class ConcederClasseHandler implements EtapaHandler {
         }
 
         // 3. Instancia e vincula as habilidades
-        List<Long> habsGranted = new ArrayList<>();
+        List<UUID> habsGranted = new ArrayList<>();
         if (propriedades != null && propriedades.has("habilidades")) {
             for (JsonNode idNode : propriedades.get("habilidades")) {
-                Long idTemplate = idNode.asLong();
+                UUID idTemplate = converterParaUuid(idNode);
                 EntidadeInstancia instanciaHab = instanciarDeTemplate(idTemplate, personagem);
                 vincularRelacao(personagem, instanciaHab, "HABILIDADE");
                 habsGranted.add(instanciaHab.getId());
@@ -83,7 +84,7 @@ public class ConcederClasseHandler implements EtapaHandler {
      * Os atributosAtuais são copiados dos atributos do template,
      * permitindo que a instância evolua independentemente.
      */
-    private EntidadeInstancia instanciarDeTemplate(Long idTemplate, EntidadeInstancia personagem) {
+    private EntidadeInstancia instanciarDeTemplate(UUID idTemplate, EntidadeInstancia personagem) {
         EntidadeSistema template = entidadeSistemaRepo.findById(idTemplate)
                 .orElseThrow(() -> new IllegalArgumentException("Template não encontrado: " + idTemplate));
 
@@ -130,13 +131,21 @@ public class ConcederClasseHandler implements EtapaHandler {
         relacaoRepo.save(rel);
     }
 
-    private Long resolverIdCavaleiro(JsonNode params, ExecucaoContexto ctx) {
+    private UUID resolverIdCavaleiro(JsonNode params, ExecucaoContexto ctx) {
         String chaveEscolhido = params.path("chave_escolhido").asString("id_cavaleiro_escolhido");
         String chaveSorteado  = params.path("chave_sorteado").asString("id_cavaleiro_sorteado");
 
-        return ctx.getContexto().getLong(chaveEscolhido)
-                .or(() -> ctx.getContexto().getLong(chaveSorteado))
+        Object rawId = ctx.getContexto().get(chaveEscolhido, Object.class)
+                .or(() -> ctx.getContexto().get(chaveSorteado, Object.class))
                 .orElseThrow(() -> new IllegalStateException(
                         "Nenhum cavaleiro foi escolhido ou sorteado no contexto"));
+
+        return rawId instanceof UUID u ? u : UUID.fromString(rawId.toString());
+    }
+
+    private UUID converterParaUuid(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        if (node.isTextual()) return UUID.fromString(node.asString());
+        return UUID.fromString(node.asText());
     }
 }

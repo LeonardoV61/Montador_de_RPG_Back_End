@@ -30,7 +30,8 @@ public class EntidadeInstanciaPersistenceAdapter implements SalvarEntidadeInstan
     }
 
     @Override
-    public List<EntidadeInstancia> listarPorDonoId(UUID donoId) {
-        return entidadeInstanciaRepository.findAllByDonoId(donoId);
+    public List<EntidadeInstancia> listarPorCampanhaId(UUID campanhaId) {
+        return entidadeInstanciaRepository.findAllByCampanhaId(campanhaId);
     }
+
 }

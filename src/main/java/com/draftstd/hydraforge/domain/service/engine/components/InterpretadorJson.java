@@ -350,22 +350,22 @@ public class InterpretadorJson {
             case "resolver" -> {
                 if (args.size() != 2) throw new IllegalArgumentException("resolver requer 2 argumentos (idResolucao, contexto)");
                 Object idArg = args.get(0).getValor();
-                Long idResolucao = switch (idArg) {
-                    case Number n -> n.longValue();
-                    case String s -> Long.parseLong(s);
-                    default -> throw new IllegalArgumentException("idResolucao deve ser número ou texto numérico");
+                UUID idResolucao = switch (idArg) {
+                    case UUID u -> u;
+                    case String s -> UUID.fromString(s);
+                    default -> throw new IllegalArgumentException("idResolucao deve ser um UUID válido ou texto UUID");
                 };
                 Object contextoObj = args.get(1).getValor();
                 JsonNode contextoJson = objectMapper.valueToTree(contextoObj);
                 Resolucao resolucao = resolucaoPort.buscarPorId(idResolucao)
                         .orElseThrow(() -> new IllegalArgumentException("Resolução não encontrada: " + idResolucao));
-                ResolutionOutcome resultado = resolutionEvaluator.evaluate(resolucao, contextoJson);
+                ResolutionOutcome resolutionOutcome = resolutionEvaluator.evaluate(resolucao, contextoJson);
                 Map<String, Object> objeto = new LinkedHashMap<>();
-                objeto.put("roll", resultado.roll());
-                objeto.put("targetValue", resultado.targetValue());
-                objeto.put("success", resultado.success());
-                objeto.put("motivo", resultado.motivo());
-                objeto.put("detalhes", objectMapper.convertValue(resultado.detalhes(), Map.class));
+                objeto.put("roll", resolutionOutcome.roll());
+                objeto.put("targetValue", resolutionOutcome.targetValue());
+                objeto.put("success", resolutionOutcome.success());
+                objeto.put("motivo", resolutionOutcome.motivo());
+                objeto.put("detalhes", objectMapper.convertValue(resolutionOutcome.detalhes(), Map.class));
                 yield ResultadoExpressao.objeto(objeto);
             }
             case "if" -> {

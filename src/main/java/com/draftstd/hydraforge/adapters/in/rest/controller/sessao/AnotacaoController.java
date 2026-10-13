@@ -24,36 +24,21 @@ public class AnotacaoController {
     private final GerenciarAnotacaoUseCase gerenciarAnotacaoUseCase;
     private final ObterAnotacaoUseCase obterAnotacaoUseCase;
 
-    public AnotacaoController(CriarAnotacaoUseCase criarAnotacaoUseCase,
-                              GerenciarAnotacaoUseCase gerenciarAnotacaoUseCase,
-                              ObterAnotacaoUseCase obterAnotacaoUseCase) {
+    public AnotacaoController(CriarAnotacaoUseCase criarAnotacaoUseCase, GerenciarAnotacaoUseCase gerenciarAnotacaoUseCase, ObterAnotacaoUseCase obterAnotacaoUseCase) {
         this.criarAnotacaoUseCase = criarAnotacaoUseCase;
         this.gerenciarAnotacaoUseCase = gerenciarAnotacaoUseCase;
         this.obterAnotacaoUseCase = obterAnotacaoUseCase;
     }
 
     @PostMapping
-    public ResponseEntity<AnotacaoQueryResponse> criar(@Valid @RequestBody AnotacaoCreateDTO dto,
-                                                        @RequestHeader("X-Usuario-Id") UUID autorId) {
-        CriarAnotacaoCommand command = new CriarAnotacaoCommand(
-                dto.sessaoId(),
-                autorId,
-                dto.titulo(),
-                dto.conteudo(),
-                dto.privada()
-        );
+    public ResponseEntity<AnotacaoQueryResponse> criar(@Valid @RequestBody AnotacaoCreateDTO dto, @RequestHeader("X-Usuario-Id") UUID autorId) {
+        CriarAnotacaoCommand command = new CriarAnotacaoCommand(dto.sessaoId(), autorId, dto.titulo(), dto.conteudo(), dto.privada());
         return ResponseEntity.status(HttpStatus.CREATED).body(criarAnotacaoUseCase.executar(command));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AnotacaoQueryResponse> atualizar(@PathVariable UUID id,
-                                                           @Valid @RequestBody AnotacaoUpdateDTO dto) {
-        AtualizarAnotacaoCommand command = new AtualizarAnotacaoCommand(
-                id,
-                dto.titulo(),
-                dto.conteudo(),
-                dto.privada()
-        );
+    public ResponseEntity<AnotacaoQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody AnotacaoUpdateDTO dto) {
+        AtualizarAnotacaoCommand command = new AtualizarAnotacaoCommand(id, dto.titulo(), dto.conteudo(), dto.privada());
         return ResponseEntity.ok(gerenciarAnotacaoUseCase.atualizar(command));
     }
 

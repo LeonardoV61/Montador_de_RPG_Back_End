@@ -9,27 +9,20 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SessaoRepository extends JpaRepository<Sessao, Long> {
-
+public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
     List<Sessao> findByStatusAndProcedimentoAtivoIsNotNull(StatusSessao status);
-
-    Optional<Sessao> findAtivaByCampanhaId(Long idCampanha);
-    
-    List<Sessao> findByCampanhaId(Long idCampanha);
-
-    List<Sessao> findByCampanhaIdOrderByOrdemDesc(Long campanhaId);
-
-    Optional<Sessao> findFirstByCampanhaIdAndStatusOrderByDataInicioDesc(Long campanhaId, StatusSessao status);
-
-    int countByCampanhaId(Long idCampanha);
+    Optional<Sessao> findAtivaByCampanhaId(UUID idCampanha);
+    List<Sessao> findByCampanhaId(UUID idCampanha);
+    List<Sessao> findByCampanhaIdOrderByOrdemDesc(UUID campanhaId);
+    Optional<Sessao> findFirstByCampanhaIdAndStatusOrderByDataInicioDesc(UUID campanhaId, StatusSessao status);
+    int countByCampanhaId(UUID idCampanha);
 
     @Query("SELECT COUNT(s) FROM Sessao s WHERE s.campanha.id IN " +
            "(SELECT cu.id.idCampanha FROM CampanhaUsuario cu " +
            "WHERE cu.id.idUsuario = :usuarioId) " +
            "AND MONTH(s.dataInicio) = :mes AND YEAR(s.dataInicio) = :ano")
-    long countByUsuarioIdAndMesAtual(@Param("usuarioId") Long usuarioId,
-                                     @Param("mes") int mes,
-                                     @Param("ano") int ano);
+    long countByUsuarioIdAndMesAtual(@Param("usuarioId") UUID usuarioId, @Param("mes") int mes, @Param("ano") int ano);
 }

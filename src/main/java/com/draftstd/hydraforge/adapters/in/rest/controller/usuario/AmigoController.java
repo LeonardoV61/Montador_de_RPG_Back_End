@@ -21,22 +21,19 @@ public class AmigoController {
     }
 
     @PostMapping("/solicitar")
-    public ResponseEntity<Void> solicitarAmizade(@Valid @RequestBody AmizadeSolicitarDTO dto,
-                                                 @RequestHeader("X-Usuario-Id") UUID remetenteId) {
+    public ResponseEntity<Void> solicitarAmizade(@Valid @RequestBody AmizadeSolicitarDTO dto, @RequestHeader("X-Usuario-Id") UUID remetenteId) {
         gerenciarAmizadeUseCase.enviarSolicitacao(remetenteId, dto.destinatarioId());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{amigoId}/aceitar")
-    public ResponseEntity<Void> aceitarAmizade(@PathVariable UUID amigoId,
-                                               @RequestHeader("X-Usuario-Id") UUID usuarioId) {
+    public ResponseEntity<Void> aceitarAmizade(@PathVariable UUID amigoId, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
         gerenciarAmizadeUseCase.aceitarSolicitacao(usuarioId, amigoId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{amigoId}")
-    public ResponseEntity<Void> removerAmizade(@PathVariable UUID amigoId,
-                                               @RequestHeader("X-Usuario-Id") UUID usuarioId) {
+    public ResponseEntity<Void> removerAmizade(@PathVariable UUID amigoId, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
         gerenciarAmizadeUseCase.recusarOuRemover(usuarioId, amigoId);
         return ResponseEntity.noContent().build();
     }

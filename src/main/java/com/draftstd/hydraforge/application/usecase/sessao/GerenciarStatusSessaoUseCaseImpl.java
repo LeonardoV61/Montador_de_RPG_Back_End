@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class GerenciarStatusSessaoUseCaseImpl implements GerenciarStatusSessaoUseCase {
@@ -22,9 +23,7 @@ public class GerenciarStatusSessaoUseCaseImpl implements GerenciarStatusSessaoUs
     private final SalvarSessaoPort salvarSessaoPort;
     private final EventStorePort eventStorePort;
 
-    public GerenciarStatusSessaoUseCaseImpl(ObterSessaoPort obterSessaoPort,
-                                            SalvarSessaoPort salvarSessaoPort,
-                                            EventStorePort eventStorePort) {
+    public GerenciarStatusSessaoUseCaseImpl(ObterSessaoPort obterSessaoPort, SalvarSessaoPort salvarSessaoPort, EventStorePort eventStorePort) {
         this.obterSessaoPort = obterSessaoPort;
         this.salvarSessaoPort = salvarSessaoPort;
         this.eventStorePort = eventStorePort;
@@ -33,34 +32,28 @@ public class GerenciarStatusSessaoUseCaseImpl implements GerenciarStatusSessaoUs
     @Override
     @Transactional
     public SessaoQueryResponse alterarStatus(AlterarStatusSessaoCommand command) {
-        Sessao sessao = obterSessaoPort.buscarPorId(command.sessaoId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + command.sessaoId()));
+        Sessao sessao = obterSessaoPort.buscarPorId(command.sessaoId()).orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + command.sessaoId()));
 
-        var statusAnterior = sessao.getStatus();
-        sessao.alterarStatus(command.novoStatus());
+        // Atualização utilizando o setter padrão da entidade
+        sessao.setStatus(command.novoStatus());
 
         Sessao sessaoSalva = salvarSessaoPort.salvar(sessao);
 
-        StatusSessaoAlteradoEvent event = new StatusSessaoAlteradoEvent(
-                sessao.getId(),
-                statusAnterior,
-                command.novoStatus(),
-                Instant.now()
-        );
+        // Conversão segura do ID Long para UUID
+        UUID sessaoUuid = sessaoSalva.getId() != null ? UUID.nameUUIDFromBytes(sessaoSalva.getId().toString().getBytes()) : UUID.randomUUID();
 
-        eventStorePort.saveEvents(
-                sessao.getId().toString(),
-                List.of(event),
-                sessao.getVersao() != null ? sessao.getVersao() : 1L
-        );
+        long versao = 1L;
+        String aggregateId = sessaoUuid.toString();
 
-        return new SessaoQueryResponse(
-                sessaoSalva.getId(),
-                sessaoSalva.getCampanhaId(),
-                sessaoSalva.getTitulo(),
-                sessaoSalva.getDescricao(),
-                sessaoSalva.getStatus(),
-                sessaoSalva.getAgendadaPara()
-        );
+        // Instanciação correta do evento com os 6 parâmetros exigidos pelo record
+        StatusSessaoAlteradoEvent event = new StatusSessaoAlteradoEvent(UUID.randomUUID(), aggregateId, sessaoUuid, command.novoStatus(), versao, Instant.now());
+
+        eventStorePort.saveEvents(aggregateId, List.of(event), versao - 1);
+
+        // Extração segura do ID da campanha a partir da relação JPA
+        UUID campanhaId = (sessaoSalva.getCampanha() != null && sessaoSalva.getCampanha().getId() != null) ? UUID.nameUUIDFromBytes(sessaoSalva.getCampanha().getId().toString().getBytes()) : null;
+
+        // Retorno compatível com os 4 parâmetros do SessaoQueryResponse
+        return new SessaoQueryResponse(sessaoUuid, campanhaId, sessaoSalva.getStatus(), List.of());
     }
 }

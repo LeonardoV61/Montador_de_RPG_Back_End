@@ -10,7 +10,9 @@ import com.draftstd.hydraforge.ports.out.sistema.ObterSistemaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,29 +24,43 @@ public class ObterSistemaUseCaseImpl implements ObterSistemaUseCase {
         this.obterSistemaPort = obterSistemaPort;
     }
 
-    @Override
-    public SistemaQueryResponse obterPorId(ObterSistemaQuery query) {
-        Sistema sistema = obterSistemaPort.buscarPorId(query.sistemaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Sistema não encontrado: " + query.sistemaId()));
+    private SistemaQueryResponse mapearParaResponse(Sistema s) {
+        UUID sistemaUuid = s.getId() != null 
+                ? UUID.nameUUIDFromBytes(s.getId().toString().getBytes()) 
+                : UUID.randomUUID();
+
+        UUID autorId = (s.getUsuario() != null && s.getUsuario().getId() != null)
+                ? UUID.nameUUIDFromBytes(s.getUsuario().getId().toString().getBytes())
+                : null;
+
+        String versaoStr = s.getVersaoSchemas() != null 
+                ? String.valueOf(s.getVersaoSchemas()) 
+                : "1";
 
         return new SistemaQueryResponse(
-                sistema.getId(),
-                sistema.getNome(),
-                sistema.getDescricao(),
-                sistema.getVersao()
+                sistemaUuid, 
+                s.getNome(), 
+                s.getDescricao(), 
+                versaoStr,
+                autorId,
+                null,
+                List.of(),
+                s.getCriadoEm(),
+                LocalDateTime.now()
         );
     }
 
     @Override
-    public List<SistemaQueryResponse> listarTodos(ListarSistemasQuery query) {
-        return obterSistemaPort.listarTodos()
-                .stream()
-                .map(s -> new SistemaQueryResponse(
-                        s.getId(),
-                        s.getNome(),
-                        s.getDescricao(),
-                        s.getVersao()
-                ))
+    public SistemaQueryResponse obterPorId(ObterSistemaQuery query) {
+        Sistema s = obterSistemaPort.buscarPorId(query.sistemaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Sistema não encontrado: " + query.sistemaId()));
+        return mapearParaResponse(s);
+    }
+
+    @Override
+    public List<SistemaQueryResponse> listarSistemas(ListarSistemasQuery query) {
+        return obterSistemaPort.listarTodos().stream()
+                .map(this::mapearParaResponse)
                 .toList();
     }
 }

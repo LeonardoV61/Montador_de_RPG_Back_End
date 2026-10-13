@@ -14,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,7 +40,9 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
 
         Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
 
-        Long idFilho  = ((Number) params.get("id_procedimento")).longValue();
+        Object rawIdProc = params.get("id_procedimento");
+        UUID idFilho = rawIdProc instanceof UUID u ? u : UUID.fromString(rawIdProc.toString());
+
         String salvarEm  = (String) params.get("salvar_em");
         String escopoTipo = (String) params.getOrDefault("escopo", "HERDAR");
 
@@ -86,18 +89,19 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
             case "NENHUMA"      -> EscopoInstancias.nenhuma();
             case "UNICA" -> {
                 String chave = (String) params.get("escopo_contexto_chave");
-                Long id   = pai.getContexto().getLong(chave).orElseThrow(
+                Object rawId = pai.getContexto().get(chave, Object.class).orElseThrow(
                         () -> new JsonFieldNotFoundException("escopo_contexto_chave", "CHAMAR_PROCEDIMENTO")
                 );
+                UUID id = rawId instanceof UUID u ? u : UUID.fromString(rawId.toString());
                 yield EscopoInstancias.unica(id);
             }
             case "CONTEXTO_IDS" -> {
                 String chave = (String) params.get("escopo_contexto_chave");
-                List<Long> ids = pai.getContexto().getListaIds(chave);
+                List<UUID> ids = pai.getContexto().getListaIds(chave);
                 yield EscopoInstancias.multiplas(ids != null ? ids : List.of());
             }
             case "TODOS" -> {
-                List<Long> ids = pai.getParticipantes().stream()
+                List<UUID> ids = pai.getParticipantes().stream()
                         .map(p -> p.getInstancia().getId())
                         .toList();
                 yield EscopoInstancias.multiplas(ids);

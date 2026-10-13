@@ -8,8 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import tools.jackson.databind.JsonNode;
+
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -19,17 +22,10 @@ import tools.jackson.databind.JsonNode;
 @Table(name = "Resolucao")
 public class Resolucao {
     @Id
-    @GeneratedValue(
-        strategy = GenerationType.SEQUENCE, 
-        generator = "resolucao_seq"
-    )
-    @SequenceGenerator(
-        name = "resolucao_seq", 
-        sequenceName = "resolucao_sequence", 
-        allocationSize = 1
-    )
-    @Column(name = "id_etapa")
-    private Long id;
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id_etapa", updatable = false, nullable = false, columnDefinition = "UUID")
+    private UUID id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "Sistemas_id_sistema")
@@ -43,5 +39,6 @@ public class Resolucao {
 
     @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private JsonNode parametros;
 }

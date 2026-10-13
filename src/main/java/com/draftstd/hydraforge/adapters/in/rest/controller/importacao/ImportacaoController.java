@@ -29,10 +29,7 @@ public class ImportacaoController {
     private final ImportarPersonagemUseCase importarPersonagemUseCase;
     private final ExportarPersonagemUseCase exportarPersonagemUseCase;
 
-    public ImportacaoController(ImportarSistemaUseCase importarSistemaUseCase,
-                                ExportarSistemaUseCase exportarSistemaUseCase,
-                                ImportarPersonagemUseCase importarPersonagemUseCase,
-                                ExportarPersonagemUseCase exportarPersonagemUseCase) {
+    public ImportacaoController(ImportarSistemaUseCase importarSistemaUseCase, ExportarSistemaUseCase exportarSistemaUseCase, ImportarPersonagemUseCase importarPersonagemUseCase, ExportarPersonagemUseCase exportarPersonagemUseCase) {
         this.importarSistemaUseCase = importarSistemaUseCase;
         this.exportarSistemaUseCase = exportarSistemaUseCase;
         this.importarPersonagemUseCase = importarPersonagemUseCase;
@@ -40,50 +37,30 @@ public class ImportacaoController {
     }
 
     @PostMapping("/sistema")
-    public ResponseEntity<SistemaQueryResponse> importarSistema(@RequestParam("file") MultipartFile file,
-                                                                 @RequestHeader("X-Usuario-Id") UUID autorId) throws IOException {
-        ImportarSistemaCommand command = new ImportarSistemaCommand(
-                autorId,
-                file.getBytes(),
-                file.getContentType()
-        );
+    public ResponseEntity<SistemaQueryResponse> importarSistema(@RequestParam("file") MultipartFile file, @RequestHeader("X-Usuario-Id") UUID autorId) throws IOException {
+        ImportarSistemaCommand command = new ImportarSistemaCommand(autorId, file.getBytes(), file.getContentType());
         return ResponseEntity.ok(importarSistemaUseCase.executar(command));
     }
 
     @GetMapping("/sistema/{id}/exportar")
-    public ResponseEntity<byte[]> exportarSistema(@PathVariable UUID id,
-                                                   @RequestParam(defaultValue = "JSON") String formato) {
+    public ResponseEntity<byte[]> exportarSistema(@PathVariable UUID id, @RequestParam(defaultValue = "JSON") String formato) {
         ExportarSistemaCommand command = new ExportarSistemaCommand(id, formato);
         ArquivoExportadoQueryResponse arquivo = exportarSistemaUseCase.executar(command);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"")
-                .contentType(MediaType.parseMediaType(arquivo.tipoConteudo()))
-                .body(arquivo.dados());
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"").contentType(MediaType.parseMediaType(arquivo.tipoConteudo())).body(arquivo.dados());
     }
 
     @PostMapping("/personagem")
-    public ResponseEntity<PersonagemQueryResponse> importarPersonagem(@RequestParam("file") MultipartFile file,
-                                                                       @RequestParam(required = false) UUID campanhaId,
-                                                                       @RequestHeader("X-Usuario-Id") UUID usuarioId) throws IOException {
-        ImportarPersonagemCommand command = new ImportarPersonagemCommand(
-                usuarioId,
-                campanhaId,
-                file.getBytes(),
-                file.getContentType()
-        );
+    public ResponseEntity<PersonagemQueryResponse> importarPersonagem(@RequestParam("file") MultipartFile file, @RequestParam(required = false) UUID campanhaId, @RequestHeader("X-Usuario-Id") UUID usuarioId) throws IOException {
+        ImportarPersonagemCommand command = new ImportarPersonagemCommand(usuarioId, campanhaId, file.getBytes(), file.getContentType());
         return ResponseEntity.ok(importarPersonagemUseCase.executar(command));
     }
 
     @GetMapping("/personagem/{id}/exportar")
-    public ResponseEntity<byte[]> exportarPersonagem(@PathVariable UUID id,
-                                                     @RequestParam(defaultValue = "JSON") String formato) {
+    public ResponseEntity<byte[]> exportarPersonagem(@PathVariable UUID id, @RequestParam(defaultValue = "JSON") String formato) {
         ExportarPersonagemCommand command = new ExportarPersonagemCommand(id, formato);
         ArquivoExportadoQueryResponse arquivo = exportarPersonagemUseCase.executar(command);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"")
-                .contentType(MediaType.parseMediaType(arquivo.tipoConteudo()))
-                .body(arquivo.dados());
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"").contentType(MediaType.parseMediaType(arquivo.tipoConteudo())).body(arquivo.dados());
     }
 }

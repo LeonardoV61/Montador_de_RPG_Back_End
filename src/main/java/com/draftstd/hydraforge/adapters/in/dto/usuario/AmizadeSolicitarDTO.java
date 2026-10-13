@@ -1,9 +1,8 @@
+package com.draftstd.hydraforge.adapters.in.dto.usuario;
 
-package com.draftstd.hydraforge.dto.usuario;
-
+import java.util.UUID;
 import jakarta.validation.constraints.NotNull;
 
-public record AmizadeSolicitarDTO(
-        @NotNull(message = "O ID do remetente é obrigatório") Long remetenteId,
-        @NotNull(message = "O ID do destinatário é obrigatório") Long destinatarioId
-) {}
+public record AmizadeSolicitarDTO(@NotNull(message = "O ID do remetente é obrigatório") UUID remetenteId, @NotNull(message = "O ID do destinatário é obrigatório") UUID destinatarioId) {
+
+}

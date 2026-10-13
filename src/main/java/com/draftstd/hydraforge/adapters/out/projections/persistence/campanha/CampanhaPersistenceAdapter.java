@@ -31,7 +31,6 @@ public class CampanhaPersistenceAdapter implements SalvarCampanhaPort, ObterCamp
 
     @Override
     public List<Campanha> listarPorUsuarioId(UUID usuarioId) {
-        // Assume consulta customizada no repositório vinculando a relação de participantes
-        return campanhaRepository.findAllByUsuarioId(usuarioId);
+        return campanhaRepository.findByUsuarioId(usuarioId);
     }
 }

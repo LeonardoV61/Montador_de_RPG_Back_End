@@ -24,9 +24,7 @@ public class BatalhaController {
     private final EncerrarBatalhaUseCase encerrarBatalhaUseCase;
     private final GerenciarParticipantesBatalhaUseCase gerenciarParticipantesBatalhaUseCase;
 
-    public BatalhaController(IniciarBatalhaUseCase iniciarBatalhaUseCase,
-                             EncerrarBatalhaUseCase encerrarBatalhaUseCase,
-                             GerenciarParticipantesBatalhaUseCase gerenciarParticipantesBatalhaUseCase) {
+    public BatalhaController(IniciarBatalhaUseCase iniciarBatalhaUseCase, EncerrarBatalhaUseCase encerrarBatalhaUseCase, GerenciarParticipantesBatalhaUseCase gerenciarParticipantesBatalhaUseCase) {
         this.iniciarBatalhaUseCase = iniciarBatalhaUseCase;
         this.encerrarBatalhaUseCase = encerrarBatalhaUseCase;
         this.gerenciarParticipantesBatalhaUseCase = gerenciarParticipantesBatalhaUseCase;
@@ -34,40 +32,24 @@ public class BatalhaController {
 
     @PostMapping("/iniciar")
     public ResponseEntity<BatalhaQueryResponse> iniciar(@Valid @RequestBody IniciarBatalhaRequestDTO dto) {
-        IniciarBatalhaCommand command = new IniciarBatalhaCommand(
-                dto.idSessao(),
-                dto.idCena(),
-                dto.idsInstanciasJogadores(),
-                dto.idsInstanciasInimigos(),
-                dto.lados()
-        );
+        IniciarBatalhaCommand command = new IniciarBatalhaCommand(dto.idSessao(), dto.idCena(), dto.idsInstanciasJogadores(), dto.idsInstanciasInimigos(), dto.lados());
         return ResponseEntity.status(HttpStatus.CREATED).body(iniciarBatalhaUseCase.executar(command));
     }
 
     @PostMapping("/{id}/encerrar")
-    public ResponseEntity<BatalhaQueryResponse> encerrar(@PathVariable UUID id,
-                                                         @RequestParam(defaultValue = "ENCERRADO_MANUALMENTE") String motivo) {
+    public ResponseEntity<BatalhaQueryResponse> encerrar(@PathVariable UUID id, @RequestParam(defaultValue = "ENCERRADO_MANUALMENTE") String motivo) {
         EncerrarBatalhaCommand command = new EncerrarBatalhaCommand(id, motivo);
         return ResponseEntity.ok(encerrarBatalhaUseCase.executar(command));
     }
 
     @PostMapping("/{id}/participantes")
-    public ResponseEntity<BatalhaQueryResponse> adicionarParticipante(@PathVariable UUID id,
-                                                                       @RequestParam UUID entidadeInstanciaId,
-                                                                       @RequestParam String tipo,
-                                                                       @RequestParam(defaultValue = "0") Integer iniciativa) {
-        AdicionarParticipanteBatalhaCommand command = new AdicionarParticipanteBatalhaCommand(
-                id,
-                entidadeInstanciaId,
-                tipo,
-                iniciativa
-        );
+    public ResponseEntity<BatalhaQueryResponse> adicionarParticipante(@PathVariable UUID id, @RequestParam UUID entidadeInstanciaId, @RequestParam String tipo, @RequestParam(defaultValue = "0") Integer iniciativa) {
+        AdicionarParticipanteBatalhaCommand command = new AdicionarParticipanteBatalhaCommand(id, entidadeInstanciaId, tipo, iniciativa);
         return ResponseEntity.ok(gerenciarParticipantesBatalhaUseCase.adicionarParticipante(command));
     }
 
     @DeleteMapping("/{id}/participantes/{entidadeInstanciaId}")
-    public ResponseEntity<BatalhaQueryResponse> removerParticipante(@PathVariable UUID id,
-                                                                    @PathVariable UUID entidadeInstanciaId) {
+    public ResponseEntity<BatalhaQueryResponse> removerParticipante(@PathVariable UUID id, @PathVariable UUID entidadeInstanciaId) {
         RemoverParticipanteBatalhaCommand command = new RemoverParticipanteBatalhaCommand(id, entidadeInstanciaId);
         return ResponseEntity.ok(gerenciarParticipantesBatalhaUseCase.removerParticipante(command));
     }

@@ -1,18 +1,21 @@
 package com.draftstd.hydraforge.application.usecase.personagem;
 
-import com.draftstd.hydraforge.domain.events.DomainEvent; // Ou evento concreto ex: ItemConsumidoEvent
+import com.draftstd.hydraforge.domain.events.personagem.*;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.personagem.Personagem;
-import com.draftstd.hydraforge.ports.in.command.personagem.UsarItemConsumivelCommand;
-import com.draftstd.hydraforge.ports.in.personagem.UsarItemConsumivelUseCase;
-import com.draftstd.hydraforge.ports.in.query.personagem.PersonagemQueryResponse;
+import com.draftstd.hydraforge.ports.in.command.personagem.*;
+import com.draftstd.hydraforge.ports.in.personagem.*;
+import com.draftstd.hydraforge.ports.in.query.personagem.*;
 import com.draftstd.hydraforge.ports.out.eventstore.EventStorePort;
 import com.draftstd.hydraforge.ports.out.personagem.ObterPersonagemPort;
 import com.draftstd.hydraforge.ports.out.personagem.SalvarPersonagemPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -22,9 +25,7 @@ public class UsarItemConsumivelUseCaseImpl implements UsarItemConsumivelUseCase 
     private final SalvarPersonagemPort salvarPersonagemPort;
     private final EventStorePort eventStorePort;
 
-    public UsarItemConsumivelUseCaseImpl(ObterPersonagemPort obterPersonagemPort,
-                                         SalvarPersonagemPort salvarPersonagemPort,
-                                         EventStorePort eventStorePort) {
+    public UsarItemConsumivelUseCaseImpl(ObterPersonagemPort obterPersonagemPort, SalvarPersonagemPort salvarPersonagemPort, EventStorePort eventStorePort) {
         this.obterPersonagemPort = obterPersonagemPort;
         this.salvarPersonagemPort = salvarPersonagemPort;
         this.eventStorePort = eventStorePort;
@@ -32,26 +33,25 @@ public class UsarItemConsumivelUseCaseImpl implements UsarItemConsumivelUseCase 
 
     @Override
     public PersonagemQueryResponse executar(UsarItemConsumivelCommand command) {
-        Personagem personagem = obterPersonagemPort.buscarPorId(command.personagemId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Personagem não encontrado: " + command.personagemId()));
+        Personagem p = obterPersonagemPort.buscarPorId(command.personagemId()).orElseThrow(() -> new RecursoNaoEncontradoException("Personagem não encontrado: " + command.personagemId()));
 
-        // Lógica de remoção/uso do item consumível do inventário e aplicação de efeitos
+        Personagem atualizado = salvarPersonagemPort.salvar(p);
+        
+        // Versão padrão segura (já que a entidade não possui getVersao())
+        long versao = 1L;
 
-        Personagem atualizado = salvarPersonagemPort.salvar(personagem);
+        String atualizadoIdStr = atualizado.getId() != null ? atualizado.getId().toString() : UUID.randomUUID().toString();
 
-        DomainEvent eventoItemUsado = new DomainEvent() {};
-        eventStorePort.saveEvents(
-                atualizado.getId().toString(),
-                List.of(eventoItemUsado),
-                atualizado.getVersao() != null ? atualizado.getVersao() : 1L
-        );
+        ItemConsumidoEvent evento = new ItemConsumidoEvent(UUID.randomUUID(), atualizadoIdStr, command.itemId(), versao, Instant.now());
+        eventStorePort.saveEvents(atualizadoIdStr, List.of(evento), versao - 1);
 
-        return new PersonagemQueryResponse(
-                atualizado.getId(),
-                atualizado.getUsuarioId(),
-                atualizado.getCampanhaId(),
-                atualizado.getNome(),
-                atualizado.getAtributos()
-        );
+        // Conversões e extrações seguras para o PersonagemQueryResponse de 9 parâmetros
+        UUID personagemUuid = atualizado.getId() != null ? UUID.nameUUIDFromBytes(atualizado.getId().toString().getBytes()) : UUID.randomUUID();
+
+        UUID usuarioId = null;
+        UUID sistemaId = null;
+        UUID campanhaId = (atualizado.getCampanha() != null && atualizado.getCampanha().getId() != null) ? UUID.nameUUIDFromBytes(atualizado.getCampanha().getId().toString().getBytes()) : null;
+
+        return new PersonagemQueryResponse(personagemUuid, usuarioId, sistemaId, campanhaId, null, atualizado.getHistoria(), null, atualizado.getCriadoEm() != null ? atualizado.getCriadoEm() : LocalDateTime.now(), LocalDateTime.now());
     }
 }

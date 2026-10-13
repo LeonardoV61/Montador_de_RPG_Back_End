@@ -14,6 +14,7 @@ import tools.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -50,17 +51,17 @@ public class ColetarDeclaracoesParalelasHandler implements EtapaHandler {
         String prompt     = params.path("prompt").asString("Declare your action");
         boolean podePasar = params.path("pode_passar").asBoolean(true);
 
-        List<Long> idsEsperados = fonteListaResolver.resolverIds(
+        List<UUID> idsEsperados = fonteListaResolver.resolverIds(
                 exigirTexto(params, "grupo_fonte", etapa),
                 params.get("grupo_estatico"), ctx,
                 params.path("grupo_filtro_vivo").asBoolean(false),
                 params.path("grupo_atributo_vida").asString("vigour")
         );
 
-        Map<Long, Object> parcial = ColetaParcialUtil.carregarParcial(ctx, salvarEm);
+        Map<UUID, Object> parcial = ColetaParcialUtil.carregarParcial(ctx, salvarEm);
         parcial = ColetaParcialUtil.registrarResposta(ctx, salvarEm, parcial, idsEsperados);
 
-        List<Long> pendentes = ColetaParcialUtil.pendentes(idsEsperados, parcial);
+        List<UUID> pendentes = ColetaParcialUtil.pendentes(idsEsperados, parcial);
 
         if (pendentes.isEmpty()) {
             ColetaParcialUtil.finalizarColeta(ctx, salvarEm, parcial);

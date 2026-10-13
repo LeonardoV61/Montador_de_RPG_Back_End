@@ -1,5 +1,4 @@
-// UsuarioUpdateDTO.java
-package com.draftstd.hydraforge.dto.usuario;
+package com.draftstd.hydraforge.adapters.in.dto.usuario;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

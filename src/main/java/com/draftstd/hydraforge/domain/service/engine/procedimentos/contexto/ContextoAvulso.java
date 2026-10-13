@@ -9,6 +9,7 @@ import com.draftstd.hydraforge.domain.model.sistema.Sistema;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Contexto mínimo para rodar UM handler fora de qualquer procedimento real —
@@ -21,6 +22,7 @@ import java.util.Map;
  * padrão de override que AlterarAtributoHandler e CalcularAtributoHandler
  * já usam para procedimentos reais.
  */
+
 public class ContextoAvulso implements ExecucaoContexto {
 
     private final Sistema sistema;
@@ -31,29 +33,38 @@ public class ContextoAvulso implements ExecucaoContexto {
         this.sistema = sistema;
 
         Map<String, Object> seed = new HashMap<>();
-        seed.put("executor_id", executor.getId());
-        seed.put("alvo_id", alvo.getId());
+        if (executor != null && executor.getId() != null) {
+            seed.put("executor_id", executor.getId());
+        }
+        if (alvo != null && alvo.getId() != null) {
+            seed.put("alvo_id", alvo.getId());
+        }
         this.contexto = new ContextoAccessor(seed);
 
-        this.escopo = EscopoInstancias.unica(executor.getId());
+        UUID executorId = (executor != null) ? executor.getId() : null;
+        this.escopo = EscopoInstancias.unica(executorId);
     }
 
     @Override public ContextoAccessor getContexto()  { return contexto; }
     @Override public Sistema getSistema()           { return sistema; }
-    @Override public Long getIdSistema()            { return sistema.getId(); }
+    @Override public UUID getIdSistema()            { return sistema.getId(); }
     @Override public EscopoInstancias getEscopo()    { return escopo; }
-    @Override public void setEscopo(EscopoInstancias escopo) {this.escopo = escopo; }
+    @Override public void setEscopo(EscopoInstancias escopo) { this.escopo = escopo; }
     @Override public boolean semInstancias()        { return false; }
     @Override public boolean temInstanciaUnica()    { return true; }
     @Override public Procedimento getProcedimento() { return null; }
     
     @Override
-    public Long idInstanciaAtiva() {
-        return ((EscopoInstancias.Unica) escopo).id();
+    public UUID idInstanciaAtiva() {
+        if (escopo instanceof EscopoInstancias.Unica unica) {
+            return unica.id();
+        }
+        return null;
     }
 
     @Override
-    public List<Long> idsInstancias() {
-        return List.of(idInstanciaAtiva());
+    public List<UUID> idsInstancias() {
+        UUID idAtivo = idInstanciaAtiva();
+        return idAtivo != null ? List.of(idAtivo) : List.of();
     }
 }

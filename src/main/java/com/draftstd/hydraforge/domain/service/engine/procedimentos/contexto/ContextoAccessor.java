@@ -58,6 +58,13 @@ public class ContextoAccessor {
         throw new ContextoTipoException(chave, "String", v);
     }
 
+    public Optional<UUID> getUUID(String chave) {
+        Object v = dados.get(chave);
+        if (v == null)             return Optional.empty();
+        if (v instanceof String s) return Optional.of(UUID.fromString(s));
+        throw new ContextoTipoException(chave, "UUID", v);
+    }
+
     public Optional<Boolean> getBoolean(String chave) {
         Object v = dados.get(chave);
         if (v == null)              return Optional.empty();
@@ -72,17 +79,17 @@ public class ContextoAccessor {
         throw new ContextoTipoException(chave, "Integer", v);
     }
 
-    public List<Long> getListaIds(String chave) {
+    public List<UUID> getListaIds(String chave) {
         Object v = dados.get(chave);
         if (v == null) return List.of();
         if (v instanceof List<?> l) {
-            // Defensive: coerce Number elements to Long (Jackson deserializes as Integer)
+            // Defensive: coerce String elements to UUID (Jackson deserializes as String)
             return l.stream()
-                    .map(e -> e instanceof Number n ? n.longValue() : null)
+                    .map(e -> e instanceof String s ? UUID.fromString(s) : null)
                     .filter(Objects::nonNull)
                     .toList();
         }
-        throw new ContextoTipoException(chave, "List<Long>", v);
+        throw new ContextoTipoException(chave, "List<UUID>", v);
     }
 
     @SuppressWarnings ("unchecked")

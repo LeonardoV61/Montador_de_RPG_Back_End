@@ -9,14 +9,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProcedimentoSnapshot {
 
-    private Long idProcedimento;
-    private Long idSessao;
+    private UUID idProcedimento;
+    private UUID idSessao;
     private int etapaAtual;
     private Status status;
     private String contextoRetorno;
@@ -24,7 +25,7 @@ public class ProcedimentoSnapshot {
     private Map<String, Object> contextoMap = new HashMap<>();
 
     private String escopoTipo;
-    private List<Long> escopoIds;
+    private List<UUID> escopoIds;
 
     @Getter(AccessLevel.NONE)
     private ContextoAccessor contexto;

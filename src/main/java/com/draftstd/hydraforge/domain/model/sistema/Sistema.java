@@ -18,6 +18,7 @@ import tools.jackson.databind.JsonNode;
 import java.time.LocalDateTime;
 // import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -35,7 +36,7 @@ public class Sistema {
                 sequenceName = "sist_sequence",
                 allocationSize = 1
         )
-        private Long id;
+        private UUID id;
 
         @ManyToOne(optional = false, fetch = FetchType.LAZY)
         @JoinColumn(name = "id_usuario_criador")

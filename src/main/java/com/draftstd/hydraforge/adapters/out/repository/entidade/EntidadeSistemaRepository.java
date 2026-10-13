@@ -5,10 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface EntidadeSistemaRepository extends JpaRepository<EntidadeSistema, Long> {
-    List<EntidadeSistema> findBySistemaId(Long sistemaId);
+public interface EntidadeSistemaRepository extends JpaRepository<EntidadeSistema, UUID> {
+    List<EntidadeSistema> findAllBySistemaId(UUID sistemaId);
 
-    List<EntidadeSistema> findBySistemaIdAndTipo(Long sistemaId, String tipo);
+    List<EntidadeSistema> findBySistemaIdAndTipo(UUID sistemaId, String tipo);
 }

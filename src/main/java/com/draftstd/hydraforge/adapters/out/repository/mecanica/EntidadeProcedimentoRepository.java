@@ -6,12 +6,10 @@ import com.draftstd.hydraforge.domain.model.mecanica.EntidadeProcedimento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface EntidadeProcedimentoRepository extends JpaRepository<EntidadeProcedimento, Long> {
-
+public interface EntidadeProcedimentoRepository extends JpaRepository<EntidadeProcedimento, UUID> {
     Optional<EntidadeProcedimento> findByEntidadeInstancia(EntidadeInstancia entidadeId);
-    // Optional<EntidadeProcedimento> findByEntidadeSistemaAndProcessamentoNot();
 }

@@ -1,6 +1,5 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-
 import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.entidade.EntidadeRelacao;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
@@ -28,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class GerenciarItemHandler implements EtapaHandler {
@@ -64,18 +64,6 @@ public class GerenciarItemHandler implements EtapaHandler {
     @Override
     public String tipoEtapa() { return "GERENCIAR_ITEM"; }
 
-    /**
-     * parametros_etapa schema:
-     * {
-     *   "tipo": "CRIAR" | "REMOVER" | "EQUIPAR" | "DESEQUIPAR",
-     *   "opcao_fonte_item": "estatico" | "contexto",
-     *   "opcao_item": <idInstancia literal>  | <chave do contexto>,
-     *   "fonte_qtd": "estatico" | "contexto",       -- only for CRIAR/REMOVER
-     *   "opcao_qtd": <int literal> | <chave>,
-     *   "opcao_fonte_personagem": "instancia_ativa" | "batalha.aliados" | "batalha.inimigos" | "todos"
-     * }
-     */
-    
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
         Map<String, Object> params = mapper.convertValue(
@@ -83,7 +71,7 @@ public class GerenciarItemHandler implements EtapaHandler {
 
         String tipo = (String) params.get("tipo");
 
-        Long idItem = resolverIdItem(params, ctx);
+        UUID idItem = resolverIdItem(params, ctx);
         List<EntidadeInstancia> personagens = resolverPersonagens(params, ctx);
 
         EntidadeInstancia item = entidadeInstanciaRepo.findById(idItem)
@@ -98,14 +86,12 @@ public class GerenciarItemHandler implements EtapaHandler {
         };
     }
 
-    // ── INSERIR: grant item to character(s), stacking quantity if already held ──
-
     private ResultadoEtapa inserir(List<EntidadeInstancia> personagens,
                                  EntidadeInstancia item,
                                  Map<String, Object> params,
                                  ExecucaoContexto ctx) {
         int qtd = resolverQtd(params, ctx);
-        Map<Long, Integer> resultado = new LinkedHashMap<>();
+        Map<UUID, Integer> resultado = new LinkedHashMap<>();
 
         for (EntidadeInstancia personagem : personagens) {
             Optional<EntidadeRelacao> existente =
@@ -169,13 +155,11 @@ public class GerenciarItemHandler implements EtapaHandler {
         return null;
     }
 
-    // ── REMOVER: decrement quantity, delete relation only when it reaches zero ──
-
     private ResultadoEtapa remover(List<EntidadeInstancia> personagens,
                                    EntidadeInstancia item,
                                    Map<String, Object> params) {
-        int qtd = resolverQtd(params, null); // qtd to remove must be explicit/static here
-        Map<Long, Integer> resultado = new LinkedHashMap<>();
+        int qtd = resolverQtd(params, null);
+        Map<UUID, Integer> resultado = new LinkedHashMap<>();
 
         for (EntidadeInstancia personagem : personagens) {
             EntidadeRelacao rel = itemResolver
@@ -202,8 +186,6 @@ public class GerenciarItemHandler implements EtapaHandler {
                 "tipo", "REMOVER", "idItem", item.getId(), "quantidades", resultado));
     }
 
-    // ── EQUIPAR: toggle relation.customizacoes.equipado, enforcing slot exclusivity ──
-
     private ResultadoEtapa equipar(List<EntidadeInstancia> personagens,
                                    EntidadeInstancia item,
                                    ExecucaoContexto ctx) {
@@ -218,7 +200,6 @@ public class GerenciarItemHandler implements EtapaHandler {
                     .orElseThrow(() -> new IllegalStateException(
                             "Personagem " + personagem.getId() + " não possui o item " + item.getId()));
 
-            // Unequip whatever currently occupies this slot
             itemResolver.buscarEquipadoPorSlot(personagem.getId(), slot)
                     .ifPresent(atual -> {
                         if (!atual.getEntidadeFilha().getId().equals(item.getId())) {
@@ -259,13 +240,16 @@ public class GerenciarItemHandler implements EtapaHandler {
         entidadeRelacaoRepo.save(rel);
     }
 
-    // ── Param resolution helpers ─────────────────────────────────
-
-    private Long resolverIdItem(Map<String, Object> params, ExecucaoContexto ctx) {
+    private UUID resolverIdItem(Map<String, Object> params, ExecucaoContexto ctx) {
         String fonte  = (String) params.get("opcao_fonte_item");
-        String opcao  = (String) params.get("opcao_item");
-        if ("estatico".equals(fonte)) return Long.parseLong(opcao);
-        if ("contexto".equals(fonte)) return ctx.getContexto().getLong(opcao).orElseThrow();
+        Object opcao  = params.get("opcao_item");
+        if ("estatico".equals(fonte)) {
+            return opcao instanceof UUID u ? u : UUID.fromString(opcao.toString());
+        }
+        if ("contexto".equals(fonte)) {
+            Object val = ctx.getContexto().get(opcao.toString(), Object.class).orElseThrow();
+            return val instanceof UUID u ? u : UUID.fromString(val.toString());
+        }
         throw new IllegalArgumentException("opcao_fonte_item inválida: " + fonte);
     }
 

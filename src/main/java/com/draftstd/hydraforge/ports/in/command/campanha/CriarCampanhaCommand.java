@@ -1,5 +1,7 @@
 package com.draftstd.hydraforge.ports.in.command.campanha;
 
-public record CriarCampanhaCommand(String nome,String descricao,Long mestreId) {
-    
+import java.util.UUID;
+
+public record CriarCampanhaCommand(String nome, String descricao, UUID sistemaId, UUID mestreId ) {
+
 }

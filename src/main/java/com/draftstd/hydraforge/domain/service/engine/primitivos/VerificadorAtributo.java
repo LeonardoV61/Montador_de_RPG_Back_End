@@ -7,6 +7,7 @@ import com.draftstd.hydraforge.adapters.out.repository.sistema.SistemaRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -15,7 +16,7 @@ public class VerificadorAtributo {
     private final EntidadeSistemaRepository entidadeSistemaRepo;
     private final SistemaRepository sistemaRepo;
 
-    public boolean verificarAtributo (Long idSistema, String atributo, double valor){
+    public boolean verificarAtributo (UUID idSistema, String atributo, double valor){
         Sistema sistema = sistemaRepo.findById(idSistema)
                 .orElseThrow(() -> new EntityNotFoundException(Sistema.class, idSistema));
         JsonNode schemaAtributo = sistema.getSchemaAtributos().get(atributo);

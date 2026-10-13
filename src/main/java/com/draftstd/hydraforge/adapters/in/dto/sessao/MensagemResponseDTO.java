@@ -1,20 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class MensagemResponseDTO {
-    private Long id;
-    private Long sessaoId;
-    private Long usuarioId;
-    private Long campanhaId;
-    private String conteudo;
-    private LocalDateTime momento;
+public record MensagemResponseDTO(UUID id, UUID sessaoId, UUID usuarioId, String conteudo, LocalDateTime momento) {
+
 }

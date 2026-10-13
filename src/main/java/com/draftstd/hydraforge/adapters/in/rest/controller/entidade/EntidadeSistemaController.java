@@ -6,7 +6,7 @@ import com.draftstd.hydraforge.ports.in.command.sistema.AtualizarEntidadeSistema
 import com.draftstd.hydraforge.ports.in.command.sistema.CriarEntidadeSistemaCommand;
 import com.draftstd.hydraforge.ports.in.query.sistema.EntidadeSistemaQueryResponse;
 import com.draftstd.hydraforge.ports.in.query.sistema.ObterEntidadeSistemaQuery;
-import com.draftstd.hydraforge.ports.in.sistema.entidade.GerenciarEntidadeSistemaUseCase;
+import com.draftstd.hydraforge.ports.in.sistema.GerenciarEntidadeSistemaUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,24 +26,14 @@ public class EntidadeSistemaController {
 
     @PostMapping
     public ResponseEntity<EntidadeSistemaQueryResponse> criar(@Valid @RequestBody EntidadeSistemaCreateDTO dto) {
-        CriarEntidadeSistemaCommand command = new CriarEntidadeSistemaCommand(
-                dto.sistemaId(),
-                dto.nome(),
-                dto.tipo(),
-                dto.schemaJson()
-        );
+        CriarEntidadeSistemaCommand command = new CriarEntidadeSistemaCommand(dto.sistemaId(), dto.nome(), dto.tipo(), dto.schemaJson());
         return ResponseEntity.status(HttpStatus.CREATED).body(gerenciarEntidadeSistemaUseCase.criar(command));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EntidadeSistemaQueryResponse> atualizar(@PathVariable UUID id,
                                                                    @Valid @RequestBody EntidadeSistemaUpdateDTO dto) {
-        AtualizarEntidadeSistemaCommand command = new AtualizarEntidadeSistemaCommand(
-                id,
-                dto.nome(),
-                dto.tipo(),
-                dto.schemaJson()
-        );
+        AtualizarEntidadeSistemaCommand command = new AtualizarEntidadeSistemaCommand(id, dto.nome(), dto.tipo(), dto.schemaJson());
         return ResponseEntity.ok(gerenciarEntidadeSistemaUseCase.atualizar(command));
     }
 

@@ -18,6 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -65,7 +66,7 @@ public class CalcularAtributoHandler implements EtapaHandler {
         if (idNode.isMissingNode() || idNode.isNull()) {
             return instanciaResolver.retornarAtiva(ctx);
         }
-        Long idEntidade = idNode.asLong();
+        UUID idEntidade = UUID.fromString(idNode.asString());
         return instanciaRepo.findById(idEntidade)
                 .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idEntidade));
     }

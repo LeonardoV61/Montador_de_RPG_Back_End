@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeSistemaR
 
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.JsonNode;
+
 
 @Component
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class SelecionarEntidadeHandler implements EtapaHandler {
         }
 
         if (ctx.getContexto().containsKey(salvarEm)) {
-            Long id = ctx.getContexto().getLongOrThrow(salvarEm);
+            UUID id = UUID.fromString(ctx.getContexto().getStringOrThrow(salvarEm));
             return ResultadoEtapa.concluida(Map.of(salvarEm, id));
         }
 

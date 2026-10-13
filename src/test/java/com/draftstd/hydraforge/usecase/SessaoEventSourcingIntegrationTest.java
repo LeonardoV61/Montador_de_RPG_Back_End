@@ -11,10 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 @SpringBootTest
 @Transactional
@@ -31,7 +32,12 @@ public class SessaoEventSourcingIntegrationTest extends IntegrationTestBase {
     void deveCriarSessaoEPersistirEventoNaEventStore() {
         // Given (Dado)
         UUID campanhaId = UUID.randomUUID();
-        CriarSessaoCommand command = new CriarSessaoCommand(campanhaId, "Sessao de Teste Event Sourcing");
+        CriarSessaoCommand command = new CriarSessaoCommand(
+                campanhaId, 
+                "Sessao de Teste Event Sourcing", 
+                "Descrição de teste", 
+                LocalDateTime.now().plusDays(1)
+        );
 
         // When (Quando)
         SessaoQueryResponse response = criarSessaoUseCase.executar(command);

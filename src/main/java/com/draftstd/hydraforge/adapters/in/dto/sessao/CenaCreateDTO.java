@@ -1,20 +1,10 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import tools.jackson.databind.JsonNode;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class CenaCreateDTO {
-    private Long sessaoId;
-    private JsonNode mapaJson;
-    private String urlMapa;
-    private Integer ordem;
-    private String tipo;
-    private JsonNode estado;
+public record CenaCreateDTO(@NotNull(message = "O ID da sessão é obrigatório") UUID sessaoId, @NotBlank(message = "O título é obrigatório") String titulo, String ambiente, String mapaUrl, Integer ordem, String tipo, JsonNode estado) {
+
 }

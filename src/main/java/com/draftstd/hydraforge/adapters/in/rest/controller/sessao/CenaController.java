@@ -24,9 +24,7 @@ public class CenaController {
     private final GerenciarCenaUseCase gerenciarCenaUseCase;
     private final ObterCenaUseCase obterCenaUseCase;
 
-    public CenaController(CriarCenaUseCase criarCenaUseCase,
-                          GerenciarCenaUseCase gerenciarCenaUseCase,
-                          ObterCenaUseCase obterCenaUseCase) {
+    public CenaController(CriarCenaUseCase criarCenaUseCase, GerenciarCenaUseCase gerenciarCenaUseCase, ObterCenaUseCase obterCenaUseCase) {
         this.criarCenaUseCase = criarCenaUseCase;
         this.gerenciarCenaUseCase = gerenciarCenaUseCase;
         this.obterCenaUseCase = obterCenaUseCase;
@@ -34,25 +32,13 @@ public class CenaController {
 
     @PostMapping
     public ResponseEntity<CenaQueryResponse> criar(@Valid @RequestBody CenaCreateDTO dto) {
-        CriarCenaCommand command = new CriarCenaCommand(
-                dto.sessaoId(),
-                dto.titulo(),
-                dto.ambiente(),
-                dto.mapaUrl()
-        );
+        CriarCenaCommand command = new CriarCenaCommand(dto.sessaoId(), dto.titulo(), dto.ambiente(), dto.mapaUrl());
         return ResponseEntity.status(HttpStatus.CREATED).body(criarCenaUseCase.executar(command));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CenaQueryResponse> atualizar(@PathVariable UUID id,
-                                                       @Valid @RequestBody CenaUpdateDTO dto) {
-        AtualizarCenaCommand command = new AtualizarCenaCommand(
-                id,
-                dto.titulo(),
-                dto.ambiente(),
-                dto.mapaUrl(),
-                dto.ativa()
-        );
+    public ResponseEntity<CenaQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody CenaUpdateDTO dto) {
+        AtualizarCenaCommand command = new AtualizarCenaCommand(id, dto.titulo(), dto.ambiente(), dto.mapaUrl(), dto.ativa());
         return ResponseEntity.ok(gerenciarCenaUseCase.atualizar(command));
     }
 

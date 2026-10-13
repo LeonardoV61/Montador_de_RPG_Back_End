@@ -7,6 +7,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class ItemResolver {
 
@@ -16,21 +17,21 @@ public class ItemResolver {
         this.relacaoPort = relacaoPort;
     }
 
-    public List<EntidadeRelacao> listarItens(Long idPersonagem) {
+    public List<EntidadeRelacao> listarItens(UUID idPersonagem) {
         return relacaoPort.buscarPorEntidadePaiId(idPersonagem);
     }
 
-    public Optional<EntidadeRelacao> buscarRelacao(Long idPersonagem, Long idItem) {
+    public Optional<EntidadeRelacao> buscarRelacao(UUID idPersonagem, UUID idItem) {
         return relacaoPort.buscarPorPaiEFilhaId(idPersonagem, idItem);
     }
 
-    public List<EntidadeRelacao> listarEquipados(Long idPersonagem) {
+    public List<EntidadeRelacao> listarEquipados(UUID idPersonagem) {
         return listarItens(idPersonagem).stream()
                 .filter(this::isEquipado)
                 .toList();
     }
 
-    public Optional<EntidadeRelacao> buscarEquipadoPorSlot(Long idPersonagem, String slot) {
+    public Optional<EntidadeRelacao> buscarEquipadoPorSlot(UUID idPersonagem, String slot) {
         return listarEquipados(idPersonagem).stream()
                 .filter(r -> slot.equals(slotDoItem(r.getEntidadeFilha())))
                 .findFirst();
@@ -45,7 +46,7 @@ public class ItemResolver {
         return item.getEntidadeSistema().getPropriedades().path("slot").asString(null);
     }
 
-    public JsonNode atributoDoEquipado(Long idPersonagem, String slot, String atributo) {
+    public JsonNode atributoDoEquipado(UUID idPersonagem, String slot, String atributo) {
         return buscarEquipadoPorSlot(idPersonagem, slot)
                 .map(EntidadeRelacao::getEntidadeFilha)
                 .map(item -> item.getAtributosAtuais().get(atributo))
