@@ -5,14 +5,8 @@ import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class CampanhaParticipanteResponseDTO {
-    private Long idCampanha;
-    private Long idUsuario;
-    private String papel;
-    private LocalDateTime entrouEm;
-    String apelido;
+public record CampanhaParticipanteResponseDTO(UUID idCampanha, UUID idUsuario, String papel, LocalDateTime entrouEm, String apelido) {
+    
 }

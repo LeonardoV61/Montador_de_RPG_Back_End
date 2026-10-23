@@ -1,19 +1,14 @@
 package com.draftstd.hydraforge.ports.out.persistence.mecanica;
 
-import com.draftstd.hydraforge.adapters.in.dto.mecanica.ResolucaoCreateDTO;
-import com.draftstd.hydraforge.adapters.in.dto.mecanica.ResolucaoExecucaoDTO;
-import com.draftstd.hydraforge.adapters.in.dto.mecanica.ResolucaoResponseDTO;
-import com.draftstd.hydraforge.adapters.in.dto.mecanica.ResolucaoUpdateDTO;
-import tools.jackson.databind.JsonNode;
+import com.draftstd.hydraforge.domain.model.mecanica.Resolucao;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ResolucaoOutputPort {
-    ResolucaoResponseDTO salvar(ResolucaoCreateDTO dto);
-    Optional<ResolucaoResponseDTO> buscarPorId(Long id);
-    List<ResolucaoResponseDTO> listarPorSistema(Long sistemaId);
-    ResolucaoResponseDTO atualizar(Long id, ResolucaoUpdateDTO dto);
-    void deletar(Long id);
-    ResolucaoExecucaoDTO executar(Long id, JsonNode contexto);
+    Resolucao salvar(Resolucao resolucao);
+    Optional<Resolucao> buscarPorId(UUID id);
+    List<Resolucao> listarPorSistema(UUID sistemaId);
+    void deletar(UUID id);
 }

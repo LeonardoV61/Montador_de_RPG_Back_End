@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.draftstd.hydraforge.domain.enums.PapeisUsuario;
 import com.draftstd.hydraforge.domain.enums.StatusCampanha;
-import com.draftstd.hydraforge.adapters.out.repository.campanha.CampanhaRepository;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.SessaoRepository;
+import com.draftstd.hydraforge.adapters.out.persistence.campanha.repository.CampanhaRepository;
+import com.draftstd.hydraforge.adapters.out.persistence.sessao.repository.CenaRepository;
+import com.draftstd.hydraforge.adapters.out.persistence.sessao.repository.SessaoRepository;
 import com.draftstd.hydraforge.config.security.UsuarioPrincipal;
 
 import lombok.RequiredArgsConstructor;

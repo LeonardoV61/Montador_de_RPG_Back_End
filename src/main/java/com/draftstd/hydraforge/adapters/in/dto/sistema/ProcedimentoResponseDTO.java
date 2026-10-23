@@ -1,15 +1,9 @@
 package com.draftstd.hydraforge.adapters.in.dto.sistema;
 
-import tools.jackson.databind.JsonNode;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-public record ProcedimentoResponseDTO(
-        Long id,
-        Long sistemaId,
-        String sistemaNome,
-        String nome,
-        String descricao,
-        String tipo,
-        JsonNode configsGeral,
-        List<EtapaProcedimentoResponseDTO> etapas  // sempre retorna as etapas junto
-) {}
+public record ProcedimentoResponseDTO(UUID id, UUID sistemaId, String sistemaNome, String nome, String descricao, String tipo, Map<String, Object> configsGeral, List<EtapaProcedimentoResponseDTO> etapas) {
+
+}

@@ -22,7 +22,7 @@ public class UsuarioPrincipal implements UserDetails {
         this.id = usuario.getId();
         this.email = usuario.getEmail();
         this.senha = usuario.getSenha();
-        this.admin = usuario.isE_admin();
+        this.admin = usuario.isEAdmin();
     }
 
     @Override

@@ -1,23 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import tools.jackson.databind.JsonNode;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AnotacaoResponseDTO {
-    private Integer id;
-    private Long usuarioId;
-    private Long campanhaId;
-    private Long sessaoId;
-    private String titulo;
-    private String conteudo;
-    private String categoria;
-    private JsonNode anotacaoComplexa;
-    private Boolean ePrivado;
+public record AnotacaoResponseDTO(UUID id, UUID usuarioId, UUID campanhaId, UUID sessaoId, String titulo, String conteudo, String categoria, JsonNode anotacaoComplexa, Boolean ePrivado) {
+
 }

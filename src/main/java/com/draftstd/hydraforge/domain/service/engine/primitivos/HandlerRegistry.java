@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos;
 
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Slf4j
 public class HandlerRegistry {
 
     private final Map<String, EtapaHandler> handlers;
@@ -26,7 +25,6 @@ public class HandlerRegistry {
                                 h.getClass().getSimpleName());
             }
             map.put(tipo, h);
-            log.info("Handler registrado: {} -> {}", tipo, h.getClass().getSimpleName());
         }
         this.handlers = Collections.unmodifiableMap(map);
     }

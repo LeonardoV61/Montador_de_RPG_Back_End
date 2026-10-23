@@ -1,11 +1,11 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
+import org.springframework.stereotype.Component;
+
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Map;
@@ -19,20 +19,19 @@ public class CalculadorHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        // Correção: getParametrosEtapa() em vez de getParametrosComoMapa()
+        Map<String, Object> params = etapa.getParametrosEtapa();
         
-        String listaOrigem = params.get("lista").asString();
-        String operacao    = params.get("operacao").asString(); // "MAX", "MIN", "SUM", "AVG"
-        String salvarEm    = params.get("salvar_em").asString();
+        String listaOrigem = (String) params.get("lista");
+        String operacao = (String) params.get("operacao");
+        String salvarEm = (String) params.get("salvar_em");
 
-        // Pega a lista (usando seu método getList que criamos)
         List<Object> lista = ctx.getContexto().getList(listaOrigem);
         
         if (lista.isEmpty()) {
             throw new IllegalArgumentException("Lista vazia para cálculo: " + listaOrigem);
         }
 
-        // Converte para Double para garantir cálculo numérico
         List<Double> numeros = lista.stream()
                 .map(obj -> Double.valueOf(obj.toString()))
                 .collect(Collectors.toList());
@@ -45,7 +44,6 @@ public class CalculadorHandler implements EtapaHandler {
             default -> throw new IllegalArgumentException("Operação não suportada: " + operacao);
         };
 
-        // Salva o resultado
         ctx.getContexto().put(salvarEm, resultado);
 
         return ResultadoEtapa.concluida(Map.of(

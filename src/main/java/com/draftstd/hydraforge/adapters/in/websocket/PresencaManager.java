@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.springframework.context.event.EventListener;
@@ -20,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PresencaManager {
 
-    private final Map<Long, Set<String>> usuariosConectados = new ConcurrentHashMap<>();
+    private final Map<Long, Set<String>> usuariosConectados;
     private final SimpMessagingTemplate messagingTemplate;
 
     @EventListener

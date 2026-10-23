@@ -1,9 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.sistema;
 
-import tools.jackson.databind.JsonNode;
+import java.util.Map;
 
-public record EventoSistemaUpdateDTO(
-        String nome,
-        String descricao,
-        JsonNode payloadSchema
-) {}
+public record EventoSistemaUpdateDTO(String nome, String descricao, Map<String, Object> payloadSchema) {
+
+}

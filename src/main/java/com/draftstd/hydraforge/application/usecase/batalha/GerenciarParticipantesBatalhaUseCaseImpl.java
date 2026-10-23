@@ -1,26 +1,18 @@
 package com.draftstd.hydraforge.application.usecase.batalha;
 
-import com.draftstd.hydraforge.domain.enums.BatalhaStatus;
-import com.draftstd.hydraforge.domain.events.batalha.BatalhaEncerradaEvent;
-import com.draftstd.hydraforge.domain.events.batalha.BatalhaIniciadaEvent;
 import com.draftstd.hydraforge.domain.events.batalha.ParticipanteBatalhaAlteradoEvent;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.batalha.Batalha;
-import com.draftstd.hydraforge.ports.in.batalha.EncerrarBatalhaUseCase;
 import com.draftstd.hydraforge.ports.in.batalha.GerenciarParticipantesBatalhaUseCase;
-import com.draftstd.hydraforge.ports.in.batalha.IniciarBatalhaUseCase;
-import com.draftstd.hydraforge.ports.in.command.batalha.AdicionarParticipanteBatalhaCommand;
-import com.draftstd.hydraforge.ports.in.command.batalha.EncerrarBatalhaCommand;
-import com.draftstd.hydraforge.ports.in.command.batalha.IniciarBatalhaCommand;
-import com.draftstd.hydraforge.ports.in.command.batalha.RemoverParticipanteBatalhaCommand;
-import com.draftstd.hydraforge.ports.in.query.batalha.BatalhaQueryResponse;
+import com.draftstd.hydraforge.application.request.batalha.AdicionarParticipanteBatalhaCommand;
+import com.draftstd.hydraforge.application.request.batalha.RemoverParticipanteBatalhaCommand;
+import com.draftstd.hydraforge.application.response.batalha.BatalhaQueryResponse;
 import com.draftstd.hydraforge.ports.out.eventstore.EventStorePort;
 import com.draftstd.hydraforge.ports.out.persistence.batalha.BatalhaOutputPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,13 +33,14 @@ public class GerenciarParticipantesBatalhaUseCaseImpl implements GerenciarPartic
         Batalha batalha = batalhaOutputPort.buscarPorId(command.batalhaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Batalha não encontrada: " + command.batalhaId()));
 
+        // Lógica de adição de participante ao domínio (se aplicável na entidade Batalha)
         Batalha atualizada = batalhaOutputPort.salvar(batalha);
-        long versao = atualizada.getVersao() != null ? atualizada.getVersao() + 1 : 1L;
+        long versao = 1L;
 
         ParticipanteBatalhaAlteradoEvent evento = new ParticipanteBatalhaAlteradoEvent(
                 UUID.randomUUID(), atualizada.getId().toString(), command.entidadeInstanciaId(), "ADICIONAR", versao, Instant.now()
         );
-        eventStorePort.saveEvents(atualizada.getId().toString(), List.of(evento), versao - 1);
+        eventStorePort.salvarEventos(atualizada.getId().toString(), List.of(evento), 0L);
 
         return toQueryResponse(atualizada);
     }
@@ -57,24 +50,33 @@ public class GerenciarParticipantesBatalhaUseCaseImpl implements GerenciarPartic
         Batalha batalha = batalhaOutputPort.buscarPorId(command.batalhaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Batalha não encontrada: " + command.batalhaId()));
 
+        // Lógica de remoção de participante ao domínio (se aplicável na entidade Batalha)
         Batalha atualizada = batalhaOutputPort.salvar(batalha);
-        long versao = atualizada.getVersao() != null ? atualizada.getVersao() + 1 : 1L;
+        long versao = 1L;
 
         ParticipanteBatalhaAlteradoEvent evento = new ParticipanteBatalhaAlteradoEvent(
                 UUID.randomUUID(), atualizada.getId().toString(), command.entidadeInstanciaId(), "REMOVER", versao, Instant.now()
         );
-        eventStorePort.saveEvents(atualizada.getId().toString(), List.of(evento), versao - 1);
+        eventStorePort.salvarEventos(atualizada.getId().toString(), List.of(evento), 0L);
 
         return toQueryResponse(atualizada);
     }
 
     private BatalhaQueryResponse toQueryResponse(Batalha b) {
-        return new BatalhaQueryResponse(b.getId(), b.getSessaoId(), b.getCenaId(), b.getStatus().name(), b.getRodadaAtual(), b.getIniciadaEm(), b.getParticipantes().stream().map(p -> new BatalhaQueryResponse.ParticipanteBatalhaResponse(
-                p.getEntidadeInstancia() != null ? p.getEntidadeInstancia().getId() : null,
-                p.getEntidadeInstancia() != null ? p.getEntidadeInstancia().getNome() : "Desconhecido",
-                p.getEntidadeInstancia() != null ? p.getEntidadeInstancia().getTipo() : "PADRAO",
+        return new BatalhaQueryResponse(
+            b.getId(), 
+            b.getSessaoId(), 
+            b.getCampanhaId(), // Utiliza campanhaId em vez de getCenaId()
+            b.getStatus().name(), 
+            b.getRodadaAtual(), 
+            b.getInicioEm(), 
+            b.getParticipantes().stream().map(p -> new BatalhaQueryResponse.ParticipanteBatalhaResponse(
+                p.getInstanciaId(),
+                "Instância " + p.getInstanciaId(),
+                "PADRAO",
                 p.getOrdemIniciativa(),
                 p.isAtivo()
-        )).toList());
+            )).toList()
+        );
     }
 }

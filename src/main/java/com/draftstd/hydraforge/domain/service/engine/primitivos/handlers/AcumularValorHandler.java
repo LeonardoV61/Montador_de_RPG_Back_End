@@ -1,9 +1,9 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.stereotype.Component;
 
 import com.draftstd.hydraforge.domain.service.engine.components.InterpretadorJson;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
@@ -13,41 +13,46 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.Resu
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
-
-import lombok.RequiredArgsConstructor;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.CenaPersistencePort;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
-@RequiredArgsConstructor
 public class AcumularValorHandler implements EtapaHandler {
 
     private final InterpretadorJson interpretador;
     private final InstanciaResolver instanciaResolver;
-    private final CenaRepository cenaRepo;
+    private final CenaPersistencePort cenaPort;
     private final JsonMapper mapper;
+
+    public AcumularValorHandler(InterpretadorJson interpretador, 
+                                InstanciaResolver instanciaResolver, 
+                                CenaPersistencePort cenaPort,
+                                JsonMapper mapper) {
+        this.interpretador = interpretador;
+        this.instanciaResolver = instanciaResolver;
+        this.cenaPort = cenaPort;
+        this.mapper = mapper;
+    }
 
     @Override
     public String tipoEtapa() { return "ACUMULAR_VALOR"; }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
-        JsonNode origemNode = params.get("origem");
-        String destino = params.get("destino").asString();
+        Map<String, Object> params = etapa.getParametrosEtapa();
+        Object origemObj = params.get("origem");
+        String destino = (String) params.get("destino");
 
         Object valor;
-        if (origemNode.isObject()) {
-            // Interpreta como expressão
+        if (origemObj instanceof JsonNode origemNode && origemNode.isObject()) {
             InterpretadorContexto intCtx = new InterpretadorContexto(
-                (ProcedimentoContexto) ctx, instanciaResolver, cenaRepo, mapper);
+                (ProcedimentoContexto) ctx, instanciaResolver, cenaPort, mapper);
             valor = interpretador.interpretar(origemNode, intCtx).getValor();
-        } else if (origemNode.isString()) {
-            // Chave de contexto
-            valor = ctx.getContexto().get(origemNode.asString(), Object.class).orElse(0);
+        } else if (origemObj instanceof String origemStr) {
+            valor = ctx.getContexto().get(origemStr, Object.class).orElse(0);
         } else {
-            throw new IllegalArgumentException("'origem' deve ser texto ou objeto (expressão)");
+            throw new IllegalArgumentException("'origem' deve ser texto ou nó de expressão JSON");
         }
 
         List<Object> lista = ctx.getContexto().getList(destino);

@@ -1,6 +1,5 @@
 package com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine;
 
-import com.draftstd.hydraforge.adapters.in.dto.mecanica.ResultadoPoolDTO;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -26,7 +25,7 @@ public class RolagemEngine {
         List<Integer> rolos = new ArrayList<>();
 
         for (int i = 0; i < config.quantidade(); i++) {
-            int resultado = rolarUmDado(faces, config.explosao(), rolos);
+            int resultado = rolarUmDado(faces, Boolean.TRUE.equals(config.explosao()), rolos);
             rolos.add(resultado);
         }
 
@@ -64,11 +63,11 @@ public class RolagemEngine {
      * @param contaUns     se true, dados mostrando 1 cancelam um sucesso (botch)
      * @param criticoEm    "dois_maximos_consecutivos" | "qualquer_maximo" | null
      */
-    public ResultadoPoolDTO executarPool(int tamanhoPool,
-                                         String dado,
-                                         Integer dificuldade,
-                                         boolean contaUns,
-                                         String criticoEm) {
+    public ResultadoPool executarPool(int tamanhoPool,
+                                     String dado,
+                                     Integer dificuldade,
+                                     boolean contaUns,
+                                     String criticoEm) {
         int faces = parseFaces(dado);
         List<Integer> rolos = new ArrayList<>();
 
@@ -92,7 +91,7 @@ public class RolagemEngine {
         int sucessosLiquidos = contaUns ? Math.max(0, sucessos - falhas) : sucessos;
         boolean critico = avaliarCritico(rolos, faces, criticoEm);
 
-        return new ResultadoPoolDTO(tamanhoPool, rolos, sucessosLiquidos, falhas, critico, botch, dificuldade);
+        return new ResultadoPool(tamanhoPool, rolos, sucessosLiquidos, falhas, critico, botch, dificuldade);
     }
 
     /**
@@ -132,4 +131,3 @@ public class RolagemEngine {
         return new Rolagem(dado, quantidade, explosao);
     }
 }
-

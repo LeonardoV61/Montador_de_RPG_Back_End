@@ -1,8 +1,7 @@
 package com.draftstd.hydraforge.ports.in.sistema;
 
-import com.draftstd.hydraforge.ports.in.command.sistema.AtualizarSistemaCommand;
-import com.draftstd.hydraforge.ports.in.query.sistema.SistemaQueryResponse;
+import com.draftstd.hydraforge.application.request.sistema.AtualizarSistemaCommand;
 
 public interface AtualizarSistemaUseCase {
-    SistemaQueryResponse executar(AtualizarSistemaCommand command);
+    void executar(AtualizarSistemaCommand command);
 }

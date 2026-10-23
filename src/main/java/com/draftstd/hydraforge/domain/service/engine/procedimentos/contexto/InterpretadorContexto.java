@@ -1,15 +1,13 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.sessao.Cena;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.utils.interpretador.contexto.Contexto;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.CenaPersistencePort;
 import lombok.RequiredArgsConstructor;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,36 +17,14 @@ import java.util.UUID;
 public class InterpretadorContexto implements Contexto {
 
     private final ProcedimentoContexto ctx;
-    private final InstanciaResolver    instanciaResolver;
-    private final CenaRepository       cenaRepo;
-    private final JsonMapper           mapper;
+    private final InstanciaResolver instanciaResolver;
+    private final CenaPersistencePort cenaPort;
+    private final JsonMapper mapper;
 
-    // Lazy caches
     private List<EntidadeInstancia> inimigosCache;
     private List<EntidadeInstancia> aliadosCache;
     private List<EntidadeInstancia> participantesCache;
 
-
-    /**
-     * Paths exposed:
-     *
-     *   iteracao                  → int
-     *
-     *   batalha.rodada            → int
-     *   batalha.status            → String
-     *
-     *   contexto.<chave>          → any value in ProcedimentoContexto.contexto
-     *
-     *   instancia.<atributo>      → value from atributos_atuais of active instance
-     *
-     *   inimigos                  → List<Map<String,Object>> (for caminho_coringa + filtro)
-     *   aliados                   → same
-     *   participantes             → same
-     *
-     *   inimigos.*                → same list (for caminho base path in filtro's lista)
-     *   aliados.*                 → same
-     *   participantes.*           → same
-     */
     @Override
     public Optional<Object> get(String caminho) {
         try {
@@ -59,7 +35,6 @@ public class InterpretadorContexto implements Contexto {
     }
 
     private Object resolver(String caminho) {
-
         if ("iteracao".equals(caminho)) {
             return ctx.getIteracaoAtual();
         }
@@ -77,7 +52,7 @@ public class InterpretadorContexto implements Contexto {
             String atributo = caminho.substring("instancia.".length());
             if (!ctx.temInstanciaUnica()) return null;
             EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-            return inst.getAtributosAtuais().get(atributo);
+            return inst.getValoresAtributos() != null ? inst.getValoresAtributos().get(atributo) : null;
         }
 
         if ("inimigos".equals(caminho) || "inimigos.*".equals(caminho)) {
@@ -93,20 +68,14 @@ public class InterpretadorContexto implements Contexto {
         return null;
     }
 
-    /**
-      * Converts instances to a list of their atributos_atuais maps.
-      * This is what filtro and caminho_coringa iterate over —
-      * each "item" inside a condition is a Map<String, Object> of attributes.
-      */
     private List<Map<String, Object>> asAtributosMap(List<EntidadeInstancia> instancias) {
         return instancias.stream()
                 .map(i -> mapper.convertValue(
-                        i.getAtributosAtuais(), new TypeReference<Map<String, Object>>() {}))
+                        i.getValoresAtributos(), new TypeReference<Map<String, Object>>() {}))
                 .toList();
     }
 
     private Object resolverCena(String sub) {
-        // Lê o id_cena como String ou UUID do contexto e converte adequadamente
         Object idCenaObj = ctx.getContexto().get("id_cena", Object.class).orElse(null);
         if (idCenaObj == null) return null;
         
@@ -121,56 +90,31 @@ public class InterpretadorContexto implements Contexto {
             }
         }
 
-        Cena cena = cenaRepo.findById(idCena).orElse(null);
-        if (cena == null) return null;
-        JsonNode estado = cena.getEstado();
-        if (estado == null) return null;
+        Cena cena = cenaPort.buscarPorId(idCena).orElse(null);
+        if (cena == null || cena.getEstadoJson() == null || cena.getEstadoJson().isBlank()) return null;
 
-        return switch (sub) {
-            case "rodada" -> estado.has("rodada") ? estado.get("rodada").asInt() : null;
-            case "status" -> {
-                if (estado.has("status")) {
-                    yield estado.get("status").asText();
-                }
-                if (estado.has("combateAtivo")) {
-                    yield estado.get("combateAtivo").asBoolean() ? "EM_ANDAMENTO" : "CONCLUIDO";
-                }
-                yield null;
-            }
-            // 🆕 Novos campos
-            case "turnoAtualId" -> estado.has("turnoAtualId") && !estado.get("turnoAtualId").isNull()
-                    ? converterParaUuidOpcional(estado.get("turnoAtualId")) : null;
-            case "jaAgiramIds" -> estado.has("jaAgiramIds")
-                    ? converterJsonArrayParaListaDeUuid(estado.get("jaAgiramIds")) : null;
-            case "dadosDisponiveis" -> estado.has("dadosDisponiveis")
-                    ? estado.get("dadosDisponiveis") : null;
-            default -> null;
-        };
-    }
-
-    // Método auxiliar para converter um JsonNode em UUID (caso o ID da entidade/turno seja UUID)
-    private UUID converterParaUuidOpcional(JsonNode node) {
-        if (node == null || node.isNull()) return null;
         try {
-            return UUID.fromString(node.asText());
-        } catch (IllegalArgumentException e) {
+            Map<String, Object> estado = mapper.readValue(cena.getEstadoJson(), new TypeReference<Map<String, Object>>() {});
+            return switch (sub) {
+                case "rodada" -> estado.get("rodada");
+                case "status" -> {
+                    if (estado.containsKey("status")) {
+                        yield estado.get("status");
+                    }
+                    if (estado.containsKey("combateAtivo")) {
+                        Boolean ativo = (Boolean) estado.get("combateAtivo");
+                        yield Boolean.TRUE.equals(ativo) ? "EM_ANDAMENTO" : "CONCLUIDO";
+                    }
+                    yield null;
+                }
+                case "turnoAtualId" -> estado.get("turnoAtualId");
+                case "jaAgiramIds" -> estado.get("jaAgiramIds");
+                case "dadosDisponiveis" -> estado.get("dadosDisponiveis");
+                default -> estado.get(sub);
+            };
+        } catch (Exception e) {
             return null;
         }
-    }
-
-    // Método auxiliar para converter um JsonNode array em List<UUID>
-    private List<UUID> converterJsonArrayParaListaDeUuid(JsonNode arrayNode) {
-        List<UUID> lista = new ArrayList<>();
-        if (arrayNode != null && arrayNode.isArray()) {
-            for (JsonNode n : arrayNode) {
-                try {
-                    UUID uuid = UUID.fromString(n.asText());
-                    lista.add(uuid);
-                } catch (IllegalArgumentException ignored) {
-                }
-            }
-        }
-        return lista;
     }
 
     private List<EntidadeInstancia> getInimigos() {

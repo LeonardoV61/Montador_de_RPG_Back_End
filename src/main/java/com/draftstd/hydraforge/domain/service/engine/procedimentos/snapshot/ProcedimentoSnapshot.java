@@ -1,5 +1,6 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos.snapshot;
 
+
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ContextoAccessor;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto.Status;
@@ -40,8 +41,8 @@ public class ProcedimentoSnapshot {
     }
 
     public void setContextoMap(Map<String, Object> map) {
-        this.contextoMap = map;
-        this.contexto = new ContextoAccessor(map);
+        this.contextoMap = map != null ? map : new HashMap<>();
+        this.contexto = new ContextoAccessor(this.contextoMap);
     }
 
     private List<ResultadoEtapa> historico = new ArrayList<>();

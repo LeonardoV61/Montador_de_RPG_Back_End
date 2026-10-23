@@ -1,6 +1,6 @@
 package com.draftstd.hydraforge.adapters.in.rest.controller;
 
-import com.draftstd.hydraforge.ports.in.command.sistema.ExecutarProcedimentoCommand;
+import com.draftstd.hydraforge.application.request.sistema.ExecutarProcedimentoCommand;
 import com.draftstd.hydraforge.ports.in.sistema.GerenciarProcedimentoUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

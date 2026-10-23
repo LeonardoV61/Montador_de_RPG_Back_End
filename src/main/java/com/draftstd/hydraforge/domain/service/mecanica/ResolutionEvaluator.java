@@ -1,25 +1,31 @@
 package com.draftstd.hydraforge.domain.service.mecanica;
 
-import com.draftstd.hydraforge.domain.model.mecanica.Resolucao;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
+
+import com.draftstd.hydraforge.domain.model.mecanica.Resolucao;
 
 import java.util.Map;
 
 @Component
 public class ResolutionEvaluator {
 
-    public ResolutionOutcome evaluate(Resolucao resolucao, JsonNode contextoJson) {
+    public ResolutionOutcome evaluate(Resolucao resolucao, Map<String, Object> contexto) {
         int roll = (int) (Math.random() * 20) + 1;
         int targetValue = 10;
         boolean success = roll >= targetValue;
+
+        String parametrosString = (resolucao != null && resolucao.getParametrosJson() != null) 
+                ? resolucao.getParametrosJson() 
+                : "";
+
+        String nomeResolucao = (resolucao != null) ? resolucao.getNome() : "Desconhecida";
 
         return new ResolutionOutcome(
                 roll,
                 targetValue,
                 success,
-                "Avaliação de " + resolucao.getNome(),
-                Map.of("parametros", resolucao.getParametros() != null ? resolucao.getParametros().toString() : "")
+                "Avaliação de " + nomeResolucao,
+                Map.of("parametros", parametrosString)
         );
     }
 }

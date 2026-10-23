@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-public record PersonagemAtualizadoEvent(UUID eventId, String aggregateId, String nome, Map<String, Object> atributos, long version, Instant occurredOn) implements DomainEvent {
+public record PersonagemAtualizadoEvent(UUID eventId, String aggregateId, String nome, String historia, String aparencia, String urlImagem, String notasJogador, Map<String, Object> atributos, long version, Instant occurredOn, UUID sessaoId) implements DomainEvent {
     @Override public UUID getEventId() { return eventId; }
     @Override public String getAggregateId() { return aggregateId; }
     @Override public Instant getOccurredOn() { return occurredOn; }

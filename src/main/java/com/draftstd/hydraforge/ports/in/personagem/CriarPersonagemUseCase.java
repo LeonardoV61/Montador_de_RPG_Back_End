@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.ports.in.personagem;
 
-import com.draftstd.hydraforge.ports.in.command.personagem.CriarPersonagemCommand;
-import com.draftstd.hydraforge.ports.in.query.personagem.PersonagemQueryResponse;
+import com.draftstd.hydraforge.application.request.personagem.CriarPersonagemCommand;
+import java.util.UUID;
 
 public interface CriarPersonagemUseCase {
-    PersonagemQueryResponse executar(CriarPersonagemCommand command);
+    UUID executar(CriarPersonagemCommand command);
 }

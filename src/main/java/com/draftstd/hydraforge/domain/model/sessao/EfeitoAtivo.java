@@ -1,68 +1,52 @@
 package com.draftstd.hydraforge.domain.model.sessao;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.mecanica.EntidadeProcedimento;
+import java.util.Objects;
+import java.util.UUID;
 
-// import com.draftstd.hydraforge.domain.model.mecanica.EntidadeEfeito;
-// import com.draftstd.hydraforge.domain.model.personagem.Personagem;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table (name = "efeito_ativo")
 public class EfeitoAtivo {
-        @Id
-        @GeneratedValue(
-                strategy = GenerationType.SEQUENCE,
-                generator = "efAt_seq"
-        )
-        @SequenceGenerator(
-                name = "efAt_seq",
-                sequenceName = "efAt_sequence",
-                allocationSize = 1
-        )
-        private Long id;
 
-        @ManyToOne(optional = false, fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_instancia")
-        private EntidadeInstancia entidadeInstancia;
+    private final UUID id;
+    private final UUID entidadeInstanciaId;
+    private final UUID entidadeProcedimentoId;
+    private String parametrosJson;
+    private String momento;
+    private Integer expiraEm;
+    private boolean ativo;
+    private Integer usosRestantes;
 
-        @ManyToOne (optional = false, fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_entidade_procedimento")
-        private EntidadeProcedimento entidadeProcedimento;
+    public EfeitoAtivo(UUID id, UUID entidadeInstanciaId, UUID entidadeProcedimentoId, 
+                       String parametrosJson, String momento, Integer expiraEm, 
+                       boolean ativo, Integer usosRestantes) {
+        this.id = Objects.requireNonNull(id, "O ID do efeito ativo é obrigatório");
+        this.entidadeInstanciaId = entidadeInstanciaId;
+        this.entidadeProcedimentoId = entidadeProcedimentoId;
+        this.parametrosJson = parametrosJson;
+        this.momento = momento;
+        this.expiraEm = expiraEm;
+        this.ativo = ativo;
+        this.usosRestantes = usosRestantes;
+    }
 
-        @ManyToOne(optional = false, fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_sessao")
-        private Sessao sessao;
+    public void desativar() {
+        this.ativo = false;
+    }
 
-        @NotNull
-        @JdbcTypeCode(SqlTypes.JSON)
-        @Column(columnDefinition = "jsonb")
-        private JsonNode parametros;
+    public void consumirUso() {
+        if (usosRestantes != null && usosRestantes > 0) {
+            usosRestantes--;
+            if (usosRestantes == 0) {
+                desativar();
+            }
+        }
+    }
 
-        @NotNull
-        @Column(name = "momento_aplicacao")
-        private String momento;
-
-        @NotNull
-        private Integer expiraEm;
-
-        @NotNull
-        private boolean ativo;
-
-        @Column(name = "usos_restantes")
-        private Integer usosRestantes;
-
-
+    // Getters
+    public UUID getId() { return id; }
+    public UUID getEntidadeInstanciaId() { return entidadeInstanciaId; }
+    public UUID getEntidadeProcedimentoId() { return entidadeProcedimentoId; }
+    public String getParametrosJson() { return parametrosJson; }
+    public String getMomento() { return momento; }
+    public Integer getExpiraEm() { return expiraEm; }
+    public boolean isAtivo() { return ativo; }
+    public Integer getUsosRestantes() { return usosRestantes; }
 }

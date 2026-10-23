@@ -1,14 +1,10 @@
 package com.draftstd.hydraforge.config;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 import jakarta.persistence.EntityManager;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -22,17 +18,19 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * manual cleanup needed.
  */
 @SpringBootTest
-@Testcontainers
 @Transactional
 public abstract class IntegrationTestBase {
 
-    // Shared container — started once for the entire test run, not per test
-    @Container
-    static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:16-alpine")
-                    .withDatabaseName("db_rpg_test")
-                    .withUsername("test")
-                    .withPassword("test");
+    // Shared container — started once for the entire test run, not per test (sem generics)
+    static final PostgreSQLContainer POSTGRES;
+
+    static {
+        POSTGRES = new PostgreSQLContainer("postgres:16-alpine")
+                .withDatabaseName("db_rpg_test")
+                .withUsername("test")
+                .withPassword("test");
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

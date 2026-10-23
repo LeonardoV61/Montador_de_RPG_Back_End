@@ -1,51 +1,46 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.domain.service.engine.primitivos.HandlerRegistry;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.*;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeSistemaRepository;
-import lombok.RequiredArgsConstructor;
-
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeSistemaOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-// @RequiredArgsConstructor
 public class CustomizarEntidadeHandler implements EtapaHandler {
 
-    private final EntidadeSistemaRepository entidadeSistemaRepo;
+    private final EntidadeSistemaOutputPort entidadeSistemaPort;
     private final InstanciaResolver instanciaResolver;
-    private final EntidadeInstanciaRepository instanciaRepo;
+    private final EntidadeInstanciaOutputPort instanciaPort;
     private final ObjectMapper mapper;
-
-    @Lazy
-    @Autowired
     private final HandlerRegistry handlers;
 
+    @Autowired
     public CustomizarEntidadeHandler(
-            EntidadeSistemaRepository entidadeSistemaRepo,
+            EntidadeSistemaOutputPort entidadeSistemaPort,
             InstanciaResolver instanciaResolver,
-            EntidadeInstanciaRepository instanciaRepo,
+            EntidadeInstanciaOutputPort instanciaPort,
             @Lazy HandlerRegistry handlers, 
             ObjectMapper mapper) {
-        this.entidadeSistemaRepo = entidadeSistemaRepo;
+        this.entidadeSistemaPort = entidadeSistemaPort;
         this.instanciaResolver = instanciaResolver;
-        this.instanciaRepo = instanciaRepo;
+        this.instanciaPort = instanciaPort;
         this.handlers = handlers;
         this.mapper = mapper;
     }
@@ -55,29 +50,32 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
         
-        JsonNode idSistemaNode = params.get("id_entidade_sistema");
-        UUID idEntidadeSistema = idSistemaNode != null && !idSistemaNode.isNull() 
-                ? UUID.fromString(idSistemaNode.asText()) 
-                : null;
+        Object idSistemaObj = params.get("id_entidade_sistema");
+        UUID idEntidadeSistema = idSistemaObj instanceof UUID u ? u 
+                : (idSistemaObj != null ? UUID.fromString(idSistemaObj.toString()) : null);
 
-        String chaveRolagem = params.path("chave_rolagem").asString("customizacao_rolagem");
+        String chaveRolagem = (String) params.getOrDefault("chave_rolagem", "customizacao_rolagem");
 
-        EntidadeSistema entidade = entidadeSistemaRepo.findById(idEntidadeSistema)
+        EntidadeSistema entidade = entidadeSistemaPort.buscarPorId(idEntidadeSistema)
                 .orElseThrow(() -> new IllegalArgumentException("Entidade não encontrada"));
 
-        String chaveTabela = params.path("chave_tabela").asString("tabela_customizacao");
-        JsonNode tabelaNode = entidade.getPropriedades().path(chaveTabela);
-        if (tabelaNode.isMissingNode()) {
+        String chaveTabela = (String) params.getOrDefault("chave_tabela", "tabela_customizacao");
+        Map<String, Object> propriedades = entidade.getPropriedades();
+        if (propriedades == null || !propriedades.containsKey(chaveTabela)) {
             return ResultadoEtapa.concluida(Map.of("status", "sem_tabela"));
         }
+
+        JsonNode tabelaNode = mapper.valueToTree(propriedades.get(chaveTabela));
 
         // Se ainda não rolou, solicita ao front
         if (!ctx.getContexto().containsKey(chaveRolagem)) {
             JsonNode dadosNode = tabelaNode.get("dados");
             List<String> dados = new ArrayList<>();
-            for (JsonNode d : dadosNode) dados.add(d.asString());
+            if (dadosNode != null && dadosNode.isArray()) {
+                for (JsonNode d : dadosNode) dados.add(d.asText());
+            }
 
             return ResultadoEtapa.aguardandoInput(Map.of(
                 "tipo_input", "ROLAGEM",
@@ -88,24 +86,27 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
         }
 
         // Lê os resultados (ex: [3, 5])
-        JsonNode rolagemNode = ctx.getContexto().get(chaveRolagem, JsonNode.class)
-                .orElse(mapper.createArrayNode());
+        List<?> rawRolagens = ctx.getContexto().get(chaveRolagem, List.class).orElse(List.of());
         List<Integer> rolagens = new ArrayList<>();
-        for (JsonNode r : rolagemNode) rolagens.add(r.asInt());
+        for (Object r : rawRolagens) {
+            rolagens.add(r instanceof Number n ? n.intValue() : Integer.parseInt(r.toString()));
+        }
 
         // Encontra a entrada
         JsonNode entradas = tabelaNode.get("entradas");
         JsonNode entrada = null;
-        for (JsonNode e : entradas) {
-            JsonNode valoresNode = e.get("valores");
-            boolean match = true;
-            for (int i = 0; i < rolagens.size(); i++) {
-                if (valoresNode.get(i).asInt() != rolagens.get(i)) {
-                    match = false;
-                    break;
+        if (entradas != null && entradas.isArray()) {
+            for (JsonNode e : entradas) {
+                JsonNode valoresNode = e.get("valores");
+                boolean match = true;
+                for (int i = 0; i < rolagens.size(); i++) {
+                    if (valoresNode.get(i).asInt() != rolagens.get(i)) {
+                        match = false;
+                        break;
+                    }
                 }
+                if (match) { entrada = e; break; }
             }
-            if (match) { entrada = e; break; }
         }
 
         if (entrada == null) {
@@ -132,40 +133,45 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
         }
     }
 
-
     private ResultadoEtapa executarAcao(JsonNode acao, ExecucaoContexto ctx) {
-        String tipoAcao = acao.get("tipo").asString();
+        String tipoAcao = acao.get("tipo").asText();
         return switch (tipoAcao) {
             case "customizacao" -> {
                 EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-                ObjectNode custom = inst.getCustomizacoes() instanceof ObjectNode on
-                        ? on : mapper.createObjectNode();
-                custom.set(acao.get("chave").asString(), acao.get("valor"));
+                Map<String, Object> custom = inst.getCustomizacoes() != null 
+                        ? new HashMap<>(inst.getCustomizacoes()) 
+                        : new HashMap<>();
+                
+                custom.put(acao.get("chave").asText(), mapper.convertValue(acao.get("valor"), Object.class));
                 inst.setCustomizacoes(custom);
-                instanciaRepo.save(inst);
+                instanciaPort.salvar(inst);
                 yield ResultadoEtapa.concluida(Map.of("status", "customizado"));
             }
             case "alterar_atributo" -> {
-                EtapaProcedimento sub = new EtapaProcedimento();
-                sub.setTipoEtapa("ALTERAR_ATRIBUTO");
-                sub.setParametrosEtapa(mapper.valueToTree(Map.of(
-                    "atributo", acao.get("atributo").asString(),
-                    "operacao", acao.get("operacao").asString("set"),
-                    "quantidade", acao.get("quantidade").asDouble()
-                )));
+                EtapaProcedimento sub = new EtapaProcedimento(
+                        UUID.randomUUID(), null, 1, "SubEtapaAlterarAtributo", "ALTERAR_ATRIBUTO",
+                        Map.of(
+                            "atributo", acao.get("atributo").asText(),
+                            "operacao", acao.has("operacao") ? acao.get("operacao").asText() : "set",
+                            "quantidade", acao.get("quantidade").asDouble()
+                        ),
+                        true
+                );
                 yield handlers.get("ALTERAR_ATRIBUTO").executar(sub, ctx);
             }
             case "gerenciar_item" -> {
-                EtapaProcedimento sub = new EtapaProcedimento();
-                sub.setTipoEtapa("GERENCIAR_ITEM");
-                sub.setParametrosEtapa(mapper.valueToTree(Map.of(
-                    "tipo", acao.get("modo").asString("CRIAR"),
-                    "opcao_fonte_item", "estatico",
-                    "opcao_item", acao.get("item_id").asText(),
-                    "fonte_qtd", "estatico",
-                    "opcao_qtd", "1",
-                    "opcao_fonte_personagem", "instancia_ativa"
-                )));
+                EtapaProcedimento sub = new EtapaProcedimento(
+                        UUID.randomUUID(), null, 1, "SubEtapaGerenciarItem", "GERENCIAR_ITEM",
+                        Map.of(
+                            "tipo", acao.has("modo") ? acao.get("modo").asText() : "CRIAR",
+                            "opcao_fonte_item", "estatico",
+                            "opcao_item", acao.get("item_id").asText(),
+                            "fonte_qtd", "estatico",
+                            "opcao_qtd", "1",
+                            "opcao_fonte_personagem", "instancia_ativa"
+                        ),
+                        true
+                );
                 yield handlers.get("GERENCIAR_ITEM").executar(sub, ctx);
             }
             case "chamar_procedimento" -> {
@@ -177,13 +183,15 @@ public class CustomizarEntidadeHandler implements EtapaHandler {
                         ? UUID.fromString(idProcNode.asText()) 
                         : null;
 
-                EtapaProcedimento sub = new EtapaProcedimento();
-                sub.setTipoEtapa("CHAMAR_PROCEDIMENTO");
-                sub.setParametrosEtapa(mapper.valueToTree(Map.of(
-                    "id_procedimento", idProcedimento,
-                    "salvar_em", "resultado_custom",
-                    "escopo", "HERDAR"
-                )));
+                EtapaProcedimento sub = new EtapaProcedimento(
+                        UUID.randomUUID(), null, 1, "SubEtapaChamarProcedimento", "CHAMAR_PROCEDIMENTO",
+                        Map.of(
+                            "id_procedimento", idProcedimento != null ? idProcedimento : "",
+                            "salvar_em", "resultado_custom",
+                            "escopo", "HERDAR"
+                        ),
+                        true
+                );
                 yield handlers.get("CHAMAR_PROCEDIMENTO").executar(sub, procedimentoCtx);
             }
             default -> ResultadoEtapa.erro("Ação desconhecida: " + tipoAcao);

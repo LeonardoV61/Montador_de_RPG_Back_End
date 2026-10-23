@@ -1,18 +1,16 @@
 package com.draftstd.hydraforge.application.usecase.sistema;
 
+import com.draftstd.hydraforge.application.response.sistema.ListarSistemasQuery;
+import com.draftstd.hydraforge.application.response.sistema.ObterSistemaQuery;
+import com.draftstd.hydraforge.application.response.sistema.SistemaQueryResponse;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.sistema.Sistema;
-import com.draftstd.hydraforge.ports.in.query.sistema.ListarSistemasQuery;
-import com.draftstd.hydraforge.ports.in.query.sistema.ObterSistemaQuery;
-import com.draftstd.hydraforge.ports.in.query.sistema.SistemaQueryResponse;
 import com.draftstd.hydraforge.ports.in.sistema.ObterSistemaUseCase;
-import com.draftstd.hydraforge.ports.out.sistema.ObterSistemaPort;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.ObterSistemaPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,28 +23,21 @@ public class ObterSistemaUseCaseImpl implements ObterSistemaUseCase {
     }
 
     private SistemaQueryResponse mapearParaResponse(Sistema s) {
-        UUID sistemaUuid = s.getId() != null 
-                ? UUID.nameUUIDFromBytes(s.getId().toString().getBytes()) 
-                : UUID.randomUUID();
-
-        UUID autorId = (s.getUsuario() != null && s.getUsuario().getId() != null)
-                ? UUID.nameUUIDFromBytes(s.getUsuario().getId().toString().getBytes())
-                : null;
-
-        String versaoStr = s.getVersaoSchemas() != null 
-                ? String.valueOf(s.getVersaoSchemas()) 
-                : "1";
-
         return new SistemaQueryResponse(
-                sistemaUuid, 
-                s.getNome(), 
-                s.getDescricao(), 
-                versaoStr,
-                autorId,
-                null,
-                List.of(),
+                s.getId(),
+                s.getUsuarioCriadorId(),
+                s.getSistemaPaiId(),
+                s.getNome(),
+                s.getDescricao(),
+                s.getUrlImagem(),
+                s.getConfiguracao(),
+                s.getSchemaAtributos(),
+                s.getSchemaEntidades(),
+                s.getSchemaResolucoes(),
+                s.getVersaoSchemas(),
+                s.isEOficial(),
                 s.getCriadoEm(),
-                LocalDateTime.now()
+                List.of()
         );
     }
 

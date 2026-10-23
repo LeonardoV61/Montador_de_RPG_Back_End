@@ -6,10 +6,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProcedimentoOutputPort {
-    Procedimento salvar(Procedimento procedimento);
+    void salvar(Procedimento procedimento);
     Optional<Procedimento> buscarPorId(UUID id);
     List<Procedimento> listarPorSistema(UUID sistemaId);
     List<Procedimento> listarTodos();
     void deletarPorId(UUID id);
     boolean existePorId(UUID id);
+    Optional<Procedimento> findByTipoAndSistemaId(String tipo, UUID sistemaId);
 }

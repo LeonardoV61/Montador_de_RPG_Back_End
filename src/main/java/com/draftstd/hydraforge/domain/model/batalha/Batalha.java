@@ -1,75 +1,145 @@
 package com.draftstd.hydraforge.domain.model.batalha;
 
 import com.draftstd.hydraforge.domain.enums.BatalhaStatus;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "batalha")
 public class Batalha {
 
-    @Id
-    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
-
-    @Column(name = "sessao_id", nullable = false)
     private UUID sessaoId;
-
-    @Column(name = "cena_id")
-    private UUID cenaId;
-
-    @Column(name = "versao")
-    private Long versao;
-
-    @Column(name = "rodada_atual")
+    private UUID campanhaId;
     private int rodadaAtual;
-
-    @Column(name = "status", nullable = false)
-    @Enumerated(EnumType.STRING)
+    private int turnoAtual;
     private BatalhaStatus status;
+    private List<ParticipanteBatalha> participantes = new ArrayList<>();
+    private LocalDateTime inicioEm;
+    private LocalDateTime fimEm;
 
-    @Column(name = "iniciada_em")
-    private LocalDateTime iniciadaEm;
-
-    @OneToMany(mappedBy = "batalha", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("ordemIniciativa ASC")
-    private List<BatalhaParticipantes> participantes;
-    
-    public List<BatalhaParticipantes> getParticipantes() {
-        return this.participantes;
+    public Batalha() {
+        this.status = BatalhaStatus.INICIANDO;
+        this.rodadaAtual = 1;
+        this.turnoAtual = 0;
     }
 
-    public List<BatalhaParticipantes> participantesAtivos() {
-        return participantes.stream()
-                .filter(BatalhaParticipantes::isAtivo)
-                .toList();
+    public Batalha(UUID id, UUID sessaoId, UUID campanhaId, int rodadaAtual, int turnoAtual, BatalhaStatus status, List<ParticipanteBatalha> participantes, LocalDateTime inicioEm, LocalDateTime fimEm) {
+        this.id = id;
+        this.sessaoId = sessaoId;
+        this.campanhaId = campanhaId;
+        this.rodadaAtual = rodadaAtual;
+        this.turnoAtual = turnoAtual;
+        this.status = status;
+        this.participantes = participantes != null ? participantes : new ArrayList<>();
+        this.inicioEm = inicioEm;
+        this.fimEm = fimEm;
     }
 
-    public List<BatalhaParticipantes> participantesLado(int lado) {
-        return participantes.stream()
-                .filter(p -> p.getLado() == lado && p.isAtivo())
-                .toList();
+    // Regras de Negócio do Domínio
+
+    public void iniciarBatalha() {
+        this.status = BatalhaStatus.EM_ANDAMENTO;
+        this.inicioEm = LocalDateTime.now();
+        this.rodadaAtual = 1;
+        this.turnoAtual = 0;
+        ordenarIniciativa();
     }
 
+    public void proximoTurno() {
+        if (participantes.isEmpty()) return;
 
-    public boolean haParticipanteAtivoNoLado(int lado) {
-        return participantes.stream()
-                .anyMatch(p -> p.getLado() == lado && p.isAtivo());
+        this.turnoAtual++;
+        if (this.turnoAtual >= participantes.size()) {
+            this.turnoAtual = 0;
+            this.rodadaAtual++;
+        }
     }
 
-    public Object toDomain() {
-        // Método de mapeamento opcional para o domínio puro se necessário
-        return this;
+    public void finalizarBatalha() {
+        this.status = BatalhaStatus.CONCLUIDA;
+        this.fimEm = LocalDateTime.now();
+    }
+
+    public void ordenarIniciativa() {
+        this.participantes.sort((p1, p2) -> Integer.compare(p2.getOrdemIniciativa(), p1.getOrdemIniciativa()));
+        for (int i = 0; i < participantes.size(); i++) {
+            participantes.get(i).setOrdemIniciativa(i + 1);
+        }
+    }
+
+    // Getters e Setters
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getSessaoId() {
+        return sessaoId;
+    }
+
+    public void setSessaoId(UUID sessaoId) {
+        this.sessaoId = sessaoId;
+    }
+
+    public UUID getCampanhaId() {
+        return campanhaId;
+    }
+
+    public void setCampanhaId(UUID campanhaId) {
+        this.campanhaId = campanhaId;
+    }
+
+    public int getRodadaAtual() {
+        return rodadaAtual;
+    }
+
+    public void setRodadaAtual(int rodadaAtual) {
+        this.rodadaAtual = rodadaAtual;
+    }
+
+    public int getTurnoAtual() {
+        return turnoAtual;
+    }
+
+    public void setTurnoAtual(int turnoAtual) {
+        this.turnoAtual = turnoAtual;
+    }
+
+    public BatalhaStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BatalhaStatus status) {
+        this.status = status;
+    }
+
+    public List<ParticipanteBatalha> getParticipantes() {
+        return participantes;
+    }
+
+    public void setParticipantes(List<ParticipanteBatalha> participantes) {
+        this.participantes = participantes;
+    }
+
+    public LocalDateTime getInicioEm() {
+        return inicioEm;
+    }
+
+    public void setInicioEm(LocalDateTime inicioEm) {
+        this.inicioEm = inicioEm;
+    }
+
+    public LocalDateTime getFimEm() {
+        return fimEm;
+    }
+
+    public void setFimEm(LocalDateTime fimEm) {
+        this.fimEm = fimEm;
     }
 }

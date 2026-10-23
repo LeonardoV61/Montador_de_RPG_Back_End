@@ -1,23 +1,20 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -27,24 +24,39 @@ import java.util.Map;
 public class SolicitarInputHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
+    private final JsonMapper mapper;
 
     @Override
     public String tipoEtapa() { return "SOLICITAR_INPUT"; }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
-        String ctxKey       = exigirCampo(params, "salvar_em", etapa);
-        String campoPedido  = exigirCampo(params, "campo_pedido", etapa);
-        boolean podePassar  = params.path("pode_passar").asBoolean(true);
-        String recursoNecessario = params.path("recurso_necessario").asString(null);
+        String ctxKey = exigirCampo(params, "salvar_em", etapa);
+        String campoPedido = exigirCampo(params, "campo_pedido", etapa);
+
+        Object rawPodePassar = params.get("pode_passar");
+        boolean podePassar = rawPodePassar instanceof Boolean b ? b
+                : (rawPodePassar == null || Boolean.parseBoolean(rawPodePassar.toString()));
+
+        Object rawRecurso = params.get("recurso_necessario");
+        String recursoNecessario = rawRecurso != null ? rawRecurso.toString() : null;
 
         if (recursoNecessario != null && !ctx.semInstancias()) {
             EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-            JsonNode val = inst.getAtributosAtuais().path(recursoNecessario);
-            boolean disponivel = val.isBoolean() ? val.asBoolean()
-                    : val.isNumber() && val.asLong() > 0;
+            Map<String, Object> attrs = inst.getValoresAtributos();
+            Object val = attrs != null ? attrs.get(recursoNecessario) : null;
+
+            boolean disponivel = false;
+            if (val instanceof Boolean b) {
+                disponivel = b;
+            } else if (val instanceof Number n) {
+                disponivel = n.longValue() > 0;
+            } else if (val != null) {
+                disponivel = Boolean.parseBoolean(val.toString());
+            }
+
             if (!disponivel) {
                 return ResultadoEtapa.concluida(Map.of(
                         "campoPedido", campoPedido, "status", "recurso_indisponivel"));
@@ -70,29 +82,31 @@ public class SolicitarInputHandler implements EtapaHandler {
         return ResultadoEtapa.concluida(Map.of("campoPedido", campoPedido, "escolha", escolha));
     }
 
-    private String exigirCampo(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) {
+    private String exigirCampo(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) {
             throw new JsonFieldNotFoundException(chave, etapa.getNome());
         }
-        return v.asString();
+        return val.toString();
     }
 
-    private List<String> resolverOpcoes(JsonNode params, ExecucaoContexto ctx) {
-        String fonte = params.path("opcoes_fonte").asString("");
+    private List<String> resolverOpcoes(Map<String, Object> params, ExecucaoContexto ctx) {
+        Object rawFonte = params.get("opcoes_fonte");
+        String fonte = rawFonte != null ? rawFonte.toString() : "";
 
         if ("estatico".equals(fonte)) {
-            return jsonArrayParaLista(params.path("opcoes_estatico"));
+            return colecaoParaLista(params.get("opcoes_estatico"));
         }
 
         if (fonte.startsWith("config_sistema.")) {
             String chave = fonte.substring("config_sistema.".length());
-            JsonNode raw = ctx.getSistema().getConfiguracao().path(chave);
-            if (raw.isMissingNode()) {
+            Map<String, Object> configMap = ctx.getSistema().getConfiguracao();
+            Object raw = configMap != null ? configMap.get(chave) : null;
+            if (raw == null) {
                 log.warn("config_sistema.{} não encontrado no sistema {}", chave, ctx.getIdSistema());
                 return List.of();
             }
-            return jsonArrayParaLista(raw);
+            return colecaoParaLista(raw);
         }
 
         if (fonte.startsWith("contexto.")) {
@@ -110,25 +124,46 @@ public class SolicitarInputHandler implements EtapaHandler {
                 return List.of();
             }
             EntidadeInstancia inst = instanciaResolver.retornarAtiva(ctx);
-            return jsonArrayParaLista(inst.getAtributosAtuais().path(chave));
+            Map<String, Object> attrs = inst.getValoresAtributos();
+            Object rawAttr = attrs != null ? attrs.get(chave) : null;
+            return colecaoParaLista(rawAttr);
         }
 
         log.warn("opcoes_fonte desconhecido: '{}'", fonte);
         return List.of();
     }
 
-    private List<String> jsonArrayParaLista(JsonNode node) {
-        if (node == null || !node.isArray()) return List.of();
-        List<String> out = new ArrayList<>();
-        node.forEach(n -> {
-            if (n.isObject()) {
-                // Tenta extrair o campo "valor"; se não existir, usa "label"
-                String valor = n.has("valor") ? n.get("valor").asString() : n.path("label").asString(null);
-                out.add(valor != null ? valor : n.toString());
-            } else {
-                out.add(n.asString());
+    private List<String> colecaoParaLista(Object obj) {
+        if (obj == null) return List.of();
+
+        if (obj instanceof Collection<?> colecao) {
+            List<String> out = new ArrayList<>();
+            for (Object item : colecao) {
+                if (item instanceof Map<?, ?> map) {
+                    Object valor = map.get("valor");
+                    Object label = map.get("label");
+                    out.add(valor != null ? valor.toString() : (label != null ? label.toString() : map.toString()));
+                } else if (item != null) {
+                    out.add(item.toString());
+                }
             }
-        });
-        return out;
+            return out;
+        }
+
+        JsonNode node = mapper.valueToTree(obj);
+        if (node.isArray()) {
+            List<String> out = new ArrayList<>();
+            node.forEach(n -> {
+                if (n.isObject()) {
+                    String valor = n.has("valor") ? n.get("valor").asText() : n.path("label").asText(null);
+                    out.add(valor != null ? valor : n.toString());
+                } else {
+                    out.add(n.asText());
+                }
+            });
+            return out;
+        }
+
+        return List.of(obj.toString());
     }
 }

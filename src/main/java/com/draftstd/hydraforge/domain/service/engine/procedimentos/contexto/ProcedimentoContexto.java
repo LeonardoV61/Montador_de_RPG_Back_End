@@ -1,5 +1,6 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto;
 
+
 import com.draftstd.hydraforge.domain.model.personagem.Personagem;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
 import com.draftstd.hydraforge.domain.model.sistema.Procedimento;

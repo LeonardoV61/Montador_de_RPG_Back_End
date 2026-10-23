@@ -12,6 +12,7 @@ import com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine.Vantage
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class RolarSimplesHandler implements EtapaHandler {
 
     private final RolagemEngine rolagemEngine;
     private final ParametroResolver resolver;
+    private final JsonMapper mapper;
 
     @Override
     public String tipoEtapa() { return "ROLAR_SIMPLES"; }
@@ -43,18 +45,31 @@ public class RolarSimplesHandler implements EtapaHandler {
      */
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
         String dado = exigirTexto(params, "dado", etapa);
-        int quantidade = params.path("quantidade").asInt(1);
-        boolean explosao = params.path("explosao").asBoolean(false);
-        VantagemTipo vantagem = VantagemTipo.valueOf(params.path("vantagem").asString("NORMAL"));
-        String salvarEm = params.path("salvar_em").asString(null);
+        
+        Object rawQtd = params.get("quantidade");
+        int quantidade = rawQtd instanceof Number n ? n.intValue() 
+                : (rawQtd != null ? Integer.parseInt(rawQtd.toString()) : 1);
+
+        Object rawExplosao = params.get("explosao");
+        boolean explosao = rawExplosao instanceof Boolean b ? b 
+                : (rawExplosao != null && Boolean.parseBoolean(rawExplosao.toString()));
+
+        Object rawVantagem = params.get("vantagem");
+        VantagemTipo vantagem = VantagemTipo.valueOf(rawVantagem != null ? rawVantagem.toString() : "NORMAL");
+
+        Object rawSalvarEm = params.get("salvar_em");
+        String salvarEm = rawSalvarEm != null ? rawSalvarEm.toString() : null;
 
         ResultadoRolagem rolo = rolagemEngine.executarComVantagem(
                 RolagemEngine.simples(dado, quantidade, explosao), vantagem);
 
-        double modificador = resolver.resolverNumero(params.get("modificador"), ctx);
+        Object rawModificador = params.get("modificador");
+        JsonNode nodeModificador = rawModificador != null ? mapper.valueToTree(rawModificador) : null;
+        double modificador = resolver.resolverNumero(nodeModificador, ctx);
+        
         double total = rolo.total() + modificador;
 
         int faces = rolagemEngine.parseFaces(dado);
@@ -81,13 +96,16 @@ public class RolarSimplesHandler implements EtapaHandler {
         return ResultadoEtapa.concluida(dados);
     }
 
-    private Boolean avaliarSucesso(JsonNode params, ExecucaoContexto ctx, double total, EtapaExecutavel etapa) {
-        String modo = params.path("modo_sucesso").asString("AUSENTE");
+    private Boolean avaliarSucesso(Map<String, Object> params, ExecucaoContexto ctx, double total, EtapaExecutavel etapa) {
+        Object rawModo = params.get("modo_sucesso");
+        String modo = rawModo != null ? rawModo.toString() : "AUSENTE";
         if ("AUSENTE".equals(modo)) return null;
 
-        JsonNode valorAlvo = params.get("valor_alvo");
-        if (valorAlvo == null) throw new JsonFieldNotFoundException("valor_alvo", etapa.getNome());
-        double alvo = resolver.resolverNumero(valorAlvo, ctx);
+        Object rawValorAlvo = params.get("valor_alvo");
+        if (rawValorAlvo == null) throw new JsonFieldNotFoundException("valor_alvo", etapa.getNome());
+
+        JsonNode nodeValorAlvo = mapper.valueToTree(rawValorAlvo);
+        double alvo = resolver.resolverNumero(nodeValorAlvo, ctx);
 
         return switch (modo) {
             case "ROLAR_IGUAL_OU_MAIOR" -> total >= alvo;   // d20 vs CA/CD — estilo D&D
@@ -96,9 +114,9 @@ public class RolarSimplesHandler implements EtapaHandler {
         };
     }
 
-    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-        return v.asString();
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
     }
 }

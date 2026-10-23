@@ -1,8 +1,7 @@
 package com.draftstd.hydraforge.domain.service.engine.utils.interpretador.contexto;
 
-
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 
 public class ContextoComposto implements Contexto {
 
@@ -14,7 +13,6 @@ public class ContextoComposto implements Contexto {
 
     @Override
     public Optional<Object> get(String caminho) {
-        // "atacante.for.modificador" → escopo "atacante", caminho "for.modificador"
         int ponto = caminho.indexOf(".");
         if (ponto == -1) return Optional.empty();
 

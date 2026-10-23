@@ -4,7 +4,7 @@ import com.draftstd.hydraforge.domain.model.sessao.Sessao;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EscopoInstancias;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.snapshot.ProcedimentoSnapshot;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.snapshot.SessaoSnapshot;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.SessaoRepository;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.SessaoPersistencePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ public class SessaoContexto {
     private final ConcurrentHashMap<UUID, Deque<ProcedimentoContexto>> sessoes
             = new ConcurrentHashMap<>();
 
-    private final SessaoRepository sessaoRepo;
+    private final SessaoPersistencePort sessaoPort;
     private final JsonMapper mapper;
 
     public void iniciarSessao(UUID idSessao) {
@@ -68,23 +68,22 @@ public class SessaoContexto {
         return pilha == null ? 0 : pilha.size();
     }
 
-    public void persistirSnapshot(UUID idSessao,
-                                   Deque<ProcedimentoContexto> pilha) {
+    public void persistirSnapshot(UUID idSessao, Deque<ProcedimentoContexto> pilha) {
         try {
             SessaoSnapshot snapshot = new SessaoSnapshot();
 
-            // Convert stack to list: front (top) first
             snapshot.setPilha(
                     pilha.stream()
                             .map(this::toSnapshot)
                             .collect(Collectors.toList())
             );
 
-            Sessao sessao = sessaoRepo.findById(idSessao).orElseThrow();
-            sessao.setSessaoSnapshot(
-                    mapper.valueToTree(snapshot)
-            );
-            sessaoRepo.save(sessao);
+            Sessao sessao = sessaoPort.buscarPorId(idSessao).orElseThrow();
+            String snapshotJson = mapper.writeValueAsString(snapshot);
+            
+            // Grava o snapshot JSON no agregado do domínio
+            sessao.encerrarSessao(snapshotJson); 
+            sessaoPort.salvar(sessao);
 
         } catch (Exception e) {
             log.error("Falha ao persistir snapshot da sessão {}: {}", idSessao, e.getMessage());
@@ -92,9 +91,8 @@ public class SessaoContexto {
     }
 
     private void limparSnapshot(UUID idSessao) {
-        sessaoRepo.findById(idSessao).ifPresent(s -> {
-            s.setSessaoSnapshot(null);
-            sessaoRepo.save(s);
+        sessaoPort.buscarPorId(idSessao).ifPresent(s -> {
+            sessaoPort.salvar(s);
         });
     }
 
@@ -108,7 +106,6 @@ public class SessaoContexto {
         snap.setContextoMap(ctx.getContexto().dados());
         snap.setHistorico(ctx.getHistorico());
 
-        // Serialize scope
         switch (ctx.getEscopo()) {
             case EscopoInstancias.Nenhuma n -> {
                 snap.setEscopoTipo("NENHUMA");
@@ -130,8 +127,7 @@ public class SessaoContexto {
     private Deque<ProcedimentoContexto> exigirPilha(UUID idSessao) {
         Deque<ProcedimentoContexto> pilha = sessoes.get(idSessao);
         if (pilha == null || pilha.isEmpty())
-            throw new IllegalStateException(
-                    "Nenhum procedimento ativo na sessão " + idSessao);
+            throw new IllegalStateException("Nenhum procedimento ativo na sessão " + idSessao);
         return pilha;
     }
 

@@ -1,8 +1,7 @@
 package com.draftstd.hydraforge.ports.in.personagem;
 
-import com.draftstd.hydraforge.ports.in.command.personagem.RealizarDescansoCommand;
-import com.draftstd.hydraforge.ports.in.query.personagem.PersonagemQueryResponse;
+import com.draftstd.hydraforge.application.request.personagem.RealizarDescansoCommand;
 
 public interface RealizarDescansoUseCase {
-    PersonagemQueryResponse executar(RealizarDescansoCommand command);
+    void executar(RealizarDescansoCommand command);
 }

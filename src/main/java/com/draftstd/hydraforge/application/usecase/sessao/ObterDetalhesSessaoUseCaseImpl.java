@@ -1,37 +1,41 @@
 package com.draftstd.hydraforge.application.usecase.sessao;
 
+import com.draftstd.hydraforge.application.response.sessao.ObterDetalhesSessaoQuery;
+import com.draftstd.hydraforge.application.response.sessao.SessaoQueryResponse;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.sessao.Sessao;
-import com.draftstd.hydraforge.ports.in.query.sessao.ObterDetalhesSessaoQuery;
-import com.draftstd.hydraforge.ports.in.query.sessao.SessaoQueryResponse;
 import com.draftstd.hydraforge.ports.in.sessao.ObterDetalhesSessaoUseCase;
-import com.draftstd.hydraforge.ports.out.sessao.ObterSessaoPort;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.SessaoPersistencePort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 public class ObterDetalhesSessaoUseCaseImpl implements ObterDetalhesSessaoUseCase {
 
-    private final ObterSessaoPort obterSessaoPort;
+    private final SessaoPersistencePort sessaoPersistencePort;
 
-    public ObterDetalhesSessaoUseCaseImpl(ObterSessaoPort obterSessaoPort) {
-        this.obterSessaoPort = obterSessaoPort;
+    public ObterDetalhesSessaoUseCaseImpl(SessaoPersistencePort sessaoPersistencePort) {
+        this.sessaoPersistencePort = sessaoPersistencePort;
     }
 
     @Override
     public SessaoQueryResponse obterPorId(ObterDetalhesSessaoQuery query) {
-        Sessao sessao = obterSessaoPort.buscarPorId(query.sessaoId()).orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + query.sessaoId()));
+        Sessao sessao = sessaoPersistencePort.buscarPorId(query.sessaoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + query.sessaoId()));
 
-        // Conversão segura do ID Long para UUID
-        UUID sessaoUuid = sessao.getId() != null ? UUID.nameUUIDFromBytes(sessao.getId().toString().getBytes()) : UUID.randomUUID();
-
-        // Extração segura do ID da campanha a partir da relação JPA
-        UUID campanhaId = (sessao.getCampanha() != null && sessao.getCampanha().getId() != null) ? UUID.nameUUIDFromBytes(sessao.getCampanha().getId().toString().getBytes()): null;
-
-        return new SessaoQueryResponse(sessaoUuid,campanhaId,sessao.getStatus(),List.of());
+        return new SessaoQueryResponse(
+                sessao.getId(),
+                sessao.getCampanhaId(),
+                sessao.getTitulo(),
+                sessao.getStatus(),
+                sessao.getOrdem(),
+                sessao.getDataInicio(),
+                sessao.getDataFim(),
+                sessao.getProcedimentoAtivoId(),
+                List.of()
+        );
     }
 }

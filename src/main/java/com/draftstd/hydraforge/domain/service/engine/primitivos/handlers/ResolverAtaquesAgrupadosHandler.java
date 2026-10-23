@@ -1,258 +1,276 @@
-// package com.draftstd.hydraforge.engine.primitivos.handlers;
+package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-// import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-// import com.draftstd.hydraforge.domain.service.engine.components.ItemResolver;
-// import com.draftstd.hydraforge.domain.service.engine.exceptions.EntityNotFoundException;
-// import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.*;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-// import com.draftstd.hydraforge.domain.service.engine.utils.ColetaParcialUtil;
-// import com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine.Rolagem;
-// import com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine.RolagemEngine;
-// import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-// import lombok.RequiredArgsConstructor;
-// import org.springframework.stereotype.Component;
-// import tools.jackson.databind.JsonNode;
-// import tools.jackson.databind.node.ObjectNode;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.service.engine.components.ItemResolver;
+import com.draftstd.hydraforge.domain.service.engine.exceptions.EntityNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
+import com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine.Rolagem;
+import com.draftstd.hydraforge.domain.service.engine.utils.rolagemEngine.RolagemEngine;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-// import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-// @Component
-// @RequiredArgsConstructor
-// public class ResolverAtaquesAgrupadosHandler implements EtapaHandler {
+@Component
+@RequiredArgsConstructor
+public class ResolverAtaquesAgrupadosHandler implements EtapaHandler {
 
-//     private final RolagemEngine rolagemEngine;
-//     private final ItemResolver itemResolver;
-//     private final EntidadeInstanciaRepository instanciaRepo;
+    private final RolagemEngine rolagemEngine;
+    private final ItemResolver itemResolver;
+    private final EntidadeInstanciaOutputPort instanciaPort;
 
-//     @Override
-//     public String tipoEtapa() { return "RESOLVER_ATAQUES_AGRUPADOS"; }
+    @Override
+    public String tipoEtapa() { return "RESOLVER_ATAQUES_AGRUPADOS"; }
 
-//     @Override
-//     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-//         JsonNode params = etapa.getParametrosEtapa();
+    @Override
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
-//         String declaracoesFonte  = exigirTexto(params, "declaracoes_fonte", etapa);
-//         JsonNode origemDadoAtaque = exigirNo(params, "dado_ataque", etapa);
-//         JsonNode origemReducao    = params.get("reducao_dano"); // optional
+        String declaracoesFonte  = exigirTexto(params, "declaracoes_fonte", etapa);
+        Object origemDadoAtaque  = exigirNo(params, "dado_ataque", etapa);
+        Object origemReducao     = params.get("reducao_dano"); // opcional
 
-//         int limiarGambit        = params.path("limiar_gambit").asInt(4);
-//         String trackDano        = params.path("track_dano").asString("guard");
-//         String overflowPara     = params.path("overflow_para").asString(null);
-//         String salvarResultados = params.path("salvar_resultados_em").asString(null);
-//         String salvarGambits    = params.path("salvar_gambits_em").asString(null);
-//         String salvarFeridosEm  = params.path("salvar_alvos_feridos_em").asString(null);
+        int limiarGambit        = params.containsKey("limiar_gambit") ? Integer.parseInt(params.get("limiar_gambit").toString()) : 4;
+        String trackDano        = (String) params.getOrDefault("track_dano", "guard");
+        String overflowPara     = (String) params.get("overflow_para");
+        String salvarResultados = (String) params.get("salvar_resultados_em");
+        String salvarGambits    = (String) params.get("salvar_gambits_em");
+        String salvarFeridosEm  = (String) params.get("salvar_alvos_feridos_em");
 
-//         Map<Long, Long> declaracoes = lerDeclaracoes(declaracoesFonte, ctx, etapa);
+        Map<UUID, UUID> declaracoes = lerDeclaracoes(declaracoesFonte, ctx, etapa);
 
-//         Map<Long, List<Long>> atacantesPorAlvo = new LinkedHashMap<>();
-//         for (var e : declaracoes.entrySet()) {
-//             if (e.getValue() == null) continue; // passed
-//             atacantesPorAlvo.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
-//         }
+        Map<UUID, List<UUID>> atacantesPorAlvo = new LinkedHashMap<>();
+        for (var e : declaracoes.entrySet()) {
+            if (e.getValue() == null) continue; // passou a vez
+            atacantesPorAlvo.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
+        }
 
-//         Map<Long, Object> resultadosPorAlvo = new LinkedHashMap<>();
-//         Map<Long, Object> gambits = new LinkedHashMap<>();
-//         List<Long> alvosFeridos = new ArrayList<>();
+        Map<UUID, Object> resultadosPorAlvo = new LinkedHashMap<>();
+        Map<UUID, Object> gambits = new LinkedHashMap<>();
+        List<UUID> alvosFeridos = new ArrayList<>();
 
-//         for (var grupo : atacantesPorAlvo.entrySet()) {
-//             Long idAlvo = grupo.getKey();
-//             List<Long> atacantes = grupo.getValue();
+        for (var grupo : atacantesPorAlvo.entrySet()) {
+            UUID idAlvo = grupo.getKey();
+            List<UUID> atacantes = grupo.getValue();
 
-//             // ── Each attacker rolls with THEIR OWN weapon die ──────────────
-//             Map<Long, Integer> rolosPorAtacante = new LinkedHashMap<>();
-//             for (Long idAtacante : atacantes) {
-//                 Rolagem rolagem = resolverDadoAtaqueDoAtacante(origemDadoAtaque, idAtacante, etapa);
-//                 int rolo = rolagemEngine.executar(rolagem).total();
-//                 rolosPorAtacante.put(idAtacante, rolo);
-//             }
+            // ── Cada atacante rola com o seu próprio dado de arma ──────────────
+            Map<UUID, Integer> rolosPorAtacante = new LinkedHashMap<>();
+            for (UUID idAtacante : atacantes) {
+                Rolagem rolagem = resolverDadoAtaqueDoAtacante(origemDadoAtaque, idAtacante, etapa);
+                int rolo = rolagemEngine.executar(rolagem).total();
+                rolosPorAtacante.put(idAtacante, rolo);
+            }
 
-//             var maxEntry = rolosPorAtacante.entrySet().stream()
-//                     .max(Map.Entry.comparingByValue()).orElseThrow();
-//             int danoBruto = maxEntry.getValue();
+            var maxEntry = rolosPorAtacante.entrySet().stream()
+                    .max(Map.Entry.comparingByValue()).orElseThrow();
+            int danoBruto = maxEntry.getValue();
 
-//             // ── Reduction comes from the TARGET's own equipped shield/armor ───
-//             int reducao = resolverReducaoDoAlvo(origemReducao, idAlvo);
-//             int danoFinal = Math.max(0, danoBruto - reducao);
+            // ── A redução é oriunda do equipamento do próprio ALVO ───────────
+            int reducao = resolverReducaoDoAlvo(origemReducao, idAlvo);
+            int danoFinal = Math.max(0, danoBruto - reducao);
 
-//             EntidadeInstancia alvo = instanciaRepo.findById(idAlvo)
-//                     .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
-//             int danoSobrando = aplicarDano(alvo, danoFinal, trackDano, overflowPara);
+            EntidadeInstancia alvo = instanciaPort.buscarPorId(idAlvo)
+                    .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
+            int danoSobrando = aplicarDano(alvo, danoFinal, trackDano, overflowPara);
 
-//             resultadosPorAlvo.put(idAlvo, Map.of(
-//                     "rolosPorAtacante", rolosPorAtacante,
-//                     "idVencedor", maxEntry.getKey(),
-//                     "danoBruto", danoBruto,
-//                     "reducao", reducao,
-//                     "danoAplicado", danoFinal,
-//                     "guardRestante", danoSobrando
-//             ));
+            resultadosPorAlvo.put(idAlvo, Map.of(
+                    "rolosPorAtacante", rolosPorAtacante,
+                    "idVencedor", maxEntry.getKey(),
+                    "danoBruto", danoBruto,
+                    "reducao", reducao,
+                    "danoAplicado", danoFinal,
+                    "guardRestante", danoSobrando
+            ));
 
-//             if (danoSobrando < 0 && salvarFeridosEm != null) alvosFeridos.add(idAlvo);
+            if (danoSobrando < 0 && salvarFeridosEm != null) alvosFeridos.add(idAlvo);
 
-//             // Gambits use the RAW roll — reduction only affects damage, not gambit eligibility
-//             for (var rolo : rolosPorAtacante.entrySet()) {
-//                 if (rolo.getValue() > limiarGambit) {
-//                     gambits.put(rolo.getKey(), Map.of("valorRolado", rolo.getValue(), "idAlvoOriginal", idAlvo));
-//                 }
-//             }
-//         }
+            // Gambits utilizam a rolagem bruta
+            for (var rolo : rolosPorAtacante.entrySet()) {
+                if (rolo.getValue() > limiarGambit) {
+                    gambits.put(rolo.getKey(), Map.of("valorRolado", rolo.getValue(), "idAlvoOriginal", idAlvo));
+                }
+            }
+        }
 
-//         if (salvarResultados != null) ctx.getContexto().put(salvarResultados, resultadosPorAlvo);
-//         if (salvarGambits != null) {
-//             ctx.getContexto().put(salvarGambits, gambits);
-//             ctx.getContexto().put(salvarGambits + "_ids", new ArrayList<>(gambits.keySet()));
-//         }
-//         if (salvarFeridosEm != null) ctx.getContexto().put(salvarFeridosEm, alvosFeridos);
+        if (salvarResultados != null) ctx.getContexto().put(salvarResultados, resultadosPorAlvo);
+        if (salvarGambits != null) {
+            ctx.getContexto().put(salvarGambits, gambits);
+            ctx.getContexto().put(salvarGambits + "_ids", new ArrayList<>(gambits.keySet()));
+        }
+        if (salvarFeridosEm != null) ctx.getContexto().put(salvarFeridosEm, alvosFeridos);
 
-//         return ResultadoEtapa.concluida(Map.of(
-//                 "resultadosPorAlvo", resultadosPorAlvo, "gambitsDisponiveis", gambits.size()));
-//     }
+        return ResultadoEtapa.concluida(Map.of(
+                "resultadosPorAlvo", resultadosPorAlvo, "gambitsDisponiveis", gambits.size()));
+    }
 
-//     // ════════════════════════════════════════════════════════════
-//     // Weapon resolution — called ONCE PER ATTACKER, never cached/shared.
-//     // ════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════
+    // Resolução de Arma — executada uma vez por atacante
+    // ════════════════════════════════════════════════════════════
 
-//     /**
-//      * Resolves the die type a SPECIFIC attacker rolls with. This is the exact
-//      * piece that was reported broken, so it's deliberately inlined here — no
-//      * shared generic resolver, no JsonNode cloning — so it can be verified by
-//      * direct inspection: idAtacante always identifies whose weapon gets read.
-//      */
-//     private Rolagem resolverDadoAtaqueDoAtacante(JsonNode origemDadoAtaque, Long idAtacante, EtapaExecutavel etapa) {
-//         if (origemDadoAtaque.isString()) {
-//             return new Rolagem(origemDadoAtaque.asString(), 1, false); // same literal die for everyone (e.g. unarmed default)
-//         }
+    private Rolagem resolverDadoAtaqueDoAtacante(Object origemDadoAtaque, UUID idAtacante, EtapaExecutavel etapa) {
+        if (origemDadoAtaque instanceof String str) {
+            return new Rolagem(str, 1, false);
+        }
 
-//         String fonte = origemDadoAtaque.path("fonte").asString("ausente");
-//         String chave = origemDadoAtaque.path("chave").asString(null);
+        if (!(origemDadoAtaque instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("Origem de dado_ataque inválida");
+        }
 
-//         return switch (fonte) {
+        Object rawFonte = map.get("fonte");
+        String fonte = rawFonte != null ? rawFonte.toString() : "ausente";
+        String chave = map.get("chave") != null ? map.get("chave").toString() : null;
 
-//             case "item_equipado" -> {
-//                 String slot = origemDadoAtaque.path("slot").asString(null);
-//                 if (slot == null || chave == null) {
-//                     throw new JsonFieldNotFoundException("slot/chave", etapa.getNome());
-//                 }
-//                 // Reads the weapon equipped by idAtacante — never the active instance,
-//                 // never the target. idAtacante is whoever is rolling THIS attack.
-//                 JsonNode dadoAtaque = itemResolver.atributoDoEquipado(idAtacante, slot, "dado_ataque");
-//                 JsonNode dadoQtd = itemResolver.atributoDoEquipado(idAtacante, slot, "dado_qtd");
-//                 if (dadoAtaque == null || dadoQtd == null) {
-//                     throw new IllegalStateException(
-//                             "Attacker " + idAtacante + " has nothing equipped in slot '" + slot +
-//                                     "' (or the equipped item lacks attribute '" + chave + "')");
-//                 }
-//                 yield new Rolagem(dadoAtaque.asString(), dadoQtd.asInt(), false);
-//             }
+        return switch (fonte) {
 
-//             case "atributo" -> {
-//                 // Innate weapon — e.g. a goblin's bite/claw stored directly on its own atributosAtuais
-//                 EntidadeInstancia atacante = instanciaRepo.findById(idAtacante)
-//                         .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAtacante));
-//                 JsonNode valor = atacante.getAtributosAtuais().get(chave);
-//                 if (valor == null) {
-//                     throw new IllegalStateException("Attacker " + idAtacante + " has no attribute '" + chave + "'");
-//                 }
-//                 yield new Rolagem(valor.asString(), 1, false);
-//             }
+            case "item_equipado" -> {
+                String slot = map.get("slot") != null ? map.get("slot").toString() : null;
+                if (slot == null || chave == null) {
+                    throw new JsonFieldNotFoundException("slot/chave", etapa.getNome());
+                }
+                Object dadoAtaque = itemResolver.atributoDoEquipado(idAtacante, slot, "dado_ataque");
+                Object dadoQtd = itemResolver.atributoDoEquipado(idAtacante, slot, "dado_qtd");
+                if (dadoAtaque == null || dadoQtd == null) {
+                    throw new IllegalStateException(
+                            "Atacante " + idAtacante + " não possui item equipado no slot '" + slot +
+                                    "' (ou o item carece do atributo '" + chave + "')");
+                }
+                int qtd = dadoQtd instanceof Number n ? n.intValue() : Integer.parseInt(dadoQtd.toString());
+                yield new Rolagem(dadoAtaque.toString(), qtd, false);
+            }
 
-//             default -> throw new IllegalArgumentException("Unknown dado_ataque fonte: '" + fonte + "'");
-//         };
-//     }
+            case "atributo" -> {
+                EntidadeInstancia atacante = instanciaPort.buscarPorId(idAtacante)
+                        .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAtacante));
+                Map<String, Object> attrs = atacante.getValoresAtributos();
+                Object valor = attrs != null ? attrs.get(chave) : null;
+                if (valor == null) {
+                    throw new IllegalStateException("Atacante " + idAtacante + " não possui o atributo '" + chave + "'");
+                }
+                yield new Rolagem(valor.toString(), 1, false);
+            }
 
-//     // ════════════════════════════════════════════════════════════
-//     // Armor/shield resolution — called ONCE PER TARGET, reading the target's own gear.
-//     // ════════════════════════════════════════════════════════════
+            default -> throw new IllegalArgumentException("Fonte desconhecida para dado_ataque: '" + fonte + "'");
+        };
+    }
 
-//     /**
-//      * Resolves damage reduction from whatever the TARGET (the victim) has
-//      * equipped. Returns 0 when the target has nothing relevant equipped —
-//      * that's a normal case (not every combatant carries a shield), not an error.
-//      */
-//     private int resolverReducaoDoAlvo(JsonNode origemReducao, Long idAlvo) {
-//         if (origemReducao == null || origemReducao.isMissingNode() || origemReducao.isNull()) return 0;
+    // ════════════════════════════════════════════════════════════
+    // Resolução de Armadura/Escudo — executada uma vez por alvo
+    // ════════════════════════════════════════════════════════════
 
-//         String fonte = origemReducao.path("fonte").asString("ausente");
-//         String chave = origemReducao.path("chave").asString(null);
+    private int resolverReducaoDoAlvo(Object origemReducao, UUID idAlvo) {
+        if (origemReducao == null || !(origemReducao instanceof Map<?, ?> map)) return 0;
 
-//         return switch (fonte) {
-//             case "ausente" -> 0;
+        Object rawFonte = map.get("fonte");
+        String fonte = rawFonte != null ? rawFonte.toString() : "ausente";
+        String chave = map.get("chave") != null ? map.get("chave").toString() : null;
 
-//             case "item_equipado" -> {
-//                 String slot = origemReducao.path("slot").asString(null);
-//                 if (slot == null || chave == null) yield 0;
-//                 JsonNode valorItem = itemResolver.atributoDoEquipado(idAlvo, slot, chave);
-//                 yield valorItem != null ? valorItem.asInt(0) : 0;
-//             }
+        return switch (fonte) {
+            case "ausente" -> 0;
 
-//             case "atributo" -> {
-//                 if (chave == null) yield 0;
-//                 EntidadeInstancia alvo = instanciaRepo.findById(idAlvo)
-//                         .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
-//                 JsonNode valor = alvo.getAtributosAtuais().get(chave);
-//                 yield valor != null ? valor.asInt(0) : 0;
-//             }
+            case "item_equipado" -> {
+                String slot = map.get("slot") != null ? map.get("slot").toString() : null;
+                if (slot == null || chave == null) yield 0;
+                Object valorItem = itemResolver.atributoDoEquipado(idAlvo, slot, chave);
+                if (valorItem == null) yield 0;
+                yield valorItem instanceof Number n ? n.intValue() : Integer.parseInt(valorItem.toString());
+            }
 
-//             case "fixo" -> origemReducao.path("chave").asInt(0);
+            case "atributo" -> {
+                if (chave == null) yield 0;
+                EntidadeInstancia alvo = instanciaPort.buscarPorId(idAlvo)
+                        .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
+                Map<String, Object> attrs = alvo.getValoresAtributos();
+                Object valor = attrs != null ? attrs.get(chave) : null;
+                if (valor == null) yield 0;
+                yield valor instanceof Number n ? n.intValue() : Integer.parseInt(valor.toString());
+            }
 
-//             default -> throw new IllegalArgumentException("Unknown reducao_dano fonte: '" + fonte + "'");
-//         };
-//     }
+            case "fixo" -> {
+                Object v = map.get("chave");
+                if (v == null) yield 0;
+                yield v instanceof Number n ? n.intValue() : Integer.parseInt(v.toString());
+            }
 
-//     // ════════════════════════════════════════════════════════════
+            default -> throw new IllegalArgumentException("Fonte desconhecida para reducao_dano: '" + fonte + "'");
+        };
+    }
 
-//     private int aplicarDano(EntidadeInstancia alvo, int dano, String track, String overflow) {
-//         ObjectNode attrs = (ObjectNode) alvo.getAtributosAtuais();
-//         int atual = attrs.path(track).asInt(0);
-//         int restante = atual - dano;
+    // ════════════════════════════════════════════════════════════
 
-//         if (restante >= 0) {
-//             attrs.put(track, restante);
-//         } else {
-//             attrs.put(track, 0);
-//             if (overflow != null) {
-//                 int overflowAtual = attrs.path(overflow).asInt(0);
-//                 attrs.put(overflow, Math.max(0, overflowAtual + restante));
-//             }
-//         }
-//         alvo.setAtributosAtuais(attrs);
-//         instanciaRepo.save(alvo);
-//         return restante;
-//     }
+    private int aplicarDano(EntidadeInstancia alvo, int dano, String track, String overflow) {
+        Map<String, Object> attrs = alvo.getValoresAtributos() != null 
+                ? new HashMap<>(alvo.getValoresAtributos()) 
+                : new HashMap<>();
 
-//     private Map<Long, Long> lerDeclaracoes(String fonte, ExecucaoContexto ctx, EtapaExecutavel etapa) {
-//         String chave = fonte.startsWith("contexto.") ? fonte.substring("contexto.".length()) : fonte;
-//         Object raw = ctx.getContexto().get(chave, Object.class)
-//                 .orElseThrow(() -> new JsonFieldNotFoundException(chave, etapa.getNome()));
-//         if (!(raw instanceof Map<?, ?> rawMap)) {
-//             throw new IllegalStateException("Expected a Map at contexto['" + chave + "'], found " + raw.getClass());
-//         }
-//         Map<Long, Long> out = new LinkedHashMap<>();
-//         for (var e : rawMap.entrySet()) {
-//             Long idAtacante = ColetaParcialUtil.comoLong(e.getKey());
-//             Long idAlvo = ColetaParcialUtil.comoLong(extrairIdAlvo(e.getValue()));
-//             if (idAtacante != null) out.put(idAtacante, idAlvo);
-//         }
-//         return out;
-//     }
+        Object valTrack = attrs.get(track);
+        int atual = valTrack instanceof Number n ? n.intValue() : (valTrack != null ? Integer.parseInt(valTrack.toString()) : 0);
+        int restante = atual - dano;
 
-//     private Object extrairIdAlvo(Object declaracao) {
-//         if (declaracao instanceof Map<?, ?> m) return m.get("id_alvo");
-//         return declaracao;
-//     }
+        if (restante >= 0) {
+            attrs.put(track, restante);
+        } else {
+            attrs.put(track, 0);
+            if (overflow != null) {
+                Object valOverflow = attrs.get(overflow);
+                int overflowAtual = valOverflow instanceof Number n ? n.intValue() : (valOverflow != null ? Integer.parseInt(valOverflow.toString()) : 0);
+                attrs.put(overflow, Math.max(0, overflowAtual + restante));
+            }
+        }
+        alvo.setValoresAtributos(attrs);
+        instanciaPort.salvar(alvo);
+        return restante;
+    }
 
-//     private JsonNode exigirNo(JsonNode params, String chave, EtapaExecutavel etapa) {
-//         JsonNode v = params.get(chave);
-//         if (v == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-//         return v;
-//     }
+    private Map<UUID, UUID> lerDeclaracoes(String fonte, ExecucaoContexto ctx, EtapaExecutavel etapa) {
+        String chave = fonte.startsWith("contexto.") ? fonte.substring("contexto.".length()) : fonte;
+        Object raw = ctx.getContexto().get(chave, Object.class)
+                .orElseThrow(() -> new JsonFieldNotFoundException(chave, etapa.getNome()));
+        if (!(raw instanceof Map<?, ?> rawMap)) {
+            throw new IllegalStateException("Esperado um Map em contexto['" + chave + "'], encontrado " + raw.getClass());
+        }
+        Map<UUID, UUID> out = new LinkedHashMap<>();
+        for (var e : rawMap.entrySet()) {
+            UUID idAtacante = converterParaUuid(e.getKey());
+            UUID idAlvo = converterParaUuid(extrairIdAlvo(e.getValue()));
+            if (idAtacante != null) out.put(idAtacante, idAlvo);
+        }
+        return out;
+    }
 
-//     private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-//         JsonNode v = params.path(chave);
-//         if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-//         return v.asString();
-//     }
-// }
+    private Object extrairIdAlvo(Object declaracao) {
+        if (declaracao instanceof Map<?, ?> m) return m.get("id_alvo");
+        return declaracao;
+    }
+
+    private UUID converterParaUuid(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof UUID u) return u;
+        try {
+            return UUID.fromString(obj.toString());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private Object exigirNo(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object v = params.get(chave);
+        if (v == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return v;
+    }
+
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object v = params.get(chave);
+        if (v == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return v.toString();
+    }
+}

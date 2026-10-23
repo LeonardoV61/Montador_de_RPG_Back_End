@@ -1,8 +1,7 @@
 package com.draftstd.hydraforge.ports.in.sessao;
 
-import com.draftstd.hydraforge.ports.in.command.sessao.AlterarStatusSessaoCommand;
-import com.draftstd.hydraforge.ports.in.query.sessao.SessaoQueryResponse;
+import com.draftstd.hydraforge.application.request.sessao.AlterarStatusSessaoCommand;
 
 public interface GerenciarStatusSessaoUseCase {
-    SessaoQueryResponse alterarStatus(AlterarStatusSessaoCommand command);
+    void alterarStatus(AlterarStatusSessaoCommand command);
 }

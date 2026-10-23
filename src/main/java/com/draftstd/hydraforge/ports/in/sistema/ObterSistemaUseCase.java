@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.ports.in.sistema;
 
-import com.draftstd.hydraforge.ports.in.query.sistema.ListarSistemasQuery;
-import com.draftstd.hydraforge.ports.in.query.sistema.ObterSistemaQuery;
-import com.draftstd.hydraforge.ports.in.query.sistema.SistemaQueryResponse;
+import com.draftstd.hydraforge.application.response.sistema.ListarSistemasQuery;
+import com.draftstd.hydraforge.application.response.sistema.ObterSistemaQuery;
+import com.draftstd.hydraforge.application.response.sistema.SistemaQueryResponse;
 import java.util.List;
 
 public interface ObterSistemaUseCase {

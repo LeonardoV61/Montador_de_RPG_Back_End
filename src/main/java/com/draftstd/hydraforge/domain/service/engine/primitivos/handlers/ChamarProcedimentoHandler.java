@@ -1,28 +1,29 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import org.springframework.stereotype.Component;
+
+import com.draftstd.hydraforge.domain.model.personagem.Personagem;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.*;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EscopoInstancias;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class ChamarProcedimentoHandler implements EtapaHandler {
 
     private final SessaoContexto sessaoCtx;
     private final ProcedimentoLoader loader;
-    private final ObjectMapper mapper;
+
+    public ChamarProcedimentoHandler(SessaoContexto sessaoCtx, ProcedimentoLoader loader) {
+        this.sessaoCtx = sessaoCtx;
+        this.loader = loader;
+    }
 
     @Override
     public String tipoEtapa() { return "CHAMAR_PROCEDIMENTO"; }
@@ -32,18 +33,16 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
         if (!(ctx instanceof ProcedimentoContexto procedimentoCtx)) {
             return ResultadoEtapa.erro("CHAMAR_PROCEDIMENTO só pode ser usado dentro de um procedimento");
         }
-        return executar((EtapaProcedimento) etapa, procedimentoCtx);
-    }
 
-    public ResultadoEtapa executar(EtapaProcedimento etapa,
-                                   ProcedimentoContexto procedimentoCtx) {
-
-        Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
         Object rawIdProc = params.get("id_procedimento");
+        if (rawIdProc == null) {
+            throw new JsonFieldNotFoundException("id_procedimento", etapa.getNome());
+        }
         UUID idFilho = rawIdProc instanceof UUID u ? u : UUID.fromString(rawIdProc.toString());
 
-        String salvarEm  = (String) params.get("salvar_em");
+        String salvarEm = (String) params.get("salvar_em");
         String escopoTipo = (String) params.getOrDefault("escopo", "HERDAR");
 
         EscopoInstancias escopoFilho = resolverEscopo(escopoTipo, params, procedimentoCtx);
@@ -68,18 +67,8 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
 
         sessaoCtx.empurrar(procedimentoCtx.getIdSessao(), filho);
 
-        // Signal to the engine: don't advance parent yet, execute child first
         return ResultadoEtapa.subProcedimentoIniciado(filho.getProcedimento().getNome());
     }
-
-    /**
-     * Resolves which instances the child procedure operates on.
-     * "HERDAR"       → same scope as parent (most common for single-actor chains)
-     * "NENHUMA"      → child needs no instance (setup/teardown procedures)
-     * "UNICA"        → a specific instance, read from contexto key
-     * "CONTEXTO_IDS" → list of IDs previously saved in parent contexto
-     * "TODOS"        → all session participants
-     */
 
     private EscopoInstancias resolverEscopo(String tipo,
                                             Map<String, Object> params,
@@ -102,7 +91,7 @@ public class ChamarProcedimentoHandler implements EtapaHandler {
             }
             case "TODOS" -> {
                 List<UUID> ids = pai.getParticipantes().stream()
-                        .map(p -> p.getInstancia().getId())
+                        .map(Personagem::getId)
                         .toList();
                 yield EscopoInstancias.multiplas(ids);
             }

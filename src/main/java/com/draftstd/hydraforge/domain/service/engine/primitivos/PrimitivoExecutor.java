@@ -1,28 +1,26 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.sistema.Sistema;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.EtapaAvulsa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ContextoAvulso;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
-@RequiredArgsConstructor
 public class PrimitivoExecutor {
 
     private final HandlerRegistry registry;
-    private final JsonMapper mapper;
+
+    public PrimitivoExecutor(HandlerRegistry registry) {
+        this.registry = registry;
+    }
 
     public ResultadoEtapa executarPrimitivoAvulso(String tipoPrimitivo,
                                                   Sistema sistema,
@@ -35,13 +33,10 @@ public class PrimitivoExecutor {
             return ResultadoEtapa.erro("Handler de primitivo não encontrado: " + tipoPrimitivo);
         }
 
-        // Garante que o handler atue sobre o ALVO correto, sem depender
-        // de "instância ativa" — segue o mesmo padrão de override
-        // já usado por AlterarAtributoHandler/CalcularAtributoHandler.
         Map<String, Object> paramsComAlvo = new HashMap<>(parametros);
         paramsComAlvo.putIfAbsent("id_entidade", alvo.getId());
 
-        EtapaExecutavel etapaAvulsa = EtapaAvulsa.de(tipoPrimitivo, paramsComAlvo, mapper);
+        EtapaExecutavel etapaAvulsa = EtapaAvulsa.de(tipoPrimitivo, paramsComAlvo);
         ExecucaoContexto ctxAvulso = new ContextoAvulso(sistema, executor, alvo);
 
         return handler.executar(etapaAvulsa, ctxAvulso);

@@ -1,17 +1,12 @@
 package com.draftstd.hydraforge.domain.service.engine.components;
 
-// import java.util.Map;
-import tools.jackson.databind.JsonNode;
-
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FormulaReferencer {
 
-    /**
-     * Agora aceita Map<String, Object> vindo direto do JSONB do seu Personagem
-     */
-    public static void processarEExecutar(String formulaBruta, JsonNode atributosAtacante, JsonNode atributosAlvo) {
+    public static void processarEExecutar(String formulaBruta, Map<String, Object> atributosAtacante, Map<String, Object> atributosAlvo) {
         
         Pattern pattern = Pattern.compile("@(atacante|alvo)\\.(\\w+)");
         Matcher matcher = pattern.matcher(formulaBruta);
@@ -22,19 +17,17 @@ public class FormulaReferencer {
             String escopo = matcher.group(1);   // "atacante" ou "alvo"
             String atributo = matcher.group(2); // "forca", "defesa", etc.
             
-            // Busca o objeto genérico do mapa
             Object valorObj = "atacante".equals(escopo) 
-                    ? atributosAtacante.get(atributo) 
-                    : atributosAlvo.get(atributo);
+                    ? (atributosAtacante != null ? atributosAtacante.get(atributo) : null) 
+                    : (atributosAlvo != null ? atributosAlvo.get(atributo) : null);
             
             Double valor = 0.0;
             
-            // Converte com segurança qualquer tipo de número (Integer, Double, Long) vindo do JSON
-            if (valorObj instanceof Number) {
-                valor = ((Number) valorObj).doubleValue();
-            } else if (valorObj instanceof String) {
+            if (valorObj instanceof Number n) {
+                valor = n.doubleValue();
+            } else if (valorObj instanceof String s) {
                 try {
-                    valor = Double.parseDouble((String) valorObj);
+                    valor = Double.parseDouble(s);
                 } catch (NumberFormatException e) {
                     valor = 0.0;
                 }
@@ -44,7 +37,6 @@ public class FormulaReferencer {
         }
         matcher.appendTail(formulaNumerica);
         
-        // Chama o seu FormulaSolver que já está pronto
         FormulaSolver.execute(formulaNumerica.toString());
     }
 }

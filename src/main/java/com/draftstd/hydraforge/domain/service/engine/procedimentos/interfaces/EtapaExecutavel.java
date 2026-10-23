@@ -1,10 +1,10 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces;
 
-import tools.jackson.databind.JsonNode;
+import java.util.Map;
 
 public interface EtapaExecutavel {
     String getNome();
     String getTipoEtapa();
-    JsonNode getParametrosEtapa();
-    
+    Map<String, Object> getParametrosEtapa();
+    Boolean isObrigatorio();
 }

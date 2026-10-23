@@ -2,10 +2,10 @@ package com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto;
 
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EscopoInstancias;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.sistema.Procedimento;
 import com.draftstd.hydraforge.domain.model.sistema.Sistema;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

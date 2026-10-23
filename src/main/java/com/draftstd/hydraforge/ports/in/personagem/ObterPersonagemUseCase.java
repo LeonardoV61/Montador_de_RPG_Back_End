@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.ports.in.personagem;
 
-import com.draftstd.hydraforge.ports.in.query.personagem.ListarPersonagensPorUsuarioQuery;
-import com.draftstd.hydraforge.ports.in.query.personagem.ObterPersonagemQuery;
-import com.draftstd.hydraforge.ports.in.query.personagem.PersonagemQueryResponse;
+import com.draftstd.hydraforge.application.response.personagem.ListarPersonagensPorUsuarioQuery;
+import com.draftstd.hydraforge.application.response.personagem.ObterPersonagemQuery;
+import com.draftstd.hydraforge.application.response.personagem.PersonagemQueryResponse;
 import java.util.List;
 
 public interface ObterPersonagemUseCase {

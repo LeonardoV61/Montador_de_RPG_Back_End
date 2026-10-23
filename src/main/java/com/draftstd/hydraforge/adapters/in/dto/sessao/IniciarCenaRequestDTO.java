@@ -1,12 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
 import java.util.List;
+import java.util.UUID;
 
-public record IniciarCenaRequestDTO(
-    Long idSessao,
-    List<Long> idsInstanciasJogadores,
-    List<Long> idsInstanciasInimigos,
-    List<List<Long>> lados,    // opcional
-    String tipo,               // "COMBATE", "SOCIAL", etc.
-    Integer ordem
-) {}
+public record IniciarCenaRequestDTO(UUID idSessao, List<UUID> idsInstanciasJogadores, List<UUID> idsInstanciasInimigos, List<List<UUID>> lados, String tipo, Integer ordem) {
+
+}

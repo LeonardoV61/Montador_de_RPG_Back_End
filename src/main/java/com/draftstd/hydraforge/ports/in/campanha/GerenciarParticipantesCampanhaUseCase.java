@@ -1,12 +1,11 @@
 package com.draftstd.hydraforge.ports.in.campanha;
 
-import com.draftstd.hydraforge.ports.in.command.campanha.AdicionarJogadorCampanhaCommand;
-import com.draftstd.hydraforge.ports.in.command.campanha.AlterarPapelJogadorCommand;
-import com.draftstd.hydraforge.ports.in.command.campanha.RemoverJogadorCampanhaCommand;
-import com.draftstd.hydraforge.ports.in.query.campanha.CampanhaQueryResponse;
+import com.draftstd.hydraforge.application.request.campanha.AdicionarJogadorCampanhaCommand;
+import com.draftstd.hydraforge.application.request.campanha.AlterarPapelJogadorCommand;
+import com.draftstd.hydraforge.application.request.campanha.RemoverJogadorCampanhaCommand;
 
 public interface GerenciarParticipantesCampanhaUseCase {
-    CampanhaQueryResponse adicionarJogador(AdicionarJogadorCampanhaCommand command);
-    CampanhaQueryResponse removerJogador(RemoverJogadorCampanhaCommand command);
-    CampanhaQueryResponse alterarPapel(AlterarPapelJogadorCommand command);
+    void adicionarJogador(AdicionarJogadorCampanhaCommand command);
+    void removerJogador(RemoverJogadorCampanhaCommand command);
+    void alterarPapel(AlterarPapelJogadorCommand command);
 }

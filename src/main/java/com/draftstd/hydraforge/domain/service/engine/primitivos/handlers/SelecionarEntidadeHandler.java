@@ -8,33 +8,32 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeSistema;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeSistemaRepository;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeSistemaOutputPort;
 
 import lombok.RequiredArgsConstructor;
-import tools.jackson.databind.JsonNode;
-
 
 @Component
 @RequiredArgsConstructor
 public class SelecionarEntidadeHandler implements EtapaHandler {
 
-    private final EntidadeSistemaRepository repo;
+    private final EntidadeSistemaOutputPort entidadeSistemaPort;
 
     @Override
     public String tipoEtapa() { return "SELECIONAR_ENTIDADE"; }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
-        String tipo = params.get("tipo_entidade").asString();
-        String salvarEm = params.get("salvar_em").asString();
-        String modoEsperado = params.path("modo_esperado").asString(null);
+        Map<String, Object> params = etapa.getParametrosEtapa();
         
+        String tipo = (String) params.get("tipo_entidade");
+        String salvarEm = (String) params.get("salvar_em");
+        String modoEsperado = (String) params.get("modo_esperado");
+
         if (modoEsperado != null) {
             String modoAtual = ctx.getContexto().getStringOrThrow("modo_escolha_cavaleiro");
             if (!modoEsperado.equals(modoAtual)) {
@@ -43,11 +42,14 @@ public class SelecionarEntidadeHandler implements EtapaHandler {
         }
 
         if (ctx.getContexto().containsKey(salvarEm)) {
-            UUID id = UUID.fromString(ctx.getContexto().getStringOrThrow(salvarEm));
+            Object valorSalvo = ctx.getContexto().get(salvarEm, Object.class).orElseThrow();
+            UUID id = valorSalvo instanceof UUID u ? u : UUID.fromString(valorSalvo.toString());
             return ResultadoEtapa.concluida(Map.of(salvarEm, id));
         }
 
-        List<EntidadeSistema> entidades = repo.findBySistemaIdAndTipo(ctx.getIdSistema(), tipo);
+        List<EntidadeSistema> entidades = entidadeSistemaPort.listarPorSistemaId(ctx.getIdSistema()).stream()
+                .filter(e -> tipo == null || tipo.equalsIgnoreCase(e.getTipo()))
+                .toList();
 
         List<Map<String, Object>> opcoes = new ArrayList<>();
         for (EntidadeSistema e : entidades) {

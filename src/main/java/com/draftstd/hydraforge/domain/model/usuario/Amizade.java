@@ -1,42 +1,43 @@
 package com.draftstd.hydraforge.domain.model.usuario;
 
 import com.draftstd.hydraforge.domain.enums.StatusAmizade;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
 public class Amizade {
 
-    @EmbeddedId  
-    private AmizadeKey id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("idRemetente")
-    @JoinColumn(name = "id_remetente")
-    private Usuario remetente;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("idDestinatario")
-    @JoinColumn(name = "id_destinatario")
-    private Usuario destinatario;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    private UUID idRemetente;
+    private UUID idDestinatario;
     private StatusAmizade status;
-
-    @CreationTimestamp
-    @Column(updatable = false)
     private LocalDateTime criadaEm;
+    private LocalDateTime aceitaEm;
 
-    private LocalDateTime aceitoEm;
+    public Amizade() {}
+
+    public Amizade(UUID idRemetente, UUID idDestinatario, StatusAmizade status, LocalDateTime criadaEm, LocalDateTime aceitaEm) {
+        this.idRemetente = idRemetente;
+        this.idDestinatario = idDestinatario;
+        this.status = status != null ? status : StatusAmizade.PENDENTE;
+        this.criadaEm = criadaEm != null ? criadaEm : LocalDateTime.now();
+        this.aceitaEm = aceitaEm;
+    }
+
+    public void aceitar() {
+        this.status = StatusAmizade.ACEITO;
+        this.aceitaEm = LocalDateTime.now();
+    }
+
+    public void rejeitar() {
+        this.status = StatusAmizade.REJEITADO;
+    }
+
+    public void bloquear() {
+        this.status = StatusAmizade.BLOQUEADO;
+    }
+
+    public UUID getIdRemetente() { return idRemetente; }
+    public UUID getIdDestinatario() { return idDestinatario; }
+    public StatusAmizade getStatus() { return status; }
+    public LocalDateTime getCriadaEm() { return criadaEm; }
+    public LocalDateTime getAceitaEm() { return aceitaEm; }
 }

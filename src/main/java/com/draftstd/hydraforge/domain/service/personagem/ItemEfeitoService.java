@@ -1,46 +1,47 @@
 package com.draftstd.hydraforge.domain.service.personagem;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
+import org.springframework.stereotype.Component;
+
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeSistema;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.SalvarEntidadeInstanciaPort;
 
 import java.util.Map;
-import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
-@Slf4j
+@Component
 public class ItemEfeitoService {
 
-    private final EntidadeInstanciaRepository entidadeInstanciaRepository;
+    private final SalvarEntidadeInstanciaPort salvarEntidadeInstanciaPort;
+
+    public ItemEfeitoService(SalvarEntidadeInstanciaPort salvarEntidadeInstanciaPort) {
+        this.salvarEntidadeInstanciaPort = salvarEntidadeInstanciaPort;
+    }
 
     /**
      * Dispara gatilhos ou efeitos associados a um item (ex: AO_EQUIPAR, AO_DESEQUIPAR, AO_USAR).
-     * Totalmente adaptado para suportar IDs baseados em UUID e propriedades em JSON.
+     * Suporta IDs baseados em UUID e propriedades em estruturas puras Java.
      */
-    public void dispararGatilho(EntidadeInstancia item, String tipoGatilho, 
+    public void dispararGatilho(EntidadeInstancia item, EntidadeSistema entidadeSistemaItem, String tipoGatilho, 
                                 EntidadeInstancia personagem, EntidadeInstancia alvo, 
                                 Map<String, Object> contextoExtra) {
-        if (item == null || item.getEntidadeSistema() == null) {
+        if (item == null || entidadeSistemaItem == null) {
             return;
         }
 
-        JsonNode propriedades = item.getEntidadeSistema().getPropriedades();
-        if (propriedades == null || propriedades.isMissingNode()) {
+        Map<String, Object> propriedades = entidadeSistemaItem.getPropriedades();
+        if (propriedades == null || propriedades.isEmpty()) {
             return;
         }
 
-        // Exemplo de integração: verifica se o item possui o gatilho configurado nas propriedades
-        JsonNode gatilhos = propriedades.path("gatilhos");
-        if (gatilhos != null && gatilhos.has(tipoGatilho)) {
-            log.info("Disparando gatilho '{}' para o item {} na entidade {}", 
-                    tipoGatilho, item.getId(), personagem.getId());
-            
-            // Aqui você pode estender a lógica para interpretar efeitos dinâmicos,
-            // alterar atributos ou invocar procedimentos associados ao efeito do item.
+        // Verifica se o item possui o gatilho configurado no mapa de propriedades
+        Object gatilhosObj = propriedades.get("gatilhos");
+        if (gatilhosObj instanceof Map<?, ?> gatilhos) {
+            if (gatilhos.containsKey(tipoGatilho)) {
+                // Execução de lógica pura de domínio para tratar gatilhos de itens
+                if (salvarEntidadeInstanciaPort != null && personagem != null) {
+                    salvarEntidadeInstanciaPort.salvar(personagem);
+                }
+            }
         }
     }
 }

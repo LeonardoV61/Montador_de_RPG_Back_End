@@ -1,7 +1,6 @@
 // domain/validation/schema/AtributoSchema.java
 package com.draftstd.hydraforge.domain.validation.schema;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,6 @@ import java.util.Map;
 //   "composto" -> campos
 //   "mapa"     -> chavesValidas, valorTipo
 //   "bool"     -> nenhum extra
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AtributoSchema {
 
     private String label;
@@ -43,6 +41,32 @@ public class AtributoSchema {
     // Usados quando tipo = "mapa"
     private List<String> chavesValidas;
     private String valorTipo;
+
+    public AtributoSchema() {
+    }
+
+    public AtributoSchema(String label, String tipo, boolean derivado, String formula, boolean obrigatorio, 
+                          Object defaultVal, Integer min, Integer max, List<String> valoresValidos, 
+                          String itensTipo, List<String> itensValidos, Integer minimoItens, 
+                          Integer maximoItens, Map<String, CampoCompostoSchema> campos, 
+                          List<String> chavesValidas, String valorTipo) {
+        this.label = label;
+        this.tipo = tipo;
+        this.derivado = derivado;
+        this.formula = formula;
+        this.obrigatorio = obrigatorio;
+        this.defaultVal = defaultVal;
+        this.min = min;
+        this.max = max;
+        this.valoresValidos = valoresValidos;
+        this.itensTipo = itensTipo;
+        this.itensValidos = itensValidos;
+        this.minimoItens = minimoItens;
+        this.maximoItens = maximoItens;
+        this.campos = campos;
+        this.chavesValidas = chavesValidas;
+        this.valorTipo = valorTipo;
+    }
 
     // Getters
     public String getLabel()                            { return label; }

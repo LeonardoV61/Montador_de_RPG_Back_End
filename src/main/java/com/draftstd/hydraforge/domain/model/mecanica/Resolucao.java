@@ -1,44 +1,41 @@
 package com.draftstd.hydraforge.domain.model.mecanica;
 
 import com.draftstd.hydraforge.domain.model.sistema.Sistema;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
 
+import java.util.Objects;
 import java.util.UUID;
 
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "Resolucao")
 public class Resolucao {
-    @Id
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name = "id_etapa", updatable = false, nullable = false, columnDefinition = "UUID")
-    private UUID id;
-
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "Sistemas_id_sistema")
-    private Sistema sistema;
-
-    @NotNull
+    private final UUID id;
+    private final Sistema sistema;
     private String nome;
-
-    @NotNull
     private String tipo;
+    private String parametrosJson; // Alterado de JsonNode para String bruta
 
-    @NotNull
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private JsonNode parametros;
+    public Resolucao(UUID id, Sistema sistema, String nome, String tipo, String parametrosJson) {
+        this.id = Objects.requireNonNull(id, "O ID da resolução é obrigatório.");
+        this.sistema = Objects.requireNonNull(sistema, "O sistema associado é obrigatório.");
+        this.setNome(nome);
+        this.tipo = tipo;
+        this.parametrosJson = parametrosJson;
+    }
+
+    public void atualizarParametros(String novoTipo, String novosParametrosJson) {
+        this.tipo = novoTipo;
+        this.parametrosJson = novosParametrosJson;
+    }
+
+    private void setNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome da resolução não pode ser vazio.");
+        }
+        this.nome = nome.trim();
+    }
+
+    // Getters
+    public UUID getId() { return id; }
+    public Sistema getSistema() { return sistema; }
+    public String getNome() { return nome; }
+    public String getTipo() { return tipo; }
+    public String getParametrosJson() { return parametrosJson; }
 }

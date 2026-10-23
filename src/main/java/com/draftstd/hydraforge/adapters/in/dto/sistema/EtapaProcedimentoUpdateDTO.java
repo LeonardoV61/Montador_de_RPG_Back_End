@@ -1,11 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.sistema;
 
-import tools.jackson.databind.JsonNode;
+import java.util.Map;
 
-public record EtapaProcedimentoUpdateDTO(
-        Integer ordem,
-        String nome,
-        String tipoEtapa,
-        JsonNode parametrosEtapa,
-        Boolean obrigatorio
-) {}
+public record EtapaProcedimentoUpdateDTO(Integer ordem, String nome, String tipoEtapa, Map<String, Object> parametrosEtapa, Boolean obrigatorio) {
+
+}

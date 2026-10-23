@@ -1,20 +1,26 @@
 package com.draftstd.hydraforge.domain.service.engine.components;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeRelacao;
-import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeRelacaoPort;
-import tools.jackson.databind.JsonNode;
+import org.springframework.stereotype.Component;
+
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeRelacao;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeRelacaoOutputPort;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 public class ItemResolver {
 
-    private final EntidadeRelacaoPort relacaoPort;
+    private final EntidadeRelacaoOutputPort relacaoPort;
+    private final EntidadeInstanciaOutputPort instanciaPort;
 
-    public ItemResolver(EntidadeRelacaoPort relacaoPort) {
+    public ItemResolver(EntidadeRelacaoOutputPort relacaoPort, EntidadeInstanciaOutputPort instanciaPort) {
         this.relacaoPort = relacaoPort;
+        this.instanciaPort = instanciaPort;
     }
 
     public List<EntidadeRelacao> listarItens(UUID idPersonagem) {
@@ -31,25 +37,30 @@ public class ItemResolver {
                 .toList();
     }
 
-    public Optional<EntidadeRelacao> buscarEquipadoPorSlot(UUID idPersonagem, String slot) {
+    public Optional<EntidadeInstancia> buscarEquipadoPorSlot(UUID idPersonagem, String slot) {
         return listarEquipados(idPersonagem).stream()
-                .filter(r -> slot.equals(slotDoItem(r.getEntidadeFilha())))
+                .map(r -> instanciaPort.buscarPorId(r.getEntidadeFilhaId()).orElse(null))
+                .filter(item -> item != null && slot.equals(slotDoItem(item)))
                 .findFirst();
     }
 
     public boolean isEquipado(EntidadeRelacao r) {
-        JsonNode custom = r.getCustomizacoes();
-        return custom != null && custom.path("equipado").asBoolean(false);
+        Map<String, Object> custom = r.getCustomizacoes();
+        if (custom == null) return false;
+        Object val = custom.get("equipado");
+        if (val instanceof Boolean b) return b;
+        return val != null && Boolean.parseBoolean(val.toString());
     }
 
     public String slotDoItem(EntidadeInstancia item) {
-        return item.getEntidadeSistema().getPropriedades().path("slot").asString(null);
+        if (item == null || item.getCustomizacoes() == null) return null;
+        Object slot = item.getCustomizacoes().get("slot");
+        return slot != null ? slot.toString() : null;
     }
 
-    public JsonNode atributoDoEquipado(UUID idPersonagem, String slot, String atributo) {
+    public Object atributoDoEquipado(UUID idPersonagem, String slot, String atributo) {
         return buscarEquipadoPorSlot(idPersonagem, slot)
-                .map(EntidadeRelacao::getEntidadeFilha)
-                .map(item -> item.getAtributosAtuais().get(atributo))
+                .map(item -> item.getValoresAtributos() != null ? item.getValoresAtributos().get(atributo) : null)
                 .orElse(null);
     }
 }

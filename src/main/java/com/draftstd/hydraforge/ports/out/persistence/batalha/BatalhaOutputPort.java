@@ -8,4 +8,5 @@ public interface BatalhaOutputPort {
     Optional<Batalha> buscarPorId(UUID id);
     Batalha salvar(Batalha batalha);
     Optional<Batalha> buscarAtivaPorCenaId(UUID cenaId);
+    void deletarPorId(UUID id);
 }

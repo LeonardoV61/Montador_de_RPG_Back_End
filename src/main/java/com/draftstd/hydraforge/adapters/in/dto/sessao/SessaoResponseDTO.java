@@ -1,10 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-/**
- * Record que devolve os dados simplificados da sessão para o frontend.
- */
-public record SessaoResponseDTO(Long id, Long campanhaId, LocalDateTime dataInicio, LocalDateTime dataFim) {
+public record SessaoResponseDTO(UUID id, UUID campanhaId, LocalDateTime dataInicio, LocalDateTime dataFim) {
     
 }

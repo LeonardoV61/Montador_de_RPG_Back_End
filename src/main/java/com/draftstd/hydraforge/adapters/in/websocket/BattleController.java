@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.websocket;
 
 import com.draftstd.hydraforge.ports.in.batalha.GerenciarParticipantesBatalhaUseCase;
-import com.draftstd.hydraforge.ports.in.command.batalha.AdicionarParticipanteBatalhaCommand;
-import com.draftstd.hydraforge.ports.in.query.batalha.BatalhaQueryResponse;
+import com.draftstd.hydraforge.application.request.batalha.AdicionarParticipanteBatalhaCommand;
+import com.draftstd.hydraforge.application.response.batalha.BatalhaQueryResponse;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;

@@ -1,49 +1,69 @@
 package com.draftstd.hydraforge.application.usecase.campanha;
 
+import com.draftstd.hydraforge.application.response.campanha.CampanhaParticipanteQueryResponse;
+import com.draftstd.hydraforge.application.response.campanha.CampanhaQueryResponse;
+import com.draftstd.hydraforge.application.response.campanha.ListarCampanhasPorUsuarioQuery;
+import com.draftstd.hydraforge.application.response.campanha.ObterCampanhaQuery;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.campanha.Campanha;
 import com.draftstd.hydraforge.ports.in.campanha.ObterCampanhaUseCase;
-import com.draftstd.hydraforge.ports.in.query.campanha.CampanhaParticipanteQueryResponse;
-import com.draftstd.hydraforge.ports.in.query.campanha.CampanhaQueryResponse;
-import com.draftstd.hydraforge.ports.in.query.campanha.ListarCampanhasPorUsuarioQuery;
-import com.draftstd.hydraforge.ports.in.query.campanha.ObterCampanhaQuery;
-import com.draftstd.hydraforge.ports.out.campanha.ObterCampanhaPort;
+import com.draftstd.hydraforge.ports.out.persistence.campanha.CampanhaPersistencePort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
-@Transactional(readOnly = true)
 public class ObterCampanhaUseCaseImpl implements ObterCampanhaUseCase {
 
-    private final ObterCampanhaPort obterCampanhaPort;
+    private final CampanhaPersistencePort campanhaPersistencePort;
 
-    public ObterCampanhaUseCaseImpl(ObterCampanhaPort obterCampanhaPort) {
-        this.obterCampanhaPort = obterCampanhaPort;
+    public ObterCampanhaUseCaseImpl(CampanhaPersistencePort campanhaPersistencePort) {
+        this.campanhaPersistencePort = campanhaPersistencePort;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CampanhaQueryResponse obterPorId(ObterCampanhaQuery query) {
-        Campanha c = obterCampanhaPort.buscarPorId(query.campanhaId()).orElseThrow(() -> new RecursoNaoEncontradoException("Campanha não encontrada: " + query.campanhaId()));
-        return toQueryResponse(c);
+        Campanha campanha = campanhaPersistencePort.buscarPorId(query.campanhaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Campanha não encontrada com o ID: " + query.campanhaId()));
+
+        return mapToResponse(campanha);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CampanhaQueryResponse> listarPorUsuario(ListarCampanhasPorUsuarioQuery query) {
-        return obterCampanhaPort.listarPorUsuarioId(query.usuarioId()).stream().map(this::toQueryResponse).toList();
+        return campanhaPersistencePort.listarPorUsuario(query.usuarioId()).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    private CampanhaQueryResponse toQueryResponse(Campanha c) {
-        List<CampanhaParticipanteQueryResponse> participantesResponse = (c.getUsuarios() != null) ? c.getUsuarios().stream().map(p -> new CampanhaParticipanteQueryResponse(
-            p.getUsuario() != null ? p.getUsuario().getId() : null,
-            p.getUsuario() != null ? p.getUsuario().getNome() : "Desconhecido",
-            p.getPapel(),
-            p.getEntrouEm()
-        )).toList() : List.of();
+    private CampanhaQueryResponse mapToResponse(Campanha c) {
+        List<CampanhaParticipanteQueryResponse> participantesResponse = c.getMembros().stream()
+                .map(p -> new CampanhaParticipanteQueryResponse(
+                        p.usuarioId(),
+                        null, // Nome resolvido via projeção na visualização se necessário
+                        p.papel(),
+                        p.status(),
+                        p.entrouEm()
+                ))
+                .toList();
 
-        return new CampanhaQueryResponse(c.getId() != null ? UUID.nameUUIDFromBytes(c.getId().toString().getBytes()) : null, c.getNome(), c.getDescricao(), c.getSistema() != null && c.getSistema().getId() != null ? UUID.nameUUIDFromBytes(c.getSistema().getId().toString().getBytes()) : null, null, c.getStatus(), participantesResponse, c.getCriadaEm(), LocalDateTime.now());
+        return new CampanhaQueryResponse(
+                c.getId(),
+                c.getNome(),
+                c.getDescricao(),
+                c.getUrlImagem(),
+                c.getStatus(),
+                c.getSistemaId(),
+                c.getMestreId(),
+                participantesResponse,
+                c.getSessoesIds(),
+                c.getPersonagensIds(),
+                c.getInstanciasIds(),
+                c.getCriadaEm(),
+                c.getAtualizadaEm()
+        );
     }
 }

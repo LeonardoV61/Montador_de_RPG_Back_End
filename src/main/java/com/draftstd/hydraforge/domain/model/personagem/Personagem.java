@@ -1,67 +1,145 @@
 package com.draftstd.hydraforge.domain.model.personagem;
 
-// import com.draftstd.hydraforge.domain.model.campanha.Campanha;
-import com.draftstd.hydraforge.domain.model.campanha.Campanha;
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.usuario.Usuario;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-// import org.hibernate.annotations.JdbcTypeCode;
-// import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
+import com.draftstd.hydraforge.domain.events.DomainEvent;
+import com.draftstd.hydraforge.domain.events.personagem.*;
+import com.draftstd.hydraforge.domain.model.AggregateRoot;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-public class Personagem {
-        @Id
-        @GeneratedValue(
-                strategy = GenerationType.SEQUENCE,
-                generator = "pers_seq"
-        )
-        @SequenceGenerator(
-                name = "pers_seq",
-                sequenceName = "pers_sequence",
-                allocationSize = 1
-        )
-        private Long id;
+public class Personagem extends AggregateRoot<UUID> {
+    private String nome;
+    private UUID usuarioId;
+    private UUID campanhaId;
+    private UUID instanciaId;
+    private String historia;
+    private boolean ativo;
+    private String aparencia;
+    private String urlImagem;
+    private String notasJogador;
+    private LocalDateTime criadoEm;
+    private Map<String, Object> atributos = new HashMap<>();
 
-        @ManyToOne(optional = false, fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_usuario")
-        private Usuario usuario;
+    public Personagem() {}
 
-        @OneToOne (cascade = CascadeType.ALL)
-        @JoinColumn
-        private EntidadeInstancia instancia;
+    // Construtor para criação de novo personagem
+    public Personagem(UUID id, String nome, UUID usuarioId, UUID campanhaId, UUID instanciaId, String historia, String aparencia, String urlImagem, String notasJogador, Map<String, Object> atributos) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do personagem não pode ser vazio.");
+        }
 
-        @ManyToOne(optional = true, fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_campanha")
-        private Campanha campanha;
+        UUID personagemId = id != null ? id : UUID.randomUUID();
+        Map<String, Object> atributosIniciais = atributos != null ? new HashMap<>(atributos) : new HashMap<>();
 
-        private String historia;
+        raiseEvent(new PersonagemCriadoEvent(
+            UUID.randomUUID(),
+            personagemId.toString(),
+            usuarioId,
+            campanhaId,
+            instanciaId,
+            nome.trim(),
+            historia,
+            aparencia,
+            urlImagem,
+            notasJogador,
+            atributosIniciais,
+            getVersion() + 1,
+            Instant.now(),
+            null // sessaoId opcional
+        ));
+    }
 
-        private boolean ativo;
+    @Override
+    protected void apply(DomainEvent event) {
+        if (event instanceof PersonagemCriadoEvent e) {
+            setId(UUID.fromString(e.getAggregateId()));
+            this.usuarioId = e.usuarioId();
+            this.campanhaId = e.campanhaId();
+            this.instanciaId = e.instanciaId();
+            this.nome = e.nome();
+            this.historia = e.historia();
+            this.aparencia = e.aparencia();
+            this.urlImagem = e.urlImagem();
+            this.notasJogador = e.notasJogador();
+            this.atributos = e.atributos() != null ? new HashMap<>(e.atributos()) : new HashMap<>();
+            this.ativo = true;
+            this.criadoEm = LocalDateTime.ofInstant(e.getOccurredOn(), ZoneOffset.UTC);
+        } else if (event instanceof PersonagemAtualizadoEvent e) {
+            if (e.nome() != null) this.nome = e.nome();
+            if (e.historia() != null) this.historia = e.historia();
+            if (e.aparencia() != null) this.aparencia = e.aparencia();
+            if (e.urlImagem() != null) this.urlImagem = e.urlImagem();
+            if (e.notasJogador() != null) this.notasJogador = e.notasJogador();
+            if (e.atributos() != null) this.atributos.putAll(e.atributos());
+        } else if (event instanceof PersonagemDeletadoEvent) {
+            this.ativo = false;
+        }
+    }
 
-        private String aparencia;
+    public void atualizar(String novoNome, String historia, String aparencia, 
+                          String urlImagem, String notasJogador, Map<String, Object> novosAtributos, UUID sessaoId) {
+        raiseEvent(new PersonagemAtualizadoEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            novoNome,
+            historia,
+            aparencia,
+            urlImagem,
+            notasJogador,
+            novosAtributos,
+            getVersion() + 1,
+            Instant.now(),
+            sessaoId
+        ));
+    }
 
-        private String urlImagem;
+    public void realizarDescanso(String tipoDescanso, UUID sessaoId) {
+        raiseEvent(new DescansoRealizadoEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            tipoDescanso,
+            getVersion() + 1,
+            Instant.now(),
+            sessaoId
+        ));
+    }
 
-        @Column(name = "notas_jogador")
-        private String notasJogador;
+    public void consumirItem(UUID itemId, UUID sessaoId) {
+        raiseEvent(new ItemConsumidoEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            itemId,
+            getVersion() + 1,
+            Instant.now(),
+            sessaoId
+        ));
+    }
 
-        @CreationTimestamp
-        @Column(name = "criado_em")
-        private LocalDateTime criadoEm;
+    public void desativar(UUID sessaoId) {
+        if (!this.ativo) return;
+        raiseEvent(new PersonagemDeletadoEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            getVersion() + 1,
+            Instant.now(),
+            sessaoId
+        ));
+    }
 
-    // public JsonNode getAtributos() {
-    //     throw new UnsupportedOperationException("Unimplemented method 'getAtributos'");
-    // }
-
+    // Getters
+    public String getNome() { return nome; }
+    public UUID getUsuarioId() { return usuarioId; }
+    public UUID getCampanhaId() { return campanhaId; }
+    public UUID getInstanciaId() { return instanciaId; }
+    public String getHistoria() { return historia; }
+    public boolean isAtivo() { return ativo; }
+    public String getAparencia() { return aparencia; }
+    public String getUrlImagem() { return urlImagem; }
+    public String getNotasJogador() { return notasJogador; }
+    public LocalDateTime getCriadoEm() { return criadoEm; }
+    public Map<String, Object> getAtributos() { return Map.copyOf(atributos); }
 }

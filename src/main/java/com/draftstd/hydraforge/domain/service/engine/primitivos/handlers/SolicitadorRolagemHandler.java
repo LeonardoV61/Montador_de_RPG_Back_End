@@ -3,20 +3,23 @@ package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 import com.draftstd.hydraforge.domain.model.sistema.Procedimento;
 import com.draftstd.hydraforge.domain.service.engine.components.InterpretadorJson;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InterpretadorContexto;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.CenaPersistencePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,9 +28,8 @@ import java.util.regex.Pattern;
 public class SolicitadorRolagemHandler implements EtapaHandler {
 
     private final InterpretadorJson interpretador;
-    // Dependências necessárias para construir o InterpretadorContexto
     private final InstanciaResolver instanciaResolver;
-    private final CenaRepository cenaRepo;
+    private final CenaPersistencePort cenaPort;
     private final JsonMapper mapper;
 
     @Override
@@ -35,10 +37,15 @@ public class SolicitadorRolagemHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
-        String campoPedido = params.path("campo_pedido").asString("Role os dados");
-        boolean podePassar = params.path("pode_passar").asBoolean(false);
+        Object rawCampoPedido = params.get("campo_pedido");
+        String campoPedido = rawCampoPedido != null ? rawCampoPedido.toString() : "Role os dados";
+
+        Object rawPodePassar = params.get("pode_passar");
+        boolean podePassar = rawPodePassar instanceof Boolean b ? b
+                : (rawPodePassar != null && Boolean.parseBoolean(rawPodePassar.toString()));
+
         String salvarEm = exigirTexto(params, "salvar_em", etapa);
         
         if (ctx.getContexto().containsKey(salvarEm)) {
@@ -61,38 +68,40 @@ public class SolicitadorRolagemHandler implements EtapaHandler {
         ));
     }
 
-    private String resolverFormula(JsonNode params, ExecucaoContexto ctx, EtapaExecutavel etapa) {
+    private String resolverFormula(Map<String, Object> params, ExecucaoContexto ctx, EtapaExecutavel etapa) {
         // 1. Fórmulas estáticas (ex: "1d4")
-        if (params.hasNonNull("formula")) {
-            return params.get("formula").asString();
+        if (params.get("formula") != null) {
+            return params.get("formula").toString();
         }
 
         // 2. Fórmulas dinâmicas (ex: expressão que busca dano na arma do personagem)
-        if (params.hasNonNull("expressao_formula")) {
-            // Construção do InterpretadorContexto aqui
+        if (params.get("expressao_formula") != null) {
             InterpretadorContexto intCtx = new InterpretadorContexto(
                 (ProcedimentoContexto) ctx, 
                 instanciaResolver, 
-                cenaRepo, 
+                cenaPort, 
                 mapper
             );
             
-            // Avalia e retorna o resultado da expressão
-            return interpretador.interpretar(params.get("expressao_formula"), intCtx).comoTexto();
+            JsonNode expressaoNode = mapper.valueToTree(params.get("expressao_formula"));
+            return interpretador.interpretar(expressaoNode, intCtx).comoTexto();
         }
 
         // 3. Fallback (Configurações do procedimento)
-        String chaveConfgs = params.path("chave_confgs").asString(null);
+        Object rawChaveConfgs = params.get("chave_confgs");
+        String chaveConfgs = rawChaveConfgs != null ? rawChaveConfgs.toString() : null;
         if (chaveConfgs != null) {
             String variacaoDados = ctx.getContexto().getStringOrThrow("start_type");
             Procedimento procedimento = ctx.getProcedimento();
-            JsonNode confgsGeral = procedimento.getConfigsGeral();
+            
+            Map<String, Object> confgsGeralMap = procedimento.getConfigsGeral();
+            JsonNode confgsGeral = confgsGeralMap != null ? mapper.valueToTree(confgsGeralMap) : mapper.createObjectNode();
             
             JsonNode tipoNode = confgsGeral.path("start_types").path(variacaoDados);
             if (tipoNode.isMissingNode())
                 throw new IllegalArgumentException("Tipo de início desconhecido: " + variacaoDados);
 
-            String formula = tipoNode.path(chaveConfgs).asString();
+            String formula = tipoNode.path(chaveConfgs).asText(null);
             if (formula == null || formula.isBlank())
                 throw new IllegalArgumentException("Fórmula '" + chaveConfgs + "' não encontrada para " + variacaoDados);
             
@@ -103,7 +112,6 @@ public class SolicitadorRolagemHandler implements EtapaHandler {
     }
 
     private Map<String, Object> parseFormula(String formula) {
-        // (Seu método parseFormula permanece inalterado)
         String limpa = formula.replaceAll("\\s+", "");
         Map<String, Object> resultado = new LinkedHashMap<>();
 
@@ -143,9 +151,9 @@ public class SolicitadorRolagemHandler implements EtapaHandler {
         throw new IllegalArgumentException("Fórmula não suportada: " + formula);
     }
 
-    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-        return v.asString();
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
     }
 }

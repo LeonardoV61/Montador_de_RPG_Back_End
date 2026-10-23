@@ -1,72 +1,140 @@
 package com.draftstd.hydraforge.adapters.in.rest.controller.campanha;
 
-import com.draftstd.hydraforge.adapters.in.dto.campanha.*;
-import com.draftstd.hydraforge.ports.in.campanha.*;
-import com.draftstd.hydraforge.ports.in.command.campanha.*;
-import com.draftstd.hydraforge.ports.in.query.campanha.*;
+import com.draftstd.hydraforge.adapters.in.dto.campanha.AdicionarJogadorDTO;
+import com.draftstd.hydraforge.adapters.in.dto.campanha.CampanhaCreateDTO;
+import com.draftstd.hydraforge.adapters.in.dto.campanha.CampanhaPapelDTO;
+import com.draftstd.hydraforge.adapters.in.dto.campanha.CampanhaUpdateDTO;
+import com.draftstd.hydraforge.application.request.campanha.AdicionarJogadorCampanhaCommand;
+import com.draftstd.hydraforge.application.request.campanha.AlterarPapelJogadorCommand;
+import com.draftstd.hydraforge.application.request.campanha.AtualizarCampanhaCommand;
+import com.draftstd.hydraforge.application.request.campanha.CriarCampanhaCommand;
+import com.draftstd.hydraforge.application.request.campanha.RemoverJogadorCampanhaCommand;
+import com.draftstd.hydraforge.application.response.campanha.CampanhaQueryResponse;
+import com.draftstd.hydraforge.application.response.campanha.ListarCampanhasPorUsuarioQuery;
+import com.draftstd.hydraforge.application.response.campanha.ObterCampanhaQuery;
+import com.draftstd.hydraforge.ports.in.campanha.AtualizarCampanhaUseCase;
+import com.draftstd.hydraforge.ports.in.campanha.CriarCampanhaUseCase;
+import com.draftstd.hydraforge.ports.in.campanha.GerenciarParticipantesCampanhaUseCase;
+import com.draftstd.hydraforge.ports.in.campanha.ObterCampanhaUseCase;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/campanhas")
+@RequestMapping("/api/campanhas")
 public class CampanhaController {
 
     private final CriarCampanhaUseCase criarCampanhaUseCase;
-    private final AtualizarCampanhaUseCase atualizarCampanhaUseCase;
     private final ObterCampanhaUseCase obterCampanhaUseCase;
-    private final GerenciarParticipantesCampanhaUseCase gerenciarParticipantesCampanhaUseCase;
+    private final AtualizarCampanhaUseCase atualizarCampanhaUseCase;
+    private final GerenciarParticipantesCampanhaUseCase gerenciarParticipantesUseCase;
 
-    public CampanhaController(CriarCampanhaUseCase criarCampanhaUseCase, AtualizarCampanhaUseCase atualizarCampanhaUseCase, ObterCampanhaUseCase obterCampanhaUseCase, GerenciarParticipantesCampanhaUseCase gerenciarParticipantesCampanhaUseCase) {
+    public CampanhaController(
+            CriarCampanhaUseCase criarCampanhaUseCase,
+            ObterCampanhaUseCase obterCampanhaUseCase,
+            AtualizarCampanhaUseCase atualizarCampanhaUseCase,
+            GerenciarParticipantesCampanhaUseCase gerenciarParticipantesUseCase
+    ) {
         this.criarCampanhaUseCase = criarCampanhaUseCase;
-        this.atualizarCampanhaUseCase = atualizarCampanhaUseCase;
         this.obterCampanhaUseCase = obterCampanhaUseCase;
-        this.gerenciarParticipantesCampanhaUseCase = gerenciarParticipantesCampanhaUseCase;
+        this.atualizarCampanhaUseCase = atualizarCampanhaUseCase;
+        this.gerenciarParticipantesUseCase = gerenciarParticipantesUseCase;
     }
 
     @PostMapping
-    public ResponseEntity<CampanhaQueryResponse> criar(@Valid @RequestBody CampanhaCreateDTO dto, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
-        CriarCampanhaCommand command = new CriarCampanhaCommand(dto.nome(), dto.descricao(), dto.sistemaId(), usuarioId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(criarCampanhaUseCase.executar(command));
-    }
+    public ResponseEntity<UUID> criar(@RequestBody @Valid CampanhaCreateDTO dto) {
+        CriarCampanhaCommand command = new CriarCampanhaCommand(
+                dto.nome(),
+                dto.descricao(),
+                dto.urlImagem(),
+                dto.sistemaId(),
+                dto.criadorId()
+        );
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CampanhaQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody CampanhaUpdateDTO dto) {
-        AtualizarCampanhaCommand command = new AtualizarCampanhaCommand(id, dto.nome(), dto.descricao(), dto.status());
-        return ResponseEntity.ok(atualizarCampanhaUseCase.executar(command));
+        UUID campanhaId = criarCampanhaUseCase.executar(command);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(campanhaId)
+                .toUri();
+
+        return ResponseEntity.created(location).body(campanhaId);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CampanhaQueryResponse> obterPorId(@PathVariable UUID id) {
-        ObterCampanhaQuery query = new ObterCampanhaQuery(id);
-        return ResponseEntity.ok(obterCampanhaUseCase.obterPorId(query));
+        CampanhaQueryResponse response = obterCampanhaUseCase.obterPorId(new ObterCampanhaQuery(id));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<CampanhaQueryResponse>> listarPorUsuario(@PathVariable UUID usuarioId) {
-        ListarCampanhasPorUsuarioQuery query = new ListarCampanhasPorUsuarioQuery(usuarioId);
-        return ResponseEntity.ok(obterCampanhaUseCase.listarPorUsuario(query));
+        List<CampanhaQueryResponse> responses = obterCampanhaUseCase.listarPorUsuario(new ListarCampanhasPorUsuarioQuery(usuarioId));
+        return ResponseEntity.ok(responses);
     }
 
-    @PostMapping("/{id}/participantes")
-    public ResponseEntity<CampanhaQueryResponse> adicionarJogador(@PathVariable UUID id, @Valid @RequestBody AdicionarJogadorDTO dto) {
-        AdicionarJogadorCampanhaCommand command = new AdicionarJogadorCampanhaCommand(id, dto.usuarioId(), dto.papel());
-        return ResponseEntity.ok(gerenciarParticipantesCampanhaUseCase.adicionarJogador(command));
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> atualizar(
+            @PathVariable UUID id,
+            @RequestBody @Valid CampanhaUpdateDTO dto
+    ) {
+        AtualizarCampanhaCommand command = new AtualizarCampanhaCommand(
+                id,
+                dto.nome(),
+                dto.descricao(),
+                dto.urlImagem(),
+                dto.status()
+        );
+
+        atualizarCampanhaUseCase.executar(command);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}/participantes/{usuarioId}")
-    public ResponseEntity<CampanhaQueryResponse> removerJogador(@PathVariable UUID id, @PathVariable UUID usuarioId) {
-        RemoverJogadorCampanhaCommand command = new RemoverJogadorCampanhaCommand(id, usuarioId);
-        return ResponseEntity.ok(gerenciarParticipantesCampanhaUseCase.removerJogador(command));
+    @PostMapping("/{campanhaId}/participantes")
+    public ResponseEntity<Void> adicionarJogador(
+            @PathVariable UUID campanhaId,
+            @RequestBody @Valid AdicionarJogadorDTO dto
+    ) {
+        AdicionarJogadorCampanhaCommand command = new AdicionarJogadorCampanhaCommand(
+                campanhaId,
+                dto.usuarioId(),
+                dto.papel(),
+                dto.statusMembro()
+        );
+
+        gerenciarParticipantesUseCase.adicionarJogador(command);
+        return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{id}/participantes/papel")
-    public ResponseEntity<CampanhaQueryResponse> alterarPapel(@PathVariable UUID id, @Valid @RequestBody CampanhaPapelDTO dto) {
-        AlterarPapelJogadorCommand command = new AlterarPapelJogadorCommand(id, dto.usuarioId(), dto.novoPapel());
-        return ResponseEntity.ok(gerenciarParticipantesCampanhaUseCase.alterarPapel(command));
+    @PutMapping("/{campanhaId}/participantes/{usuarioId}")
+    public ResponseEntity<Void> alterarPapel(
+            @PathVariable UUID campanhaId,
+            @PathVariable UUID usuarioId,
+            @RequestBody @Valid CampanhaPapelDTO dto
+    ) {
+        AlterarPapelJogadorCommand command = new AlterarPapelJogadorCommand(
+                campanhaId,
+                usuarioId,
+                dto.novoPapel(),
+                dto.novoStatus()
+        );
+
+        gerenciarParticipantesUseCase.alterarPapel(command);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{campanhaId}/participantes/{usuarioId}")
+    public ResponseEntity<Void> removerJogador(
+            @PathVariable UUID campanhaId,
+            @PathVariable UUID usuarioId
+    ) {
+        RemoverJogadorCampanhaCommand command = new RemoverJogadorCampanhaCommand(campanhaId, usuarioId);
+        gerenciarParticipantesUseCase.removerJogador(command);
+        return ResponseEntity.noContent().build();
     }
 }

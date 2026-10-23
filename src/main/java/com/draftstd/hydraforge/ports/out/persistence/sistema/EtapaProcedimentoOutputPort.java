@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EtapaProcedimentoOutputPort {
-    EtapaProcedimento salvar(EtapaProcedimento etapa);
+    void salvar(EtapaProcedimento etapa);
     Optional<EtapaProcedimento> buscarPorId(UUID id);
     List<EtapaProcedimento> buscarPorProcedimentoIdOrdenado(UUID procedimentoId);
     boolean existePorProcedimentoEOrdem(UUID procedimentoId, Integer ordem);

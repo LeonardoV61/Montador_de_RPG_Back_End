@@ -1,80 +1,57 @@
 package com.draftstd.hydraforge.domain.model.sessao;
 
-import com.draftstd.hydraforge.domain.model.campanha.Campanha;
-import com.draftstd.hydraforge.domain.model.usuario.Usuario;
-// import com.draftstd.hydraforge.domain.model.entidade.EntidadeSistema;
-// import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
-
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.UUID;
 
-import org.hibernate.annotations.JdbcTypeCode;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "Anotacoes")
 public class Anotacao {
-    @Id
-    @GeneratedValue(
-        strategy = GenerationType.SEQUENCE,
-        generator = "evento_sistema_seq"
-    )
-    @SequenceGenerator(
-        name = "evento_sistema_seq",
-        sequenceName = "evento_sistema_sequence",
-        allocationSize = 1
-    )
-    @Column(name = "id_anotacao")
-    private Integer idAnotacao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Usuario_id_autor")
-    private Usuario usuario;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Campanhas_id_campanha")
-    private Campanha campanha;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Sessoes_id_sessao")
-    private Sessao sessao;
-
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "Cenas_id_cena")
-    // private Cena cena;
-
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "Entidade_Instancia_id_entidade")
-    // private EntidadeInstancia entidadeInstancia;
-
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "Entidade_Sistema_id_entidade")
-    // private EntidadeSistema entidadeSistema;
-
+    private final UUID id;
+    private final UUID usuarioId;
+    private final UUID campanhaId;
+    private final UUID sessaoId;
     private String titulo;
-
     private String conteudo;
-
     private String categoria;
+    private String anotacaoComplexaJson;
+    private Boolean ePrivado;
+    private final LocalDateTime criadaEm;
+    private LocalDateTime atualizadaEm;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private JsonNode anotacaoComplexa;
-
-    @Column(name = "e_privado", nullable = false, columnDefinition = "boolean default true")
-    private Boolean ePrivado = true;
-
-    public void setCriadaEm(LocalDateTime now) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setCriadaEm'");
+    public Anotacao(UUID id, UUID usuarioId, UUID campanhaId, UUID sessaoId, String titulo, String conteudo, String categoria, String anotacaoComplexaJson, Boolean ePrivado) {
+        this.id = Objects.requireNonNull(id, "O ID da anotação é obrigatório");
+        this.usuarioId = Objects.requireNonNull(usuarioId, "O ID do usuário é obrigatório");
+        this.campanhaId = Objects.requireNonNull(campanhaId, "O ID da campanha é obrigatório");
+        this.sessaoId = sessaoId;
+        this.titulo = titulo;
+        this.conteudo = conteudo;
+        this.categoria = categoria;
+        this.anotacaoComplexaJson = anotacaoComplexaJson;
+        this.ePrivado = ePrivado != null ? ePrivado : true;
+        this.criadaEm = LocalDateTime.now();
+        this.atualizadaEm = this.criadaEm;
     }
+
+    public void atualizar(String titulo, String conteudo, String categoria, Boolean ePrivado) {
+        this.titulo = titulo;
+        this.conteudo = conteudo;
+        this.categoria = categoria;
+        if (ePrivado != null) {
+            this.ePrivado = ePrivado;
+        }
+        this.atualizadaEm = LocalDateTime.now();
+    }
+
+    // Getters
+    public UUID getId() { return id; }
+    public UUID getUsuarioId() { return usuarioId; }
+    public UUID getCampanhaId() { return campanhaId; }
+    public UUID getSessaoId() { return sessaoId; }
+    public String getTitulo() { return titulo; }
+    public String getConteudo() { return conteudo; }
+    public String getCategoria() { return categoria; }
+    public String getAnotacaoComplexaJson() { return anotacaoComplexaJson; }
+    public Boolean getEPrivado() { return ePrivado; }
+    public LocalDateTime getCriadaEm() { return criadaEm; }
+    public LocalDateTime getAtualizadaEm() { return atualizadaEm; }
 }

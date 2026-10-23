@@ -1,80 +1,136 @@
 package com.draftstd.hydraforge.domain.model.usuario;
 
-import com.draftstd.hydraforge.domain.model.campanha.CampanhaUsuario;
-import com.draftstd.hydraforge.domain.model.personagem.Personagem;
-import com.draftstd.hydraforge.domain.model.sessao.MensagemLog;
-import com.draftstd.hydraforge.domain.model.sistema.Sistema;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UuidGenerator; // <-- Importante para gerar UUID no Hibernate
-import org.hibernate.annotations.UpdateTimestamp;
+import com.draftstd.hydraforge.domain.enums.StatusAmizade;
+import com.draftstd.hydraforge.domain.events.DomainEvent;
+import com.draftstd.hydraforge.domain.events.usuario.*;
+import com.draftstd.hydraforge.domain.model.AggregateRoot;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID; // <-- Import do UUID
+import java.time.ZoneOffset;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-public class Usuario {
+public class Usuario extends AggregateRoot<UUID> {
+    private String senha;
+    private String email;
+    private String apelido;
+    private String urlImagem;
+    private boolean eAdmin;
+    private String provider;
+    private String providerId;
+    private LocalDateTime criadoEm;
+    private LocalDateTime atualizadoEm;
 
-        @Id
-        @GeneratedValue
-        @UuidGenerator // Garante a geração automática do UUID pelo Hibernate
-        @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID") 
-        private UUID id; // Alterado de Long para UUID
+    public Usuario() {}
 
-        private String senha;
-
-        @NotBlank
-        private String email;
-
-        @NotBlank
-        private String apelido;
-
-        private String urlImagem; // Icone de perfil do usuário
-
-        private boolean e_admin;
-
-        // NOVOS CAMPOS PARA OAUTH2:
-        private String provider;   // Salvará "GOOGLE" ou "DISCORD"
-        private String providerId; // ID único que o Google/Discord gera para aquele usuário
-
-        @CreationTimestamp
-        @Column(name="criado_em", updatable = false)
-        private LocalDateTime criadoEm;
-
-        @UpdateTimestamp
-        @Column(name="atualizado_em")
-        private LocalDateTime atualizadoEm;
-
-        @OneToMany(mappedBy = "usuario")
-        private List<Sistema> sistema;
-
-        @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
-        private List<Personagem> personagens;
-
-        @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
-        private List<MensagemLog> mensagens;
-
-        @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario")
-        private List<CampanhaUsuario> campanhas;
-
-        @OneToMany(mappedBy = "remetente", cascade = CascadeType.ALL)
-        private List<Amizade> solicitacoesEnviadas;
-
-        @OneToMany(mappedBy = "destinatario", cascade = CascadeType.ALL)
-        private List<Amizade> solicitacoesRecebidas;
-
-        public String getNome() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getNome'");
+    // Construtor para registo de novo utilizador
+    public Usuario(UUID id, String email, String senha, String apelido, String urlImagem, 
+                   boolean eAdmin, String provider, String providerId) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("O e-mail não pode ser vazio.");
         }
+
+        UUID usuarioId = id != null ? id : UUID.randomUUID();
+        this.senha = senha;
+
+        raiseEvent(new UsuarioRegistradoEvent(
+            UUID.randomUUID(),
+            usuarioId.toString(),
+            email.trim().toLowerCase(),
+            apelido != null ? apelido.trim() : null,
+            provider,
+            providerId,
+            eAdmin,
+            getVersion() + 1,
+            Instant.now(),
+            null
+        ));
+    }
+
+    @Override
+    protected void apply(DomainEvent event) {
+        if (event instanceof UsuarioRegistradoEvent e) {
+            setId(UUID.fromString(e.getAggregateId()));
+            this.email = e.email();
+            this.apelido = e.apelido();
+            this.provider = e.provider();
+            this.providerId = e.providerId();
+            this.eAdmin = e.eAdmin();
+            this.criadoEm = LocalDateTime.ofInstant(e.getOccurredOn(), ZoneOffset.UTC);
+            this.atualizadoEm = this.criadoEm;
+        } else if (event instanceof UsuarioAtualizadoEvent e) {
+            if (e.apelido() != null) this.apelido = e.apelido();
+            if (e.urlImagem() != null) this.urlImagem = e.urlImagem();
+            this.atualizadoEm = LocalDateTime.ofInstant(e.getOccurredOn(), ZoneOffset.UTC);
+        } else if (event instanceof SolicitacaoAmizadeEnviadaEvent) {
+            // Regras adicionais de estado interno se necessário
+        } else if (event instanceof SolicitacaoAmizadeRespondidaEvent) {
+            // Regras adicionais de estado interno se necessário
+        }
+    }
+
+    // Métodos de Comportamento
+    public void atualizarPerfil(String novoApelido, String novaUrlImagem) {
+        raiseEvent(new UsuarioAtualizadoEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            novoApelido,
+            novaUrlImagem,
+            getVersion() + 1,
+            Instant.now(),
+            null
+        ));
+    }
+
+    public void enviarSolicitacaoAmizade(UUID destinatarioId) {
+        if (destinatarioId == null || destinatarioId.equals(getId())) {
+            throw new IllegalArgumentException("Solicitação de amizade inválida.");
+        }
+        raiseEvent(new SolicitacaoAmizadeEnviadaEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            destinatarioId,
+            getVersion() + 1,
+            Instant.now(),
+            null
+        ));
+    }
+
+    public void responderSolicitacaoAmizade(UUID remetenteId, StatusAmizade novoStatus) {
+        if (remetenteId == null || novoStatus == null) {
+            throw new IllegalArgumentException("Parâmetros de resposta de amizade inválidos.");
+        }
+        raiseEvent(new SolicitacaoAmizadeRespondidaEvent(
+            UUID.randomUUID(),
+            getId().toString(),
+            remetenteId,
+            novoStatus,
+            getVersion() + 1,
+            Instant.now(),
+            null
+        ));
+    }
+
+    public void alterarSenha(String novaSenha) {
+        if (novaSenha == null || novaSenha.isBlank()) {
+            throw new IllegalArgumentException("A nova senha não pode ser vazia.");
+        }
+        this.senha = novaSenha;
+        this.atualizadoEm = LocalDateTime.now();
+    }
+
+    // Getters Imutáveis
+    public String getSenha() { return senha; }
+    public String getEmail() { return email; }
+    public String getApelido() { return apelido; }
+    public String getUrlImagem() { return urlImagem; }
+    public boolean isEAdmin() { return eAdmin; }
+    public String getProvider() { return provider; }
+    public String getProviderId() { return providerId; }
+    public LocalDateTime getCriadoEm() { return criadoEm; }
+    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
+
+    public String getNome() {
+        return this.apelido != null ? this.apelido : this.email;
+    }
 }

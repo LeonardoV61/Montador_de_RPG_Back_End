@@ -1,6 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.rest.controller.usuario;
 
 import com.draftstd.hydraforge.adapters.in.dto.usuario.UsuarioResponseDTO;
+import com.draftstd.hydraforge.application.response.usuario.ObterUsuarioQuery;
 import com.draftstd.hydraforge.ports.in.usuario.ObterUsuarioUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,16 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseDTO> obterPorId(@PathVariable UUID id) {
-        var response = obterUsuarioUseCase.obterPorId(id);
-        return ResponseEntity.ok(new UsuarioResponseDTO(response.id(), response.nome(), response.email()));
+        var query = new ObterUsuarioQuery(id);
+        var response = obterUsuarioUseCase.obterPorId(query);
+        return ResponseEntity.ok(new UsuarioResponseDTO(
+            response.id(),
+            response.email(),
+            response.apelido(),
+            response.urlImagem(),
+            response.eAdmin(),
+            response.provider(),
+            response.criadoEm()
+        ));
     }
 }

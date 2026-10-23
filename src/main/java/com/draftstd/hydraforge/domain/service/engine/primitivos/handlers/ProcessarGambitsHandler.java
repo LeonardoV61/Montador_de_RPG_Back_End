@@ -1,128 +1,129 @@
-// package com.draftstd.hydraforge.engine.primitivos.handlers;
+package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-// import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-// import com.draftstd.hydraforge.domain.service.engine.exceptions.EntityNotFoundException;
-// import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
-// import com.draftstd.hydraforge.domain.service.engine.primitivos.PrimitivoExecutor;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.*;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
-// import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-// import com.draftstd.hydraforge.domain.service.engine.utils.ColetaParcialUtil;
-// import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-// import lombok.RequiredArgsConstructor;
-// import org.springframework.stereotype.Component;
-// import tools.jackson.databind.JsonNode;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.service.engine.exceptions.EntityNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
+import com.draftstd.hydraforge.domain.service.engine.utils.ColetaParcialUtil;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-// import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-// @Component
-// @RequiredArgsConstructor
-// public class ProcessarGambitsHandler implements EtapaHandler {
+@Component
+@RequiredArgsConstructor
+public class ProcessarGambitsHandler implements EtapaHandler {
 
-//     // private final PrimitivoExecutor primitivoExecutor;
-//     private final EntidadeInstanciaRepository instanciaRepo;
+    private final EntidadeInstanciaOutputPort instanciaPort;
 
-//     @Override
-//     public String tipoEtapa() { return "PROCESSAR_GAMBITS"; }
+    @Override
+    public String tipoEtapa() { return "PROCESSAR_GAMBITS"; }
 
-//     /**
-//      * parametros_etapa:
-//      * {
-//      *   "gambits_ids_fonte":  "contexto.gambits_aliados_ids",
-//      *   "gambits_info_fonte": "contexto.gambits_aliados",
-//      *
-//      *   "definicoes_gambit": {
-//      *     "DESARMAR": [{ "primitivo": "GERENCIAR_STATUS",
-//      *                    "parametros": { "acao": "APLICAR", "status": "desarmado" } }],
-//      *     "DERRUBAR": [...],
-//      *     "EMPURRAR": [...],
-//      *     "INTIMIDAR": [...]
-//      *   },
-//      *
-//      *   "salvar_em": "resultados_gambits_aliados"
-//      * }
-//      *
-//      * FIX: removida a dependência de CombateService/EventoSistema — as ações de
-//      * gambit agora disparam primitivos diretamente via PrimitivoExecutor, igual
-//      * a DispararGatilhoItemHandler. As opções oferecidas vêm das CHAVES de
-//      * definicoes_gambit + "PASSAR" implícito — fonte única de verdade, sem lista
-//      * paralela que precise ser mantida sincronizada manualmente.
-//      */
-//     @Override
-//     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-//         JsonNode params = etapa.getParametrosEtapa();
+    /**
+     * parametros_etapa:
+     * {
+     *   "gambits_ids_fonte":  "contexto.gambits_aliados_ids",
+     *   "gambits_info_fonte": "contexto.gambits_aliados",
+     *
+     *   "definicoes_gambit": {
+     *     "DESARMAR": [{ "primitivo": "GERENCIAR_STATUS",
+     *                    "parametros": { "acao": "APLICAR", "status": "desarmado" } }],
+     *     "DERRUBAR": [...],
+     *     "EMPURRAR": [...],
+     *     "INTIMIDAR": [...]
+     *   },
+     *
+     *   "salvar_em": "resultados_gambits_aliados"
+     * }
+     */
+    @Override
+    public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
-//         String idsFonte = exigirTexto(params, "gambits_ids_fonte", etapa);
-//         String salvarEm = exigirTexto(params, "salvar_em", etapa);
-//         JsonNode definicoes = params.path("definicoes_gambit");
+        String idsFonte = exigirTexto(params, "gambits_ids_fonte", etapa);
+        String salvarEm = exigirTexto(params, "salvar_em", etapa);
+        Object rawDefinicoes = params.get("definicoes_gambit");
 
-//         List<Long> idsComGambit = ctx.getContexto().getListaIds(idsFonte.replace("contexto.", ""));
+        List<UUID> idsComGambit = ctx.getContexto().getListaIds(idsFonte.replace("contexto.", ""));
 
-//         if (idsComGambit.isEmpty()) {
-//             return ResultadoEtapa.concluida(Map.of("gambitsProcessados", 0));
-//         }
+        if (idsComGambit == null || idsComGambit.isEmpty()) {
+            return ResultadoEtapa.concluida(Map.of("gambitsProcessados", 0));
+        }
 
-//         Map<Long, Object> parcial = ColetaParcialUtil.carregarParcial(ctx, salvarEm);
-//         parcial = ColetaParcialUtil.registrarResposta(ctx, salvarEm, parcial, idsComGambit);
+        Map<UUID, Object> parcial = ColetaParcialUtil.carregarParcial(ctx, salvarEm);
+        parcial = ColetaParcialUtil.registrarResposta(ctx, salvarEm, parcial, idsComGambit);
 
-//         List<Long> pendentes = ColetaParcialUtil.pendentes(idsComGambit, parcial);
+        List<UUID> pendentes = ColetaParcialUtil.pendentes(idsComGambit, parcial);
 
-//         if (!pendentes.isEmpty()) {
-//             List<String> opcoes = new ArrayList<>();
-//             definicoes.properties().forEach(e -> opcoes.add(e.getKey()));
-//             opcoes.add("PASSAR");
+        if (!pendentes.isEmpty()) {
+            List<String> opcoes = new ArrayList<>();
+            if (rawDefinicoes instanceof Map<?, ?> defMap) {
+                defMap.keySet().forEach(k -> opcoes.add(String.valueOf(k)));
+            }
+            opcoes.add("PASSAR");
 
-//             return ResultadoEtapa.aguardandoInputMultiplo(Map.of(
-//                     "prompt",      "You earned a GAMBIT! Choose a bonus action.",
-//                     "opcoes",      opcoes,
-//                     "podePassar",  true,
-//                     "salvarEm",    salvarEm + "_entrada",
-//                     "pendentes",   pendentes,
-//                     "respondidos", new ArrayList<>(parcial.keySet())
-//             ));
-//         }
+            return ResultadoEtapa.aguardandoInputMultiplo(Map.of(
+                    "prompt",      "You earned a GAMBIT! Choose a bonus action.",
+                    "opcoes",      opcoes,
+                    "podePassar",  true,
+                    "salvarEm",    salvarEm + "_entrada",
+                    "pendentes",   pendentes,
+                    "respondidos", new ArrayList<>(parcial.keySet())
+            ));
+        }
 
-//         Map<Long, Object> resultados = new LinkedHashMap<>();
-//         for (var entry : parcial.entrySet()) {
-//             Long idAtacante = entry.getKey();
-//             String acao = extrairAcao(entry.getValue());
-//             Long idAlvo  = extrairAlvo(entry.getValue());
+        Map<UUID, Object> resultados = new LinkedHashMap<>();
+        for (var entry : parcial.entrySet()) {
+            UUID idAtacante = entry.getKey();
+            String acao = extrairAcao(entry.getValue());
+            UUID idAlvo = extrairAlvo(entry.getValue());
 
-//             if ("PASSAR".equals(acao) || idAlvo == null) continue;
+            if ("PASSAR".equals(acao) || idAlvo == null) continue;
 
-//             JsonNode definicaoAcao = definicoes.get(acao);
-//             if (definicaoAcao == null) continue; // ação desconhecida — ignorada silenciosamente
+            Object definicaoAcao = rawDefinicoes instanceof Map<?, ?> defMap ? defMap.get(acao) : null;
+            if (definicaoAcao == null) continue; // ação desconhecida — ignorada silenciosamente
 
-//             EntidadeInstancia atacante = instanciaRepo.findById(idAtacante)
-//                     .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAtacante));
-//             EntidadeInstancia alvo = instanciaRepo.findById(idAlvo)
-//                     .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
+            EntidadeInstancia atacante = instanciaPort.buscarPorId(idAtacante)
+                    .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAtacante));
+            EntidadeInstancia alvo = instanciaPort.buscarPorId(idAlvo)
+                    .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idAlvo));
 
-// //            resultados.put(idAtacante, primitivoExecutor.executarPrimitivoAvulso(
-// //                    definicaoAcao, ctx.getSistema(), atacante, alvo));
-//         }
+            // reservado para futuras chamadas de primitivos
+        }
 
-//         ColetaParcialUtil.finalizarColeta(ctx, salvarEm, parcial);
+        ColetaParcialUtil.finalizarColeta(ctx, salvarEm, parcial);
 
-//         return ResultadoEtapa.concluida(Map.of(
-//                 "gambitsProcessados", parcial.size(), "resultados", resultados));
-//     }
+        return ResultadoEtapa.concluida(Map.of(
+                "gambitsProcessados", parcial.size(), "resultados", resultados));
+    }
 
-//     private String extrairAcao(Object decisao) {
-//         if (decisao instanceof String s) return s;
-//         if (decisao instanceof Map<?, ?> m) return String.valueOf(m.get("acao"));
-//         return "PASSAR";
-//     }
+    private String extrairAcao(Object decisao) {
+        if (decisao instanceof String s) return s;
+        if (decisao instanceof Map<?, ?> m) return String.valueOf(m.get("acao"));
+        return "PASSAR";
+    }
 
-//     private Long extrairAlvo(Object decisao) {
-//         if (decisao instanceof Map<?, ?> m) return ColetaParcialUtil.comoLong(m.get("id_alvo"));
-//         return null;
-//     }
+    private UUID extrairAlvo(Object decisao) {
+        if (decisao instanceof Map<?, ?> m) {
+            Object rawAlvo = m.get("id_alvo");
+            if (rawAlvo != null) {
+                return rawAlvo instanceof UUID u ? u : UUID.fromString(rawAlvo.toString());
+            }
+        }
+        return null;
+    }
 
-//     private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-//         JsonNode v = params.path(chave);
-//         if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-//         return v.asString();
-//     }
-// }
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
+    }
+}

@@ -1,7 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-public record CenaCombateDTO(
-    Long id,
-    String status,
-    int rodadaAtual
-) {}
+import java.util.UUID;
+
+public record CenaCombateDTO(UUID id, String status, int rodadaAtual) {
+
+}

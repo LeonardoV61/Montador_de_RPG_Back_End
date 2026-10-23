@@ -1,70 +1,59 @@
 package com.draftstd.hydraforge.domain.service;
 
-import com.draftstd.hydraforge.adapters.out.repository.campanha.CampanhaUsuarioRepository;
-import com.draftstd.hydraforge.adapters.out.repository.personagem.PersonagemRepository;
 import com.draftstd.hydraforge.domain.enums.PapeisUsuario;
 import com.draftstd.hydraforge.domain.exceptions.DeniedAcessException;
-import com.draftstd.hydraforge.domain.model.campanha.CampanhaUsuario;
+import com.draftstd.hydraforge.domain.model.campanha.CampanhaMembro;
 import com.draftstd.hydraforge.domain.model.personagem.Personagem;
-import org.springframework.stereotype.Service;
+import com.draftstd.hydraforge.ports.out.persistence.campanha.ObterCampanhaMembroPort;
+import com.draftstd.hydraforge.ports.out.persistence.personagem.ObterPersonagemPort;
 
 import java.util.UUID;
 
-@Service
 public class CampanhaAutorizacaoService {
 
-    private final CampanhaUsuarioRepository campanhaUsuarioRepository;
-    private final PersonagemRepository personagemRepository;
+    private final ObterCampanhaMembroPort obterCampanhaMembroPort;
+    private final ObterPersonagemPort obterPersonagemPort;
 
-    public CampanhaAutorizacaoService(CampanhaUsuarioRepository campanhaUsuarioRepository,
-                                     PersonagemRepository personagemRepository) {
-        this.campanhaUsuarioRepository = campanhaUsuarioRepository;
-        this.personagemRepository = personagemRepository;
+    public CampanhaAutorizacaoService(
+            ObterCampanhaMembroPort obterCampanhaMembroPort,
+            ObterPersonagemPort obterPersonagemPort
+    ) {
+        this.obterCampanhaMembroPort = obterCampanhaMembroPort;
+        this.obterPersonagemPort = obterPersonagemPort;
     }
 
-    private Long uuidParaLong(UUID uuid) {
-        if (uuid == null) return null;
-        return Math.abs(uuid.getMostSignificantBits());
-    }
-
-    public CampanhaUsuario exigirMestre(UUID idCampanha, UUID idUsuario) {
-        Long campanhaIdLong = uuidParaLong(idCampanha);
-        Long usuarioIdLong = uuidParaLong(idUsuario);
-
-        return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioIdAndPapel(campanhaIdLong, usuarioIdLong, PapeisUsuario.MESTRE)
+    public CampanhaMembro exigirMestre(UUID idCampanha, UUID idUsuario) {
+        validarParametros(idCampanha, idUsuario);
+        return obterCampanhaMembroPort
+                .buscarPorCampanhaEUsuarioEPapel(idCampanha, idUsuario, PapeisUsuario.MESTRE)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Usuário " + idUsuario + " não é mestre da campanha " + idCampanha));
     }
 
-    public CampanhaUsuario exigirMembro(UUID idCampanha, UUID idUsuario) {
-        Long campanhaIdLong = uuidParaLong(idCampanha);
-        Long usuarioIdLong = uuidParaLong(idUsuario);
-
-        return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioIdAndPapel(campanhaIdLong, usuarioIdLong, PapeisUsuario.JOGADOR)
+    public CampanhaMembro exigirMembro(UUID idCampanha, UUID idUsuario) {
+        validarParametros(idCampanha, idUsuario);
+        // Mestre ou Jogador são membros válidos da campanha
+        return obterCampanhaMembroPort
+                .buscarPorCampanhaEUsuario(idCampanha, idUsuario)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Usuário " + idUsuario + " não é membro da campanha " + idCampanha));
     }
 
     public boolean isMestre(UUID idCampanha, UUID idUsuario) {
-        Long campanhaIdLong = uuidParaLong(idCampanha);
-        Long usuarioIdLong = uuidParaLong(idUsuario);
-
-        return campanhaUsuarioRepository
-                .findByCampanhaIdAndUsuarioId(campanhaIdLong, usuarioIdLong)
-                .map(cu -> cu.getPapel() == PapeisUsuario.MESTRE)
+        if (idCampanha == null || idUsuario == null) return false;
+        return obterCampanhaMembroPort
+                .buscarPorCampanhaEUsuario(idCampanha, idUsuario)
+                .map(membro -> membro.papel() == PapeisUsuario.MESTRE)
                 .orElse(false);
     }
 
-    public CampanhaUsuario exigirAcessoPersonagem(Personagem personagem, UUID idUsuario) {
-        UUID idCampanhaLong = (personagem.getCampanha() != null) ? personagem.getCampanha().getId() : null;
-        
-        UUID idCampanhaUuid = idCampanhaLong != null 
-                ? UUID.nameUUIDFromBytes(idCampanhaLong.toString().getBytes()) 
-                : null;
+    public CampanhaMembro exigirAcessoPersonagem(Personagem personagem, UUID idUsuario) {
+        if (personagem == null) {
+            throw new DeniedAcessException("Personagem não informado para verificação de acesso.");
+        }
 
-        UUID usuarioIdEntidade = (personagem.getUsuario() != null) ? personagem.getUsuario().getId() : null;
+        UUID idCampanhaUuid = personagem.getCampanhaId();
+        UUID usuarioIdEntidade = personagem.getUsuarioId();
 
         if (usuarioIdEntidade != null && usuarioIdEntidade.equals(idUsuario)) {
             return exigirMembro(idCampanhaUuid, idUsuario);
@@ -73,9 +62,16 @@ public class CampanhaAutorizacaoService {
     }
 
     public Personagem exigirPersonagemVivo(UUID idCampanha, UUID idUsuario) {
-        return personagemRepository
-                .findAtivoByCampanhaIdAndUsuarioId(idCampanha, idUsuario)
+        validarParametros(idCampanha, idUsuario);
+        return obterPersonagemPort
+                .buscarAtivoPorCampanhaEUsuario(idCampanha, idUsuario)
                 .orElseThrow(() -> new DeniedAcessException(
                         "Nenhum personagem vivo nesta campanha para o usuário " + idUsuario));
+    }
+
+    private void validarParametros(UUID idCampanha, UUID idUsuario) {
+        if (idCampanha == null || idUsuario == null) {
+            throw new DeniedAcessException("ID da campanha e ID do usuário são obrigatórios para validação de acesso.");
+        }
     }
 }

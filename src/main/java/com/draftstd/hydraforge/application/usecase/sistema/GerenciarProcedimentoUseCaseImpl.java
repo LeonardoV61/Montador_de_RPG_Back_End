@@ -1,9 +1,10 @@
 package com.draftstd.hydraforge.application.usecase.sistema;
 
+import com.draftstd.hydraforge.application.request.sistema.ExecutarProcedimentoCommand;
 import com.draftstd.hydraforge.domain.events.mecanica.ProcedimentoExecutadoEvent;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.sistema.Procedimento;
-import com.draftstd.hydraforge.ports.in.command.sistema.ExecutarProcedimentoCommand;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.ports.in.sistema.GerenciarProcedimentoUseCase;
 import com.draftstd.hydraforge.ports.out.eventstore.EventStorePort;
 import com.draftstd.hydraforge.ports.out.persistence.sistema.ProcedimentoOutputPort;
@@ -27,33 +28,24 @@ public class GerenciarProcedimentoUseCaseImpl implements GerenciarProcedimentoUs
     }
 
     @Override
-    public Object executarProcedimento(ExecutarProcedimentoCommand command) {
-        // Convertendo o identificador do command para Long, se necessário, ou buscando pelo ID correto
-        UUID procedimentoIdLong = command.procedimentoId() != null 
-                ? command.procedimentoId() // Exemplo de conversão se vier UUID, ou ajuste conforme o tipo do command
-                : null;
-
-        Procedimento procedimento = procedimentoOutputPort.buscarPorId(procedimentoIdLong)
+    public ResultadoEtapa executarProcedimento(ExecutarProcedimentoCommand command) {
+        Procedimento procedimento = procedimentoOutputPort.buscarPorId(command.procedimentoId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Procedimento não encontrado: " + command.procedimentoId()));
 
-        // Lógica de execução do procedimento
-        Object resultado = procedimento; 
+        String aggregateId = procedimento.getId().toString();
+        long versao = 1L;
 
-        if (command.procedimentoId() != null) {
-            String aggregateId = command.procedimentoId().toString();
-            long versao = 1L;
+        ProcedimentoExecutadoEvent evento = new ProcedimentoExecutadoEvent(
+                UUID.randomUUID(),
+                aggregateId,
+                procedimento.getId(),
+                versao,
+                Instant.now()
+        );
 
-            ProcedimentoExecutadoEvent evento = new ProcedimentoExecutadoEvent(
-                    UUID.randomUUID(), 
-                    aggregateId, 
-                    command.procedimentoId(), 
-                    versao, 
-                    Instant.now()
-            );
-            
-            eventStorePort.saveEvents(aggregateId, List.of(evento), versao - 1);
-        }
+        eventStorePort.salvarEventos(aggregateId, List.of(evento), versao - 1);
 
-        return resultado;
+        // Retorno ajustado utilizando o método estático real concluida(...)
+        return ResultadoEtapa.concluida("Procedimento " + procedimento.getNome() + " executado com sucesso.");
     }
 }

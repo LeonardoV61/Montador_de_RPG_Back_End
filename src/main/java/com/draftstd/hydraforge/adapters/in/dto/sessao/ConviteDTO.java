@@ -1,4 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.sessao;
 
-public record ConviteDTO(Long idSessao, Long idUsuario, String token) {
+import java.util.UUID;
+
+public record ConviteDTO(UUID idSessao, UUID idUsuario, String token) {
+
 }

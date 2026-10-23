@@ -1,52 +1,57 @@
 package com.draftstd.hydraforge.application.usecase.sessao.anotacao;
 
+import com.draftstd.hydraforge.application.request.sessao.AtualizarAnotacaoCommand;
+import com.draftstd.hydraforge.application.request.sessao.CriarAnotacaoCommand;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.sessao.Anotacao;
-import com.draftstd.hydraforge.ports.in.command.sessao.AtualizarAnotacaoCommand;
-import com.draftstd.hydraforge.ports.in.query.sessao.AnotacaoQueryResponse;
 import com.draftstd.hydraforge.ports.in.sessao.GerenciarAnotacaoUseCase;
-import com.draftstd.hydraforge.ports.out.sessao.ObterAnotacaoPort;
-import com.draftstd.hydraforge.ports.out.sessao.SalvarAnotacaoPort;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.AnotacaoPersistencePort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class GerenciarAnotacaoUseCaseImpl implements GerenciarAnotacaoUseCase {
 
-    private final ObterAnotacaoPort obterAnotacaoPort;
-    private final SalvarAnotacaoPort salvarAnotacaoPort;
+    private final AnotacaoPersistencePort anotacaoPersistencePort;
 
-    public GerenciarAnotacaoUseCaseImpl(ObterAnotacaoPort obterAnotacaoPort, SalvarAnotacaoPort salvarAnotacaoPort) {
-        this.obterAnotacaoPort = obterAnotacaoPort;
-        this.salvarAnotacaoPort = salvarAnotacaoPort;
+    public GerenciarAnotacaoUseCaseImpl(AnotacaoPersistencePort anotacaoPersistencePort) {
+        this.anotacaoPersistencePort = anotacaoPersistencePort;
     }
 
     @Override
-    public AnotacaoQueryResponse atualizar(AtualizarAnotacaoCommand command) {
-        Anotacao anotacao = obterAnotacaoPort.buscarPorId(command.anotacaoId()).orElseThrow(() -> new RecursoNaoEncontradoException("Anotação não encontrada: " + command.anotacaoId()));
+    public UUID criarAnotacao(CriarAnotacaoCommand command) {
+        UUID novoId = UUID.randomUUID();
+        Anotacao anotacao = new Anotacao(
+                novoId,
+                command.usuarioId(),
+                command.campanhaId(),
+                command.sessaoId(),
+                command.titulo(),
+                command.conteudo(),
+                command.categoria(),
+                command.anotacaoComplexaJson(),
+                command.ePrivado()
+        );
 
-        anotacao.setTitulo(command.titulo());
-        anotacao.setConteudo(command.conteudo());
-        
-        if (command.privada() != null) {
-            anotacao.setEPrivado(command.privada());
-        }
+        anotacaoPersistencePort.salvar(anotacao);
+        return novoId;
+    }
 
-        Anotacao atualizada = salvarAnotacaoPort.salvar(anotacao);
+    @Override
+    public void atualizarAnotacao(AtualizarAnotacaoCommand command) {
+        Anotacao anotacao = anotacaoPersistencePort.buscarPorId(command.anotacaoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Anotação não encontrada: " + command.anotacaoId()));
 
-        // Conversão segura do ID Integer para UUID
-        UUID anotacaoUuid = atualizada.getIdAnotacao() != null ? UUID.nameUUIDFromBytes(atualizada.getIdAnotacao().toString().getBytes()) : UUID.randomUUID();
+        anotacao.atualizar(
+                command.titulo(),
+                command.conteudo(),
+                command.categoria(),
+                command.ePrivado()
+        );
 
-        // Extração de IDs relacionais se aplicável
-        UUID sessaoId = (atualizada.getSessao() != null) ? null : null; // Ajustar conforme os getters da Sessão/Usuario se existirem
-        UUID autorId = (atualizada.getUsuario() != null) ? null : null;
-
-        LocalDateTime agora = LocalDateTime.now();
-
-        return new AnotacaoQueryResponse(anotacaoUuid, sessaoId, autorId, atualizada.getTitulo(), atualizada.getConteudo(), atualizada.getEPrivado() != null ? atualizada.getEPrivado() : true, agora, agora);
+        anotacaoPersistencePort.salvar(anotacao);
     }
 }

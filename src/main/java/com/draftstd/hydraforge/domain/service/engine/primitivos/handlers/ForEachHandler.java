@@ -1,21 +1,16 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.service.engine.primitivos.HandlerRegistry;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EscopoInstancias;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
-import com.draftstd.hydraforge.domain.service.engine.primitivos.HandlerRegistry;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,7 +27,6 @@ import java.util.UUID;
 //   "salvar_count_em": "count_inimigos_vivos"
 // }
 @Component
-// @RequiredArgsConstructor
 public class ForEachHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
@@ -41,20 +35,15 @@ public class ForEachHandler implements EtapaHandler {
     @Override
     public String tipoEtapa() { return "PARA_CADA"; }
 
-    private final JsonMapper mapper;
-
-
     public ForEachHandler(InstanciaResolver instanciaResolver,
-                          @Lazy HandlerRegistry handlerRegistry,
-                          JsonMapper mapper) {
+                          @Lazy HandlerRegistry handlerRegistry) {
         this.instanciaResolver = instanciaResolver;
         this.handlers = handlerRegistry;
-        this.mapper = mapper;
     }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        Map<String, Object> params = mapper.convertValue(etapa.getParametrosEtapa(), new TypeReference<>() {});
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
         String fonte          = (String) params.get("fonte");
         String subTipo        = (String) params.get("sub_etapa_tipo");
@@ -68,25 +57,26 @@ public class ForEachHandler implements EtapaHandler {
         List<EntidadeInstancia> instancias = instanciaResolver.resolverDeFonte(fonte, ctx);
 
         EtapaHandler subHandler = handlers.get(subTipo);
-        if (subHandler == null) throw new IllegalArgumentException(
-                "Sub-handler não encontrado: " + subTipo);
+        if (subHandler == null) {
+            throw new IllegalArgumentException("Sub-handler não encontrado: " + subTipo);
+        }
 
-        // Build a minimal EtapaProcedimento to pass to the sub-handler
-        EtapaProcedimento subEtapa = new EtapaProcedimento();
-        subEtapa.setTipoEtapa(subTipo);
-        subEtapa.setParametrosEtapa(mapper.valueToTree(subParams));
+        // Constrói uma sub-etapa utilizando o construtor do modelo imutável
+        EtapaProcedimento subEtapa = new EtapaProcedimento(
+                UUID.randomUUID(), null, 1, "SubEtapaForEach", subTipo, subParams, true
+        );
 
         List<UUID> idsPasaram = new ArrayList<>();
         Map<UUID, Object> resultadosPorId = new LinkedHashMap<>();
 
         for (EntidadeInstancia instancia : instancias) {
-            // Temporarily set scope to this single instance for the sub-handler
+            // Define temporariamente o escopo para esta única instância durante a execução do sub-handler
             EscopoInstancias escopoOriginal = ctx.getEscopo();
             ctx.setEscopo(EscopoInstancias.unica(instancia.getId()));
 
             ResultadoEtapa resultado = subHandler.executar(subEtapa, ctx);
 
-            ctx.setEscopo(escopoOriginal); // restore
+            ctx.setEscopo(escopoOriginal); // restaura o escopo original
 
             resultadosPorId.put(instancia.getId(), resultado.dados());
 
@@ -95,7 +85,7 @@ public class ForEachHandler implements EtapaHandler {
             }
         }
 
-        // Save results for downstream handlers
+        // Salva os resultados no contexto para utilização por handlers subsequentes
         if (salvarIdsEm != null) {
             ctx.getContexto().put(salvarIdsEm, idsPasaram);
         }

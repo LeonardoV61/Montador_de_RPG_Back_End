@@ -1,50 +1,55 @@
 package com.draftstd.hydraforge.application.usecase.sessao;
 
+import com.draftstd.hydraforge.application.request.sessao.AdicionarEfeitoManualCommand;
+import com.draftstd.hydraforge.application.request.sessao.RemoverEfeitoManualCommand;
 import com.draftstd.hydraforge.domain.exceptions.RecursoNaoEncontradoException;
 import com.draftstd.hydraforge.domain.model.sessao.EfeitoAtivo;
 import com.draftstd.hydraforge.domain.model.sessao.Sessao;
-import com.draftstd.hydraforge.ports.in.command.sessao.AdicionarEfeitoManualCommand;
-import com.draftstd.hydraforge.ports.in.command.sessao.RemoverEfeitoManualCommand;
 import com.draftstd.hydraforge.ports.in.sessao.GerenciarEfeitosManuaisUseCase;
-import com.draftstd.hydraforge.ports.out.sessao.ObterSessaoPort;
-import com.draftstd.hydraforge.ports.out.sessao.SalvarSessaoPort;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.EfeitoAtivoPersistencePort;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.SessaoPersistencePort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @Transactional
 public class GerenciarEfeitosManuaisUseCaseImpl implements GerenciarEfeitosManuaisUseCase {
 
-    private final ObterSessaoPort obterSessaoPort;
-    private final SalvarSessaoPort salvarSessaoPort;
+    private final SessaoPersistencePort sessaoPersistencePort;
+    private final EfeitoAtivoPersistencePort efeitoAtivoPersistencePort;
 
-    public GerenciarEfeitosManuaisUseCaseImpl(ObterSessaoPort obterSessaoPort, SalvarSessaoPort salvarSessaoPort) {
-        this.obterSessaoPort = obterSessaoPort;
-        this.salvarSessaoPort = salvarSessaoPort;
+    public GerenciarEfeitosManuaisUseCaseImpl(SessaoPersistencePort sessaoPersistencePort, EfeitoAtivoPersistencePort efeitoAtivoPersistencePort) {
+        this.sessaoPersistencePort = sessaoPersistencePort;
+        this.efeitoAtivoPersistencePort = efeitoAtivoPersistencePort;
     }
 
     @Override
     public void adicionarEfeito(AdicionarEfeitoManualCommand command) {
-        Sessao sessao = obterSessaoPort.buscarPorId(command.sessaoId())
+        Sessao sessao = sessaoPersistencePort.buscarPorId(command.sessaoId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + command.sessaoId()));
 
-        EfeitoAtivo efeito = new EfeitoAtivo();
-        // O id é gerado por sequence (Long), não chamamos setId com UUID
-        
-        efeito.setSessao(sessao);
-        efeito.setMomento("MANUAL");
-        efeito.setExpiraEm(1);
-        efeito.setAtivo(true);
+        EfeitoAtivo efeito = new EfeitoAtivo(
+                UUID.randomUUID(),
+                command.entidadeInstanciaId(),
+                command.entidadeProcedimentoId(),
+                command.parametrosJson(),
+                command.momento(),
+                command.expiraEm(),
+                true,
+                command.usosRestantes()
+        );
 
-        // Se precisar associar parâmetros ou dados adicionais do comando, mapeie aqui.
-        
-        // Lógica de salvamento ou adição do efeito na sessão correspondente
+        sessao.adicionarEfeitoAtivo(efeito);
+        efeitoAtivoPersistencePort.salvar(sessao.getId(), efeito);
     }
 
     @Override
     public void removerEfeito(RemoverEfeitoManualCommand command) {
-        obterSessaoPort.buscarPorId(command.sessaoId()).orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + command.sessaoId()));
+        sessaoPersistencePort.buscarPorId(command.sessaoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada: " + command.sessaoId()));
 
-        // Lógica de remoção do efeito por ID
+        efeitoAtivoPersistencePort.remover(command.efeitoId());
     }
 }

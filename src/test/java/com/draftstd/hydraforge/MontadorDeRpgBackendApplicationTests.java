@@ -1,13 +1,11 @@
 package com.draftstd.hydraforge;
 
+import com.draftstd.hydraforge.config.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class MontadorDeRpgBackendApplicationTests {
+class MontadorDeRpgBackendApplicationTests extends IntegrationTestBase {
 
     @Test
     void contextLoads() {
     }
-
 }

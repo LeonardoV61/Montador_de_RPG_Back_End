@@ -1,58 +1,19 @@
 package com.draftstd.hydraforge.domain.model.sessao;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.campanha.Campanha;
-// import com.draftstd.hydraforge.domain.model.personagem.Personagem;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
-
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "Historico_Acoes")
-public class HistoricoAcoes {
+public record HistoricoAcoes(UUID id, UUID entidadeInstanciaId, LocalDateTime momento, String resultadoJson) {
+    public HistoricoAcoes {
+        Objects.requireNonNull(id, "O ID do histórico é obrigatório");
+        if (momento == null) {
+            momento = LocalDateTime.now();
+        }
+    }
 
-        @Id
-        @GeneratedValue(
-                strategy = GenerationType.SEQUENCE,
-                generator = "histAc_seq"
-        )
-        @SequenceGenerator(
-                name = "histAc_seq",
-                sequenceName = "histAc_sequence",
-                allocationSize = 1
-        )
-        private Long id;
-
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_sessao")
-        private Sessao sessao;
-
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_campanha")
-        private Campanha campanha;
-
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "id_entidade")
-        private EntidadeInstancia entidadeInstancia;
-
-        @CreationTimestamp
-        @Column(nullable = false, updatable = false)
-        private LocalDateTime momento;
-
-        @JdbcTypeCode(SqlTypes.JSON)
-        @Column(columnDefinition = "jsonb")
-        private JsonNode resultado;
-
+    public UUID getId() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getId'");
+    }
 }

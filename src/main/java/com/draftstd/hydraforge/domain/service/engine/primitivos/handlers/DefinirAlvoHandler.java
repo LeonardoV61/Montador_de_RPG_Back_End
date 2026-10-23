@@ -6,9 +6,9 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.Et
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class DefinirAlvoHandler implements EtapaHandler {
@@ -18,13 +18,16 @@ public class DefinirAlvoHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
         String salvarEm = exigirTexto(params, "salvar_em", etapa);
-        String prompt = params.path("prompt").asString("Selecione um alvo no mapa");
+        String prompt = (String) params.getOrDefault("prompt", "Selecione um alvo no mapa");
 
         // Se o contexto já tem a variável, significa que o front-end já respondeu
         if (ctx.getContexto().containsKey(salvarEm)) {
-            Long alvoId = ctx.getContexto().getLongOrThrow(salvarEm);
+            Object rawAlvo = ctx.getContexto().get(salvarEm, Object.class)
+                    .orElseThrow(() -> new JsonFieldNotFoundException(salvarEm, etapa.getNome()));
+            
+            UUID alvoId = rawAlvo instanceof UUID u ? u : UUID.fromString(rawAlvo.toString());
             return ResultadoEtapa.concluida(Map.of("alvo_definido", alvoId));
         }
 
@@ -36,9 +39,9 @@ public class DefinirAlvoHandler implements EtapaHandler {
         ));
     }
 
-    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-        return v.asString();
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
     }
 }

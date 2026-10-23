@@ -1,11 +1,8 @@
 // domain/validation/schema/CampoCompostoSchema.java
 package com.draftstd.hydraforge.domain.validation.schema;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 // Representa um campo dentro de um atributo composto.
 // Ex: dentro de "for" existem "valor" e "modificador"
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class CampoCompostoSchema {
 
     private String tipo;
@@ -14,6 +11,18 @@ public class CampoCompostoSchema {
     private Integer min;
     private Integer max;
     private Object defaultVal;
+
+    public CampoCompostoSchema() {
+    }
+
+    public CampoCompostoSchema(String tipo, boolean derivado, String formula, Integer min, Integer max, Object defaultVal) {
+        this.tipo = tipo;
+        this.derivado = derivado;
+        this.formula = formula;
+        this.min = min;
+        this.max = max;
+        this.defaultVal = defaultVal;
+    }
 
     public String getTipo()      { return tipo; }
     public boolean isDerivado()   { return derivado; }

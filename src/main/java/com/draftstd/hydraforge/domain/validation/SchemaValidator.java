@@ -1,34 +1,17 @@
 // domain/validation/SchemaValidator.java
 package com.draftstd.hydraforge.domain.validation;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.domain.model.sistema.Sistema;
 import com.draftstd.hydraforge.domain.validation.exception.*;
 import com.draftstd.hydraforge.domain.validation.schema.*;
-import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class SchemaValidator {
 
-    private final ObjectMapper objectMapper;
-
-    public SchemaValidator(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     // valida a consistência interna dos schemas do sistema
-    // Chamado ao criar ou editar um Sistema.
-    public void validarConsistenciaSchemas(Sistema sistema) {
-
-        Map<String, AtributoSchema> schemaAtributos = converterSchemaAtributos(sistema);
-        Map<String, TipoEntidadeSchema> schemaEntidades = converterSchemaEntidades(sistema);
+    public void validarConsistenciaSchemas(Sistema sistema, Map<String, AtributoSchema> schemaAtributos, Map<String, TipoEntidadeSchema> schemaEntidades) {
 
         for (Map.Entry<String, TipoEntidadeSchema> entry : schemaEntidades.entrySet()) {
             String nomesTipo = entry.getKey();
@@ -38,7 +21,6 @@ public class SchemaValidator {
             if (tipoSchema.getAtributos() != null) {
                 for (String nomeAtributo : tipoSchema.getAtributos()) {
                     if (!schemaAtributos.containsKey(nomeAtributo)) {
-                        
                         throw new SchemaInconsistenteException(nomesTipo, nomeAtributo);
                     }
                 }
@@ -49,8 +31,7 @@ public class SchemaValidator {
                     if (!tipoSchema.getAtributos().contains(obrigatorio)) {
                         throw new SchemaInconsistenteException(
                             nomesTipo,
-                            "atributo obrigatório '%s' não está na lista de atributos do tipo"
-                            .formatted(obrigatorio)
+                            "atributo obrigatório '%s' não está na lista de atributos do tipo".formatted(obrigatorio)
                         );
                     }
                 }
@@ -58,50 +39,27 @@ public class SchemaValidator {
         }
     }
 
-    // valida os atributos de um Entidade
-    // Chamado ao criar ou editar uma entidade sistema.
-    public void validarEntidade(EntidadeSistema entidade, Sistema sistema) {
-        Map<String, AtributoSchema> schemaAtributos = converterSchemaAtributos(sistema);
-        Map<String, TipoEntidadeSchema> schemaEntidades = converterSchemaEntidades(sistema);
-        Map<String, Object> entidadeAtributos = jsonNodeToMap(entidade.getAtributos());
+    // valida os atributos de uma Entidade
+    public void validarEntidade(
+            Map<String, Object> entidadeAtributos,
+            String tipoEntidade,
+            Map<String, AtributoSchema> schemaAtributos,
+            Map<String, TipoEntidadeSchema> schemaEntidades) {
 
-        TipoEntidadeSchema tipoSchema = resolverTipo(entidade.getTipo(), schemaEntidades);
+        TipoEntidadeSchema tipoSchema = resolverTipo(tipoEntidade, schemaEntidades);
         validarObrigatorios(entidadeAtributos, tipoSchema);
         validarValoresAtributos(entidadeAtributos, schemaAtributos, tipoSchema);
     }
 
-    // valida os atributos de uma EntidadeInstancia
-    // Chamado ao instanciar uma entidade em campanha.
-    public void validarInstancia(EntidadeInstancia instancia, Sistema sistema) {
-        Map<String, AtributoSchema> schemaAtributos = converterSchemaAtributos(sistema);
-        Map<String, TipoEntidadeSchema> schemaEntidades = converterSchemaEntidades(sistema);
-        Map<String, Object> instanciaAtributosAtuais = jsonNodeToMap(instancia.getAtributosAtuais());
-
-        TipoEntidadeSchema tipoSchema = resolverTipo(instancia.getTipo(), schemaEntidades);
-        validarObrigatorios(instanciaAtributosAtuais, tipoSchema);
-        validarValoresAtributos(instanciaAtributosAtuais, schemaAtributos, tipoSchema);
-    }
-
-
-    // MÉTODOS PRIVADOS
-
-    // Verifica se o tipo existe no schema e o retorna.
-    // Centraliza a verificação para não repetir em validarTemplate e validarInstancia.
-    private TipoEntidadeSchema resolverTipo( String tipo, Map<String, TipoEntidadeSchema> schemaEntidades) {
-
+    private TipoEntidadeSchema resolverTipo(String tipo, Map<String, TipoEntidadeSchema> schemaEntidades) {
         TipoEntidadeSchema tipoSchema = schemaEntidades.get(tipo);
-
-        // Se null, o tipo não existe no sistema
         if (tipoSchema == null) {
             throw new TipoEntidadeInvalidoException(tipo);
         }
-
         return tipoSchema;
     }
 
-    // Verifica se todos os atributos obrigatórios estão presentes no mapa de valores
     private void validarObrigatorios(Map<String, Object> atributos, TipoEntidadeSchema tipoSchema) {
-
         if (tipoSchema.getObrigatorios() == null) return;
 
         for (String obrigatorio : tipoSchema.getObrigatorios()) {
@@ -114,7 +72,6 @@ public class SchemaValidator {
         }
     }
 
-    // Valida cada atributo presente na entidade contra as regras do schema
     private void validarValoresAtributos(
             Map<String, Object> atributos,
             Map<String, AtributoSchema> schemaAtributos,
@@ -125,7 +82,6 @@ public class SchemaValidator {
             String nomeAtributo = entry.getKey();
             Object valor = entry.getValue();
 
-            // Ignora se tiver atributos não existente no sisteam, pois podem ser customizados
             AtributoSchema meta = schemaAtributos.get(nomeAtributo);
             if (meta == null) continue;
 
@@ -136,20 +92,17 @@ public class SchemaValidator {
                 );
             }
 
-            // Delega a validação para o método correto conforme o tipo
             switch (meta.getTipo()) {
                 case "int"      -> validarInt(nomeAtributo, valor, meta);
                 case "enum"     -> validarEnum(nomeAtributo, valor, meta);
                 case "array"    -> validarArray(nomeAtributo, valor, meta);
                 case "composto" -> validarComposto(nomeAtributo, valor, meta);
                 case "bool"     -> validarBool(nomeAtributo, valor);
-                // "string" e "mapa" aceitam qualquer valor por ora
             }
         }
     }
 
     private void validarInt(String nome, Object valor, AtributoSchema meta) {
-        
         if (!(valor instanceof Integer i)) {
             throw new AtributoInvalidoException(nome, "deveria ser um número inteiro");
         }
@@ -171,12 +124,10 @@ public class SchemaValidator {
         if (!(valor instanceof String s)) {
             throw new AtributoInvalidoException(nome, "deveria ser uma string");
         }
-        // Verifica se o valor está entre os permitidos
         if (meta.getValoresValidos() != null && !meta.getValoresValidos().contains(s)) {
             throw new AtributoInvalidoException(
                 nome,
-                "valor '%s' não está entre os permitidos: %s"
-                .formatted(s, meta.getValoresValidos())
+                "valor '%s' não está entre os permitidos: %s".formatted(s, meta.getValoresValidos())
             );
         }
     }
@@ -197,7 +148,6 @@ public class SchemaValidator {
                 "lista tem %d itens, máximo é %d".formatted(lista.size(), meta.getMaximoItens())
             );
         }
-        // Verifica cada item da lista se houver itens válidos definidos
         if (meta.getItensValidos() != null) {
             for (Object item : lista) {
                 if (!meta.getItensValidos().contains(item.toString())) {
@@ -211,24 +161,20 @@ public class SchemaValidator {
     }
 
     private void validarComposto(String nome, Object valor, AtributoSchema meta) {
-       
         if (!(valor instanceof Map<?, ?> mapa)) {
             throw new AtributoInvalidoException(nome, "deveria ser um objeto");
         }
         if (meta.getCampos() == null) return;
 
-        // Valida cada campo interno do composto
         for (Map.Entry<String, CampoCompostoSchema> campoEntry : meta.getCampos().entrySet()) {
             String nomeCampo = campoEntry.getKey();
             CampoCompostoSchema campoSchema = campoEntry.getValue();
 
-            // Campos derivados dentro do composto também não podem ser informados
             if (campoSchema.isDerivado()) continue;
 
             Object valorCampo = mapa.get(nomeCampo);
             if (valorCampo == null) continue;
 
-            // Valida tipo e limites do campo interno
             if ("int".equals(campoSchema.getTipo()) && valorCampo instanceof Integer i) {
                 if (campoSchema.getMin() != null && i < campoSchema.getMin()) {
                     throw new AtributoInvalidoException(
@@ -250,25 +196,5 @@ public class SchemaValidator {
         if (!(valor instanceof Boolean)) {
             throw new AtributoInvalidoException(nome, "deveria ser true ou false");
         }
-    }
-
-
-
-    private Map<String, AtributoSchema> converterSchemaAtributos(Sistema sistema) {
-        return objectMapper.convertValue(
-            sistema.getSchemaAtributos(),
-            new TypeReference<Map<String, AtributoSchema>>() {}
-        );
-    }
-
-    private Map<String, TipoEntidadeSchema> converterSchemaEntidades(Sistema sistema) {
-        return objectMapper.convertValue(
-            sistema.getSchemaEntidades(),
-            new TypeReference<Map<String, TipoEntidadeSchema>>() {}
-        );
-    }
-
-    private Map<String, Object> jsonNodeToMap(JsonNode node) {
-        return objectMapper.convertValue(node, new TypeReference<>() {});
     }
 }

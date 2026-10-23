@@ -2,6 +2,7 @@ package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
 import com.draftstd.hydraforge.domain.service.engine.components.InterpretadorJson;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InterpretadorContexto;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
@@ -9,9 +10,7 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.Et
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.draftstd.hydraforge.domain.service.engine.utils.interpretador.ResultadoExpressao;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
-
+import com.draftstd.hydraforge.ports.out.persistence.sessao.CenaPersistencePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -25,7 +24,7 @@ public class DefinirVariavelHandler implements EtapaHandler {
 
     private final InterpretadorJson interpretador;
     private final InstanciaResolver instanciaResolver;
-    private final CenaRepository cenaRepo;
+    private final CenaPersistencePort cenaPort;
     private final JsonMapper mapper;
 
     @Override
@@ -33,19 +32,28 @@ public class DefinirVariavelHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
         String nomeVariavel = exigirTexto(params, "nome", etapa);
-        JsonNode expressao = params.get("expressao");
-
-        if (expressao == null || expressao.isMissingNode()) {
+        
+        Object rawExpressao = params.get("expressao");
+        if (rawExpressao == null) {
             throw new JsonFieldNotFoundException("expressao", etapa.getNome());
         }
 
+        JsonNode expressaoNode = rawExpressao instanceof JsonNode node 
+                ? node 
+                : mapper.valueToTree(rawExpressao);
+
         // Cria o contexto de avaliação do Interpretador
-        InterpretadorContexto intCtx = new InterpretadorContexto((ProcedimentoContexto) ctx, instanciaResolver, cenaRepo, mapper);
+        InterpretadorContexto intCtx = new InterpretadorContexto(
+                (ProcedimentoContexto) ctx, 
+                instanciaResolver, 
+                cenaPort, 
+                mapper
+        );
         
         // Avalia a expressão JSON
-        ResultadoExpressao resultado = interpretador.interpretar(expressao, intCtx);
+        ResultadoExpressao resultado = interpretador.interpretar(expressaoNode, intCtx);
 
         // Salva o valor no contexto do procedimento com base no tipo retornado
         switch (resultado.getTipo()) {
@@ -63,9 +71,9 @@ public class DefinirVariavelHandler implements EtapaHandler {
         ));
     }
 
-    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-        return v.asString();
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
     }
 }

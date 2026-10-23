@@ -51,52 +51,55 @@ public class ResultadoExpressao {
         return new ResultadoExpressao(TipoResultado.OBJETO, valor);
     }
 
-    // Getters com verificação
+    // Getters com coerção defensiva
     public double comoNumero() {
-        if (tipo != TipoResultado.NUMERO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não NUMERO");
-        return (double) valor;
+        if (valor instanceof Number n) {
+            return n.doubleValue();
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não NUMERO");
     }
 
     public boolean comoBooleano() {
-        if (tipo != TipoResultado.BOOLEANO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não BOOLEANO");
-        return (boolean) valor;
+        if (valor instanceof Boolean b) {
+            return b;
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não BOOLEANO");
     }
 
     public String comoTexto() {
-        if (tipo != TipoResultado.TEXTO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não TEXTO");
-        return (String) valor;
+        if (valor != null) {
+            return valor.toString();
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não TEXTO");
     }
 
     public List<?> comoLista() {
-        if (tipo != TipoResultado.LISTA)
-            throw new IllegalStateException("Resultado é " + tipo + ", não LISTA");
-        return (List<?>) valor;
+        if (valor instanceof List<?> l) {
+            return l;
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não LISTA");
     }
 
     public Alvo comoAlvo() {
-        if (tipo != TipoResultado.ALVO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não ALVO");
-        return (Alvo) valor;
+        if (valor instanceof Alvo a) {
+            return a;
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não ALVO");
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> comoInstrucao() {
-        if (tipo != TipoResultado.INSTRUCAO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não INSTRUCAO");
-        return (Map<String, Object>) valor;
+        if (valor instanceof Map<?, ?> m) {
+            return (Map<String, Object>) m;
+        }
+        throw new IllegalStateException("Resultado é " + tipo + ", não INSTRUCAO");
     }
 
     public Object comoObjeto() {
-        if (tipo != TipoResultado.OBJETO)
-            throw new IllegalStateException("Resultado é " + tipo + ", não OBJETO");
-        return (Object) valor;
+        return valor;
     }
 
-
     public TipoResultado getTipo() { return tipo; }
-
     
     public Object getValor() { return valor; }
 

@@ -1,10 +1,10 @@
 package com.draftstd.hydraforge.application.usecase.importacao;
 
-import com.draftstd.hydraforge.ports.in.command.importacao.*;
+import com.draftstd.hydraforge.application.request.importacao.*;
 import com.draftstd.hydraforge.ports.in.importacao.*;
-import com.draftstd.hydraforge.ports.in.query.importacao.ArquivoExportadoQueryResponse;
-import com.draftstd.hydraforge.ports.in.query.personagem.PersonagemQueryResponse;
-import com.draftstd.hydraforge.ports.in.query.sistema.SistemaQueryResponse;
+import com.draftstd.hydraforge.application.response.importacao.ArquivoExportadoQueryResponse;
+import com.draftstd.hydraforge.application.response.personagem.PersonagemQueryResponse;
+import com.draftstd.hydraforge.application.response.sistema.SistemaQueryResponse;
 import com.draftstd.hydraforge.ports.out.persistence.importacao.ImportacaoOutputPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

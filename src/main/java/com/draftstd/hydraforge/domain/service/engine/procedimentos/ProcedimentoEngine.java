@@ -1,14 +1,13 @@
 package com.draftstd.hydraforge.domain.service.engine.procedimentos;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.primitivos.HandlerRegistry;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.*;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EscopoInstancias;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,7 @@ public class ProcedimentoEngine {
     private final InstanciaResolver instanciaResolver;
 
     public ProcedimentoContexto getContextoAtivo(UUID idSessao) {
-        return null;
+        return sessaoContexto.frameAtivo(idSessao);
     }
 
     public ProcedimentoContexto iniciarComInstancia(UUID idProcedimento, UUID idSessao, UUID idInstancia) {
@@ -65,15 +64,19 @@ public class ProcedimentoEngine {
             throw new IllegalStateException("Nenhuma etapa aguardando input");
         }
 
-        JsonNode params = etapaPendente.getParametrosEtapa();
-        String chave = params.path("salvar_em").asString();
+        Map<String, Object> params = etapaPendente.getParametrosEtapa();
+        Object rawChave = params.get("salvar_em");
+        String chave = rawChave != null ? rawChave.toString() : null;
 
-        // Armazena o valor como veio (String, Integer etc.)
+        if (chave == null || chave.isBlank()) {
+            throw new IllegalStateException("Campo 'salvar_em' não configurado na etapa pendente");
+        }
+
+        // Armazena o valor no contexto (String, Integer, etc.)
         frame.getContexto().put(chave, valor);
         frame.setAguardandoInput(false);
         frame.setEtapaPendente(null);
 
-        // NÃO avança manualmente – o avancar() fará isso ao reprocessar a etapa
         return avancar(idSessao);
     }
 
@@ -123,11 +126,11 @@ public class ProcedimentoEngine {
                 }
 
                 case SUB_PROCEDIMENTO_INICIADO -> {
-                    // Child frame was already pushed by ChamarProcedimentoHandler.
+                    // Child frame já empilhado pelo ChamarProcedimentoHandler.
                 }
 
                 case REPETINDO -> {
-                    // etapaAtual already rewritten.
+                    // etapaAtual já reescrita pelo handler.
                 }
 
                 case PULAR_ETAPAS -> {
@@ -147,15 +150,19 @@ public class ProcedimentoEngine {
     }
 
     private boolean naoDisponivel(EtapaProcedimento etapa, ProcedimentoContexto frame) {
-        JsonNode params = etapa.getParametrosEtapa();
-        String requerRecurso = params.path("requer_recurso").asString(null);
+        Map<String, Object> params = etapa.getParametrosEtapa();
+        Object rawRecurso = params.get("requer_recurso");
+        String requerRecurso = rawRecurso != null ? rawRecurso.toString() : null;
+
         if (requerRecurso == null) return false;
         if (frame.semInstancias()) return true;
 
         EntidadeInstancia instancia = instanciaResolver.retornarAtiva(frame);
-        JsonNode val = instancia.getAtributosAtuais().path(requerRecurso);
-        if (val.isBoolean()) return !val.asBoolean();
-        if (val.isNumber())  return val.asLong() <= 0;
-        return true;
+        Map<String, Object> attrs = instancia.getValoresAtributos();
+        Object val = attrs != null ? attrs.get(requerRecurso) : null;
+
+        if (val instanceof Boolean b) return !b;
+        if (val instanceof Number n) return n.longValue() <= 0;
+        return val == null;
     }
 }

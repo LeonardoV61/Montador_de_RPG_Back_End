@@ -1,52 +1,58 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import org.springframework.stereotype.Component;
+
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.EntityNotFoundException;
 import com.draftstd.hydraforge.domain.service.engine.exceptions.JsonFieldNotFoundException;
 import com.draftstd.hydraforge.domain.service.engine.primitivos.VerificadorAtributo;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ObjectNode;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class AlterarAtributoHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
-    private final EntidadeInstanciaRepository instanciaRepo;
+    private final EntidadeInstanciaOutputPort entidadeInstanciaPort;
     private final VerificadorAtributo verificador;
+
+    public AlterarAtributoHandler(InstanciaResolver instanciaResolver,
+                                 EntidadeInstanciaOutputPort entidadeInstanciaPort,
+                                 VerificadorAtributo verificador) {
+        this.instanciaResolver = instanciaResolver;
+        this.entidadeInstanciaPort = entidadeInstanciaPort;
+        this.verificador = verificador;
+    }
 
     @Override
     public String tipoEtapa() { return "ALTERAR_ATRIBUTO"; }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode params = etapa.getParametrosEtapa();
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
         String atributo = exigirTexto(params, "atributo", etapa);
-        String op       = params.path("operacao").asString(""); // soma|sub|mult|div|set|""
+        String op = (String) params.getOrDefault("operacao", "");
 
         double qtd = resolverQuantidade(params, ctx, etapa);
         EntidadeInstancia inst = resolverInstancia(params, ctx);
 
-        JsonNode atualNode = inst.getAtributosAtuais().get(atributo);
-        if (atualNode == null) {
-            throw new JsonFieldNotFoundException(atributo, "atributosAtuais da instância " + inst.getId());
+        // Ajuste aqui: getValoresAtributos() em vez de getAtributosAtuais()
+        Map<String, Object> atributosAtuais = inst.getValoresAtributos();
+        if (atributosAtuais == null || !atributosAtuais.containsKey(atributo)) {
+            throw new JsonFieldNotFoundException(atributo, "valoresAtributos da instância " + inst.getId());
         }
-        double valorAtual = atualNode.asDouble();
+
+        Object valorAtualObj = atributosAtuais.get(atributo);
+        double valorAtual = valorAtualObj instanceof Number n ? n.doubleValue() : Double.parseDouble(valorAtualObj.toString());
 
         double resultadoBruto = switch (op) {
             case "", "set" -> qtd;
@@ -70,14 +76,16 @@ public class AlterarAtributoHandler implements EtapaHandler {
                             " (etapa: " + etapa.getNome() + ")");
         }
 
-        ObjectNode attrs = (ObjectNode) inst.getAtributosAtuais();
+        Map<String, Object> novosAttrs = new HashMap<>(atributosAtuais);
         if (manterInteiro) {
-            attrs.put(atributo, (long) resultadoBruto);
+            novosAttrs.put(atributo, (long) resultadoBruto);
         } else {
-            attrs.put(atributo, resultadoBruto);
+            novosAttrs.put(atributo, resultadoBruto);
         }
-        inst.setAtributosAtuais(attrs);
-        instanciaRepo.save(inst);
+        
+        // Ajuste aqui: setValoresAtributos()
+        inst.setValoresAtributos(novosAttrs);
+        entidadeInstanciaPort.salvar(inst);
 
         return ResultadoEtapa.concluida(Map.of(
                 "idInstancia", inst.getId(),
@@ -87,10 +95,9 @@ public class AlterarAtributoHandler implements EtapaHandler {
         ));
     }
 
-    private double resolverQuantidade(JsonNode params, ExecucaoContexto ctx, EtapaExecutavel etapa) {
-        if (params.has("source_key")) {
-            String sourceKey = params.get("source_key").asString();
-    
+    private double resolverQuantidade(Map<String, Object> params, ExecucaoContexto ctx, EtapaExecutavel etapa) {
+        if (params.containsKey("source_key")) {
+            String sourceKey = (String) params.get("source_key");
             Object raw = ctx.getContexto().get(sourceKey, Object.class).orElse(null);
             if (raw == null) {
                 throw new JsonFieldNotFoundException(sourceKey, etapa.getNome());
@@ -103,25 +110,26 @@ public class AlterarAtributoHandler implements EtapaHandler {
                 );
             }
         }
-        if (params.has("quantidade")) {
-            return params.get("quantidade").asDouble();
+        if (params.containsKey("quantidade")) {
+            Object qtdObj = params.get("quantidade");
+            return qtdObj instanceof Number n ? n.doubleValue() : Double.parseDouble(qtdObj.toString());
         }
         throw new JsonFieldNotFoundException("quantidade ou source_key", etapa.getNome());
     }
 
-    private EntidadeInstancia resolverInstancia(JsonNode params, ExecucaoContexto ctx) {
-        JsonNode idNode = params.path("id_entidade");
-        if (idNode.isMissingNode() || idNode.isNull()) {
+    private EntidadeInstancia resolverInstancia(Map<String, Object> params, ExecucaoContexto ctx) {
+        Object idObj = params.get("id_entidade");
+        if (idObj == null) {
             return instanciaResolver.retornarAtiva(ctx);
         }
-        UUID idEntidade = UUID.fromString(idNode.asString());
-        return instanciaRepo.findById(idEntidade)
+        UUID idEntidade = idObj instanceof UUID u ? u : UUID.fromString(idObj.toString());
+        return entidadeInstanciaPort.buscarPorId(idEntidade)
                 .orElseThrow(() -> new EntityNotFoundException(EntidadeInstancia.class, idEntidade));
     }
 
-    private String exigirTexto(JsonNode params, String chave, EtapaExecutavel etapa) {
-        JsonNode v = params.path(chave);
-        if (v.isMissingNode() || v.isNull()) throw new JsonFieldNotFoundException(chave, etapa.getNome());
-        return v.asString();
+    private String exigirTexto(Map<String, Object> params, String chave, EtapaExecutavel etapa) {
+        Object val = params.get(chave);
+        if (val == null) throw new JsonFieldNotFoundException(chave, etapa.getNome());
+        return val.toString();
     }
 }

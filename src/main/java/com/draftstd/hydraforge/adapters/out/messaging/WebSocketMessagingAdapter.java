@@ -17,11 +17,19 @@ public class WebSocketMessagingAdapter implements SessaoMessagingOutputPort {
 
     @Override
     public void broadcastSessao(UUID idSessao, String tipo, Map<String, Object> payload) {
-        // Criando o mapa explicitamente tipado para evitar erros de inferência do compilador
         Map<String, Object> mensagem = new HashMap<>();
         mensagem.put("tipo", tipo);
         mensagem.put("payload", payload);
 
         messagingTemplate.convertAndSend("/topic/sessao/" + idSessao, (Object) mensagem);
+    }
+
+    @Override
+    public void notificarStatusSessao(UUID idSessao, String status) {
+        Map<String, Object> mensagem = new HashMap<>();
+        mensagem.put("tipo", "STATUS_SESSAO");
+        mensagem.put("status", status);
+
+        messagingTemplate.convertAndSend("/topic/sessao/" + idSessao + "/status", (Object) mensagem);
     }
 }

@@ -1,9 +1,9 @@
 package com.draftstd.hydraforge.adapters.in.dto.campanha;
 
 import com.draftstd.hydraforge.domain.enums.PapeisUsuario;
+import com.draftstd.hydraforge.domain.enums.StatusMembroCampanha;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
 
-public record CampanhaPapelDTO(@NotNull(message = "O ID do usuário é obrigatório") UUID usuarioId, @NotNull(message = "O novo papel é obrigatório") PapeisUsuario novoPapel) {
+public record CampanhaPapelDTO(@NotNull(message = "O novo papel é obrigatório") PapeisUsuario novoPapel, StatusMembroCampanha novoStatus) {
 
 }

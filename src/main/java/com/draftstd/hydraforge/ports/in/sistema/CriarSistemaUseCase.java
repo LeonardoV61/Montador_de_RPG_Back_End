@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.ports.in.sistema;
 
-import com.draftstd.hydraforge.ports.in.command.sistema.CriarSistemaCommand;
-import com.draftstd.hydraforge.ports.in.query.sistema.SistemaQueryResponse;
+import com.draftstd.hydraforge.application.request.sistema.CriarSistemaCommand;
+import java.util.UUID;
 
 public interface CriarSistemaUseCase {
-    SistemaQueryResponse executar(CriarSistemaCommand command);
+    UUID executar(CriarSistemaCommand command);
 }

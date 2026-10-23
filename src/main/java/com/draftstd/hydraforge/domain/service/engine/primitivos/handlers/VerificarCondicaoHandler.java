@@ -1,6 +1,6 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
 import com.draftstd.hydraforge.domain.service.engine.components.InterpretadorJson;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InterpretadorContexto;
@@ -10,7 +10,7 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.Et
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
 import com.draftstd.hydraforge.domain.service.engine.utils.interpretador.ResultadoExpressao;
-import com.draftstd.hydraforge.adapters.out.repository.sessao.CenaRepository;
+import com.draftstd.hydraforge.ports.out.persistence.sessao.CenaPersistencePort;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,28 +25,30 @@ public class VerificarCondicaoHandler implements EtapaHandler {
 
     private final InstanciaResolver instanciaResolver;
     private final InterpretadorJson interpretador;
-    private final CenaRepository cenaRepo;
+    private final CenaPersistencePort cenaPort;
     private final JsonMapper mapper;
-
 
     @Override
     public String tipoEtapa() { return "VERIFICAR_CONDICAO"; }
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        JsonNode condicaoNode = etapa.getParametrosEtapa().get("condicao");
+        Map<String, Object> params = etapa.getParametrosEtapa();
+        Object condicaoObj = params.get("condicao");
+        
+        JsonNode condicaoNode = condicaoObj != null ? mapper.valueToTree(condicaoObj) : null;
         return verificar(condicaoNode, ctx);
     }
 
     public ResultadoEtapa verificar(JsonNode condicaoNode, ExecucaoContexto ctx) {
-        if (condicaoNode == null || condicaoNode.isMissingNode()) {
+        if (condicaoNode == null || condicaoNode.isMissingNode() || condicaoNode.isNull()) {
             return ResultadoEtapa.concluida(Map.of("status", "sem_condicao"));
         }
 
-        // Se for uma expressão do InterpretadorJson (objeto com "tipo"), delegue
+        // Se for uma expressão do InterpretadorJson (objeto com "tipo"), delega
         if (condicaoNode.isObject() && condicaoNode.has("tipo")) {
             InterpretadorContexto intCtx = new InterpretadorContexto(
-                (ProcedimentoContexto) ctx, instanciaResolver, cenaRepo, mapper);
+                (ProcedimentoContexto) ctx, instanciaResolver, cenaPort, mapper);
             ResultadoExpressao resultado = interpretador.interpretar(condicaoNode, intCtx);
             boolean ok = resultado.comoBooleano();
             if (!ok) {
@@ -59,7 +61,7 @@ public class VerificarCondicaoHandler implements EtapaHandler {
     }
 
     private ResultadoEtapa verificarLegado(JsonNode condicao, ExecucaoContexto ctx) {
-        if (condicao == null || condicao.isMissingNode()) {
+        if (condicao == null || condicao.isMissingNode() || condicao.isNull()) {
             return ResultadoEtapa.concluida(Map.of("status", "sem_condicao"));
         }
 
@@ -81,14 +83,14 @@ public class VerificarCondicaoHandler implements EtapaHandler {
             } else if (valorEsperado.isObject()) {
                 ok = avaliarObjetoCondicao(valorEsperado, valorReal);
             } else {
-                ok = valorEsperado.asString().equals(valorReal.toString());
+                ok = valorEsperado.asText().equals(valorReal.toString());
             }
 
             if (!ok) {
                 return ResultadoEtapa.concluida(Map.of(
                         "status", "condicao_falhou",
                         "campo", campo,
-                        "esperado", valorEsperado.asString(),
+                        "esperado", valorEsperado.asText(),
                         "real", valorReal.toString()
                 ));
             }
@@ -102,20 +104,16 @@ public class VerificarCondicaoHandler implements EtapaHandler {
         if (ctx.getContexto().containsKey(campo)) {
             return ctx.getContexto().get(campo, Object.class).orElse(null);
         }
-        // Tenta obter da instância ativa
+        // Tenta obter da instância ativa via mapa de atributos do novo modelo de domínio
         if (!ctx.semInstancias()) {
             try {
                 EntidadeInstancia instancia = instanciaResolver.retornarAtiva(ctx);
-                JsonNode atributos = instancia.getAtributosAtuais();
-                if (atributos.has(campo)) {
-                    JsonNode valor = atributos.get(campo);
-                    // Converte para tipo Java apropriado
-                    if (valor.isBoolean()) return valor.asBoolean();
-                    if (valor.isNumber()) return valor.asDouble();
-                    return valor.asString();
+                Map<String, Object> atributos = instancia.getValoresAtributos();
+                if (atributos != null && atributos.containsKey(campo)) {
+                    return atributos.get(campo);
                 }
             } catch (Exception e) {
-                // Instância não encontrada, retorna null
+                // Instância não encontrada ou sem o atributo
             }
         }
         return null;
@@ -128,7 +126,7 @@ public class VerificarCondicaoHandler implements EtapaHandler {
             return true;
         }
         if (obj.has("contains") && valorReal instanceof String s) {
-            return s.contains(obj.get("contains").asString());
+            return s.contains(obj.get("contains").asText());
         }
         return false;
     }

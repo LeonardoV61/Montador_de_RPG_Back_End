@@ -1,6 +1,7 @@
 package com.draftstd.hydraforge.adapters.in.dto.campanha;
 
-public record CampanhaSessaoTemporariaDTO(
-    Long campanhaId, 
-    Long sessaoId
-) {}
+import java.util.UUID;
+
+public record CampanhaSessaoTemporariaDTO(UUID campanhaId, UUID sessaoId) {
+
+}

@@ -1,6 +1,6 @@
 package com.draftstd.hydraforge.adapters.in.websocket;
 
-import com.draftstd.hydraforge.ports.in.command.sessao.CriarAnotacaoCommand;
+import com.draftstd.hydraforge.application.request.sessao.CriarAnotacaoCommand;
 import com.draftstd.hydraforge.ports.in.sessao.CriarAnotacaoUseCase;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;

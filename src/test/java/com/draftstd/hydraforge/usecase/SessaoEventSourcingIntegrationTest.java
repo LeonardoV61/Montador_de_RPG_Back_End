@@ -1,8 +1,8 @@
 package com.draftstd.hydraforge.usecase;
 
 import com.draftstd.hydraforge.config.IntegrationTestBase;
-import com.draftstd.hydraforge.ports.in.command.sessao.CriarSessaoCommand;
-import com.draftstd.hydraforge.ports.in.query.sessao.SessaoQueryResponse;
+import com.draftstd.hydraforge.application.request.sessao.CriarSessaoCommand;
+import com.draftstd.hydraforge.domain.enums.StatusCampanha;
 import com.draftstd.hydraforge.ports.in.sessao.CriarSessaoUseCase;
 import com.draftstd.hydraforge.ports.out.eventstore.EventStorePort;
 import org.junit.jupiter.api.DisplayName;
@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 
 @SpringBootTest
 @Transactional
@@ -30,24 +30,36 @@ public class SessaoEventSourcingIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Deve executar o Use Case de criação de sessão e persistir evento na EventStore")
     void deveCriarSessaoEPersistirEventoNaEventStore() {
-        // Given (Dado)
+        // Given: Persistir uma Campanha válida previamente com todos os campos obrigatórios para satisfazer a FK
         UUID campanhaId = UUID.randomUUID();
+        var campanhaJpa = new com.draftstd.hydraforge.adapters.out.persistence.campanha.entity.CampanhaJpaEntity();
+        campanhaJpa.setId(campanhaId);
+        campanhaJpa.setNome("Campanha de Teste");
+        campanhaJpa.setMestreId(UUID.randomUUID());
+        campanhaJpa.setSistemaId(UUID.randomUUID());
+        campanhaJpa.setStatus(StatusCampanha.ATIVA);
+        campanhaJpa.setVersion(0L);
+
+        em.persist(campanhaJpa);
+        em.flush();
+
         CriarSessaoCommand command = new CriarSessaoCommand(
                 campanhaId, 
                 "Sessao de Teste Event Sourcing", 
-                "Descrição de teste", 
+                1, 
                 LocalDateTime.now().plusDays(1)
         );
 
-        // When (Quando)
-        SessaoQueryResponse response = criarSessaoUseCase.executar(command);
+        // When
+        UUID sessaoId = criarSessaoUseCase.executar(command);
 
-        // Then (Então)
-        assertNotNull(response);
-        assertNotNull(response.id());
+        // Sincronizar e limpar cache para forçar a leitura correta do banco de dados
+        flushAndClear();
 
-        // Valida se o evento foi de fato persistido e recuperado pela porta da EventStore
-        var eventos = eventStorePort.getEventsForAggregate(response.id().toString());
+        // Then
+        assertNotNull(sessaoId);
+        var eventos = eventStorePort.carregarEventosPorSessao(sessaoId);
         assertNotNull(eventos);
+        org.junit.jupiter.api.Assertions.assertTrue(eventos.size() > 0, "Deverá conter pelo menos um evento persistido na EventStore");
     }
 }

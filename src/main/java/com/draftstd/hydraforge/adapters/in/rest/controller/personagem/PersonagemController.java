@@ -1,14 +1,14 @@
 package com.draftstd.hydraforge.adapters.in.rest.controller.personagem;
 
 import com.draftstd.hydraforge.adapters.in.dto.personagem.*;
-import com.draftstd.hydraforge.ports.in.command.personagem.*;
+import com.draftstd.hydraforge.application.request.personagem.*;
+import com.draftstd.hydraforge.application.response.personagem.*;
 import com.draftstd.hydraforge.ports.in.personagem.*;
-import com.draftstd.hydraforge.ports.in.query.personagem.*;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +23,12 @@ public class PersonagemController {
     private final RealizarDescansoUseCase realizarDescansoUseCase;
     private final UsarItemConsumivelUseCase usarItemConsumivelUseCase;
 
-    public PersonagemController(CriarPersonagemUseCase criarPersonagemUseCase, AtualizarPersonagemUseCase atualizarPersonagemUseCase, DeletarPersonagemUseCase deletarPersonagemUseCase, ObterPersonagemUseCase obterPersonagemUseCase, RealizarDescansoUseCase realizarDescansoUseCase, UsarItemConsumivelUseCase usarItemConsumivelUseCase) {
+    public PersonagemController(CriarPersonagemUseCase criarPersonagemUseCase,
+                                AtualizarPersonagemUseCase atualizarPersonagemUseCase,
+                                DeletarPersonagemUseCase deletarPersonagemUseCase,
+                                ObterPersonagemUseCase obterPersonagemUseCase,
+                                RealizarDescansoUseCase realizarDescansoUseCase,
+                                UsarItemConsumivelUseCase usarItemConsumivelUseCase) {
         this.criarPersonagemUseCase = criarPersonagemUseCase;
         this.atualizarPersonagemUseCase = atualizarPersonagemUseCase;
         this.deletarPersonagemUseCase = deletarPersonagemUseCase;
@@ -33,20 +38,49 @@ public class PersonagemController {
     }
 
     @PostMapping
-    public ResponseEntity<PersonagemQueryResponse> criar(@Valid @RequestBody PersonagemCreateDTO dto, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
-        CriarPersonagemCommand command = new CriarPersonagemCommand(usuarioId, dto.sistemaId(), dto.campanhaId(), dto.nome(), dto.conceito(), dto.dadosJson());
-        return ResponseEntity.status(HttpStatus.CREATED).body(criarPersonagemUseCase.executar(command));
+    public ResponseEntity<PersonagemQueryResponse> criar(@Valid @RequestBody PersonagemCreateDTO dto,
+                                                        @RequestHeader("X-Usuario-Id") UUID usuarioId) {
+        CriarPersonagemCommand command = new CriarPersonagemCommand(
+            usuarioId,
+            dto.sistemaId(),
+            dto.campanhaId(),
+            dto.instanciaId(),
+            dto.nome(),
+            dto.historia(),
+            dto.aparencia(),
+            dto.urlImagem(),
+            dto.notasJogador(),
+            dto.atributos()
+        );
+        UUID idCriado = criarPersonagemUseCase.executar(command);
+        PersonagemQueryResponse response = obterPersonagemUseCase.obterPorId(new ObterPersonagemQuery(idCriado));
+        return ResponseEntity.created(URI.create("/api/v1/personagens/" + idCriado)).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PersonagemQueryResponse> atualizar(@PathVariable UUID id, @Valid @RequestBody PersonagemUpdateDTO dto) {
-        AtualizarPersonagemCommand command = new AtualizarPersonagemCommand(id, dto.nome(), dto.conceito(), dto.dadosJson());
-        return ResponseEntity.ok(atualizarPersonagemUseCase.executar(command));
+    public ResponseEntity<Void> atualizar(@PathVariable UUID id,
+                                         @RequestHeader("X-Usuario-Id") UUID usuarioId,
+                                         @Valid @RequestBody PersonagemUpdateDTO dto) {
+        AtualizarPersonagemCommand command = new AtualizarPersonagemCommand(
+            id,
+            usuarioId,
+            dto.nome(),
+            dto.historia(),
+            dto.aparencia(),
+            dto.urlImagem(),
+            dto.notasJogador(),
+            dto.atributos(),
+            dto.sessaoId()
+        );
+        atualizarPersonagemUseCase.executar(command);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable UUID id, @RequestHeader("X-Usuario-Id") UUID usuarioId) {
-        DeletarPersonagemCommand command = new DeletarPersonagemCommand(id, usuarioId);
+    public ResponseEntity<Void> deletar(@PathVariable UUID id,
+                                        @RequestHeader("X-Usuario-Id") UUID usuarioId,
+                                        @RequestParam(required = false) UUID sessaoId) {
+        DeletarPersonagemCommand command = new DeletarPersonagemCommand(id, usuarioId, sessaoId);
         deletarPersonagemUseCase.executar(command);
         return ResponseEntity.noContent().build();
     }
@@ -64,14 +98,21 @@ public class PersonagemController {
     }
 
     @PostMapping("/{id}/descanso")
-    public ResponseEntity<PersonagemQueryResponse> descansar(@PathVariable UUID id, @RequestParam String tipoDescanso) {
-        RealizarDescansoCommand command = new RealizarDescansoCommand(id, tipoDescanso);
-        return ResponseEntity.ok(realizarDescansoUseCase.executar(command));
+    public ResponseEntity<Void> descansar(@PathVariable UUID id,
+                                         @RequestHeader("X-Usuario-Id") UUID usuarioId,
+                                         @RequestParam String tipoDescanso,
+                                         @RequestParam(required = false) UUID sessaoId) {
+        RealizarDescansoCommand command = new RealizarDescansoCommand(id, usuarioId, tipoDescanso, sessaoId);
+        realizarDescansoUseCase.executar(command);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/usar-item")
-    public ResponseEntity<PersonagemQueryResponse> usarItem(@PathVariable UUID id, @Valid @RequestBody UsoItemDTO dto) {
-        UsarItemConsumivelCommand command = new UsarItemConsumivelCommand(id, dto.itemId(), dto.alvoId());
-        return ResponseEntity.ok(usarItemConsumivelUseCase.executar(command));
+    public ResponseEntity<Void> usarItem(@PathVariable UUID id,
+                                         @RequestHeader("X-Usuario-Id") UUID usuarioId,
+                                         @Valid @RequestBody UsoItemDTO dto) {
+        UsarItemConsumivelCommand command = new UsarItemConsumivelCommand(id, usuarioId, dto.itemId(), dto.alvoId(), dto.sessaoId());
+        usarItemConsumivelUseCase.executar(command);
+        return ResponseEntity.noContent().build();
     }
 }

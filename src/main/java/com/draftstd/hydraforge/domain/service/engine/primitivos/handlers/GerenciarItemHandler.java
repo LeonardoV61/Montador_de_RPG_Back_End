@@ -1,8 +1,9 @@
 package com.draftstd.hydraforge.domain.service.engine.primitivos.handlers;
 
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeInstancia;
-import com.draftstd.hydraforge.domain.model.entidade.EntidadeRelacao;
 import com.draftstd.hydraforge.domain.model.sistema.EtapaProcedimento;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeInstancia;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeRelacao;
+import com.draftstd.hydraforge.domain.model.sistema.entidade.EntidadeSistema;
 import com.draftstd.hydraforge.domain.service.engine.components.ItemResolver;
 import com.draftstd.hydraforge.domain.service.engine.primitivos.HandlerRegistry;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.InstanciaResolver;
@@ -10,19 +11,15 @@ import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.Resu
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.ExecucaoContexto;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeInstanciaRepository;
-import com.draftstd.hydraforge.adapters.out.repository.entidade.EntidadeRelacaoRepository;
 import com.draftstd.hydraforge.domain.service.personagem.ItemEfeitoService;
-import lombok.RequiredArgsConstructor;
-
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeInstanciaOutputPort;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeRelacaoOutputPort;
+import com.draftstd.hydraforge.ports.out.persistence.sistema.EntidadeSistemaOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,27 +29,27 @@ import java.util.UUID;
 @Component
 public class GerenciarItemHandler implements EtapaHandler {
 
-    private final JsonMapper mapper;
     private final InstanciaResolver instanciaResolver;
     private final ItemResolver itemResolver;
     private final ItemEfeitoService itemEfeitoService;
-    private final EntidadeRelacaoRepository entidadeRelacaoRepo;
-    private final EntidadeInstanciaRepository entidadeInstanciaRepo;
+    private final EntidadeRelacaoOutputPort entidadeRelacaoPort;
+    private final EntidadeInstanciaOutputPort entidadeInstanciaPort;
+    private final EntidadeSistemaOutputPort entidadeSistemaPort;
     
     private HandlerRegistry handlers;
 
-    public GerenciarItemHandler(JsonMapper mapper,
-                                InstanciaResolver instanciaResolver,
+    public GerenciarItemHandler(InstanciaResolver instanciaResolver,
                                 ItemResolver itemResolver,
                                 ItemEfeitoService itemEfeitoService,
-                                EntidadeRelacaoRepository entidadeRelacaoRepo,
-                                EntidadeInstanciaRepository entidadeInstanciaRepo) {
-        this.mapper = mapper;
+                                EntidadeRelacaoOutputPort entidadeRelacaoPort,
+                                EntidadeInstanciaOutputPort entidadeInstanciaPort,
+                                EntidadeSistemaOutputPort entidadeSistemaPort) {
         this.instanciaResolver = instanciaResolver;
         this.itemResolver = itemResolver;
         this.itemEfeitoService = itemEfeitoService;
-        this.entidadeRelacaoRepo = entidadeRelacaoRepo;
-        this.entidadeInstanciaRepo = entidadeInstanciaRepo;
+        this.entidadeRelacaoPort = entidadeRelacaoPort;
+        this.entidadeInstanciaPort = entidadeInstanciaPort;
+        this.entidadeSistemaPort = entidadeSistemaPort;
     }
 
     @Lazy
@@ -66,15 +63,14 @@ public class GerenciarItemHandler implements EtapaHandler {
 
     @Override
     public ResultadoEtapa executar(EtapaExecutavel etapa, ExecucaoContexto ctx) {
-        Map<String, Object> params = mapper.convertValue(
-                etapa.getParametrosEtapa(), new TypeReference<>() {});
+        Map<String, Object> params = etapa.getParametrosEtapa();
 
         String tipo = (String) params.get("tipo");
 
         UUID idItem = resolverIdItem(params, ctx);
         List<EntidadeInstancia> personagens = resolverPersonagens(params, ctx);
 
-        EntidadeInstancia item = entidadeInstanciaRepo.findById(idItem)
+        EntidadeInstancia item = entidadeInstanciaPort.buscarPorId(idItem)
                 .orElseThrow(() -> new IllegalArgumentException("Item não encontrado: " + idItem));
 
         return switch (tipo) {
@@ -102,13 +98,14 @@ public class GerenciarItemHandler implements EtapaHandler {
                 EntidadeRelacao rel = existente.get();
                 novaQtd = rel.getQuantidade() + qtd;
                 rel.setQuantidade(novaQtd);
-                entidadeRelacaoRepo.save(rel);
+                entidadeRelacaoPort.salvar(rel);
             } else {
                 EntidadeRelacao rel = new EntidadeRelacao();
-                rel.setEntidadePai(personagem);
-                rel.setEntidadeFilha(item);
+                rel.setId(UUID.randomUUID());
+                rel.setEntidadePaiId(personagem.getId());
+                rel.setEntidadeFilhaId(item.getId());
                 rel.setQuantidade(qtd);
-                entidadeRelacaoRepo.save(rel);
+                entidadeRelacaoPort.salvar(rel);
                 novaQtd = qtd;
             }
             resultado.put(personagem.getId(), novaQtd);
@@ -122,10 +119,16 @@ public class GerenciarItemHandler implements EtapaHandler {
     }
 
     private ResultadoEtapa dispararCustomizacoes(EntidadeInstancia item, ExecucaoContexto ctx) {
-        JsonNode propriedades = item.getEntidadeSistema().getPropriedades();
-        if (propriedades == null || propriedades.isMissingNode()) return null;
+        if (item.getEntidadeSistemaId() == null) return null;
 
-        for (Map.Entry<String, JsonNode> entry : propriedades.properties()) {
+        Optional<EntidadeSistema> optTemplate = entidadeSistemaPort.buscarPorId(item.getEntidadeSistemaId());
+        if (optTemplate.isEmpty()) return null;
+
+        EntidadeSistema template = optTemplate.get();
+        Map<String, Object> propriedades = template.getPropriedades();
+        if (propriedades == null || propriedades.isEmpty()) return null;
+
+        for (Map.Entry<String, Object> entry : propriedades.entrySet()) {
             if (!entry.getKey().startsWith("tabela_customizacao_")) continue;
 
             String chaveTabela = entry.getKey();
@@ -134,14 +137,19 @@ public class GerenciarItemHandler implements EtapaHandler {
 
             if (ctx.getContexto().containsKey(chaveConcluida)) continue;
 
-            EtapaProcedimento sub = new EtapaProcedimento();
-            sub.setTipoEtapa("CUSTOMIZAR_ENTIDADE");
-            sub.setNome("Customizar " + item.getEntidadeSistema().getNome() + " — " + chaveTabela);
-            sub.setParametrosEtapa(mapper.valueToTree(Map.of(
-                    "id_entidade_sistema", item.getEntidadeSistema().getId(),
-                    "chave_rolagem",       chaveRolagem,
-                    "chave_tabela",        chaveTabela
-            )));
+            EtapaProcedimento sub = new EtapaProcedimento(
+                    UUID.randomUUID(),
+                    null,
+                    1,
+                    "Customizar " + template.getNome() + " — " + chaveTabela,
+                    "CUSTOMIZAR_ENTIDADE",
+                    Map.of(
+                            "id_entidade_sistema", template.getId(),
+                            "chave_rolagem",       chaveRolagem,
+                            "chave_tabela",        chaveTabela
+                    ),
+                    true
+            );
 
             ResultadoEtapa resultado = handlers.get("CUSTOMIZAR_ENTIDADE").executar(sub, ctx);
 
@@ -173,11 +181,11 @@ public class GerenciarItemHandler implements EtapaHandler {
 
             int restante = rel.getQuantidade() - qtd;
             if (restante <= 0) {
-                entidadeRelacaoRepo.delete(rel);
+                entidadeRelacaoPort.deletarPorId(rel.getId());
                 resultado.put(personagem.getId(), 0);
             } else {
                 rel.setQuantidade(restante);
-                entidadeRelacaoRepo.save(rel);
+                entidadeRelacaoPort.salvar(rel);
                 resultado.put(personagem.getId(), restante);
             }
         }
@@ -194,6 +202,10 @@ public class GerenciarItemHandler implements EtapaHandler {
             return ResultadoEtapa.erro("Item " + item.getId() + " não possui slot — não pode ser equipado");
         }
 
+        EntidadeSistema templateItem = item.getEntidadeSistemaId() != null 
+                ? entidadeSistemaPort.buscarPorId(item.getEntidadeSistemaId()).orElse(null) 
+                : null;
+
         for (EntidadeInstancia personagem : personagens) {
             EntidadeRelacao rel = itemResolver
                     .buscarRelacao(personagem.getId(), item.getId())
@@ -201,16 +213,26 @@ public class GerenciarItemHandler implements EtapaHandler {
                             "Personagem " + personagem.getId() + " não possui o item " + item.getId()));
 
             itemResolver.buscarEquipadoPorSlot(personagem.getId(), slot)
-                    .ifPresent(atual -> {
-                        if (!atual.getEntidadeFilha().getId().equals(item.getId())) {
-                            setEquipado(atual, false);
+                    .ifPresent(itemAtual -> {
+                        if (!itemAtual.getId().equals(item.getId())) {
+                            EntidadeRelacao relAtual = itemResolver
+                                    .buscarRelacao(personagem.getId(), itemAtual.getId())
+                                    .orElse(null);
+                            if (relAtual != null) {
+                                setEquipado(relAtual, false);
+                            }
+                            
+                            EntidadeSistema templateDesequipado = (itemAtual.getEntidadeSistemaId() != null)
+                                    ? entidadeSistemaPort.buscarPorId(itemAtual.getEntidadeSistemaId()).orElse(null)
+                                    : null;
+
                             itemEfeitoService.dispararGatilho(
-                                    atual.getEntidadeFilha(), "AO_DESEQUIPAR", personagem, personagem, Map.of());
+                                    itemAtual, templateDesequipado, "AO_DESEQUIPAR", personagem, personagem, Map.of());
                         }
                     });
 
             setEquipado(rel, true);
-            itemEfeitoService.dispararGatilho(item, "AO_EQUIPAR", personagem, personagem, Map.of());
+            itemEfeitoService.dispararGatilho(item, templateItem, "AO_EQUIPAR", personagem, personagem, Map.of());
         }
 
         return ResultadoEtapa.concluida(Map.of(
@@ -220,24 +242,29 @@ public class GerenciarItemHandler implements EtapaHandler {
     private ResultadoEtapa desequipar(List<EntidadeInstancia> personagens,
                                       EntidadeInstancia item,
                                       ExecucaoContexto ctx) {
+        EntidadeSistema templateItem = item.getEntidadeSistemaId() != null 
+                ? entidadeSistemaPort.buscarPorId(item.getEntidadeSistemaId()).orElse(null) 
+                : null;
+
         for (EntidadeInstancia personagem : personagens) {
             EntidadeRelacao rel = itemResolver
                     .buscarRelacao(personagem.getId(), item.getId())
                     .orElseThrow();
 
             setEquipado(rel, false);
-            itemEfeitoService.dispararGatilho(item, "AO_DESEQUIPAR", personagem, personagem, Map.of());
+            itemEfeitoService.dispararGatilho(item, templateItem, "AO_DESEQUIPAR", personagem, personagem, Map.of());
         }
 
         return ResultadoEtapa.concluida(Map.of("tipo", "DESEQUIPAR", "idItem", item.getId()));
     }
 
     private void setEquipado(EntidadeRelacao rel, boolean valor) {
-        ObjectNode custom = rel.getCustomizacoes() instanceof ObjectNode on
-                ? on : mapper.createObjectNode();
+        Map<String, Object> custom = rel.getCustomizacoes() != null 
+                ? new HashMap<>(rel.getCustomizacoes()) 
+                : new HashMap<>();
         custom.put("equipado", valor);
         rel.setCustomizacoes(custom);
-        entidadeRelacaoRepo.save(rel);
+        entidadeRelacaoPort.salvar(rel);
     }
 
     private UUID resolverIdItem(Map<String, Object> params, ExecucaoContexto ctx) {

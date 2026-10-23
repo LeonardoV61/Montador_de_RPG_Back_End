@@ -1,9 +1,8 @@
 package com.draftstd.hydraforge.adapters.in.dto.personagem;
 
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
-public record UsoItemDTO(UUID itemId, UUID alvoId, String nomeItem, boolean restamUnidades, List<ResultadoEtapa> resultados) {
+public record UsoItemDTO(@NotNull(message = "O ID do item é obrigatório") UUID itemId, UUID alvoId, UUID sessaoId) {
 
 }

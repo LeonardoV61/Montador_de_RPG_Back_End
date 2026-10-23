@@ -2,7 +2,6 @@ package com.draftstd.hydraforge.domain.model;
 
 import com.draftstd.hydraforge.domain.events.DomainEvent;
 import java.util.ArrayList;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -35,15 +34,20 @@ public abstract class AggregateRoot<ID> {
         this.uncommittedEvents.clear();
     }
 
+    // Método para extrair e limpar os eventos pendentes atomicamente
+    public List<DomainEvent> pullEventos() {
+        List<DomainEvent> eventos = new ArrayList<>(this.uncommittedEvents);
+        this.uncommittedEvents.clear();
+        return eventos;
+    }
+
     protected void raiseEvent(DomainEvent event) {
         this.uncommittedEvents.add(event);
         apply(event);
     }
 
-    // Método abstrato para reconstruir o estado a partir de um evento
     protected abstract void apply(DomainEvent event);
 
-    // Reconstitui o agregado a partir de um histórico de eventos
     public void loadFromHistory(List<DomainEvent> history) {
         for (DomainEvent event : history) {
             apply(event);

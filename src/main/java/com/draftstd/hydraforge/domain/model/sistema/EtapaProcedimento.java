@@ -1,57 +1,37 @@
 package com.draftstd.hydraforge.domain.model.sistema;
 
 import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaExecutavel;
-import com.draftstd.hydraforge.domain.service.engine.procedimentos.interfaces.EtapaHandler;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import tools.jackson.databind.JsonNode;
+import java.util.Map;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "Etapas_Procedimento")
 public class EtapaProcedimento implements EtapaExecutavel {
-    @Id
-    @GeneratedValue(
-        strategy = GenerationType.SEQUENCE, 
-        generator = "etapa_procedimento_seq"
-    )
-    @SequenceGenerator(
-        name = "etapa_procedimento_seq", 
-        sequenceName = "etapa_procedimento_sequence", 
-        allocationSize = 1
-    )
-    @Column(name = "id_etapa")
-    private Long idEtapa;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_procedimento")
-    private Procedimento procedimento;
-
-    @NotNull
+    private UUID idEtapa;
+    private UUID procedimentoId;
     private Integer ordem;
-
-    @NotNull
     private String nome;
-
-    @Column(name = "tipo_etapa")
     private String tipoEtapa;
-
-    @NotNull
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private JsonNode parametrosEtapa;
-
-    @NotNull
+    private Map<String, Object> parametrosEtapa;
     private Boolean obrigatorio;
 
-    public Boolean isObrigatorio() {return obrigatorio;}
+    public EtapaProcedimento() {}
+
+    public EtapaProcedimento(UUID idEtapa, UUID procedimentoId, Integer ordem, String nome, 
+                             String tipoEtapa, Map<String, Object> parametrosEtapa, Boolean obrigatorio) {
+        this.idEtapa = idEtapa != null ? idEtapa : UUID.randomUUID();
+        this.procedimentoId = procedimentoId;
+        this.ordem = ordem;
+        this.nome = nome;
+        this.tipoEtapa = tipoEtapa;
+        this.parametrosEtapa = parametrosEtapa != null ? parametrosEtapa : Map.of();
+        this.obrigatorio = obrigatorio != null ? obrigatorio : true;
+    }
+
+    public UUID getIdEtapa() { return idEtapa; }
+    public UUID getProcedimentoId() { return procedimentoId; }
+    public Integer getOrdem() { return ordem; }
+    public String getNome() { return nome; }
+    public String getTipoEtapa() { return tipoEtapa; }
+    public Map<String, Object> getParametrosEtapa() { return parametrosEtapa; }
+    public Boolean isObrigatorio() { return obrigatorio; }
 }
