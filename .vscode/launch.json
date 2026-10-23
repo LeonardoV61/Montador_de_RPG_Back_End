@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-MontadorDeRpgBackendApplication<hydraforge>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.draftstd.hydraforge.MontadorDeRpgBackendApplication",
+            "projectName": "hydraforge",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

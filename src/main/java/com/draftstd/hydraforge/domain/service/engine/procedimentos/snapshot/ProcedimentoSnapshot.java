@@ -1,0 +1,49 @@
+package com.draftstd.hydraforge.domain.service.engine.procedimentos.snapshot;
+
+
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ContextoAccessor;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ResultadoEtapa;
+import com.draftstd.hydraforge.domain.service.engine.procedimentos.contexto.ProcedimentoContexto.Status;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProcedimentoSnapshot {
+
+    private UUID idProcedimento;
+    private UUID idSessao;
+    private int etapaAtual;
+    private Status status;
+    private String contextoRetorno;
+
+    private Map<String, Object> contextoMap = new HashMap<>();
+
+    private String escopoTipo;
+    private List<UUID> escopoIds;
+
+    @Getter(AccessLevel.NONE)
+    private ContextoAccessor contexto;
+
+    public void inicializarAcessor() {
+        this.contexto = new ContextoAccessor(contextoMap);
+    }
+
+    public ContextoAccessor getContexto() {
+        if (contexto == null) contexto = new ContextoAccessor(contextoMap);
+        return contexto;
+    }
+
+    public void setContextoMap(Map<String, Object> map) {
+        this.contextoMap = map != null ? map : new HashMap<>();
+        this.contexto = new ContextoAccessor(this.contextoMap);
+    }
+
+    private List<ResultadoEtapa> historico = new ArrayList<>();
+}

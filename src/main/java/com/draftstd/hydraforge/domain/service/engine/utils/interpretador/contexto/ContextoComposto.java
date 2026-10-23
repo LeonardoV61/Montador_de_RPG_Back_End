@@ -1,0 +1,27 @@
+package com.draftstd.hydraforge.domain.service.engine.utils.interpretador.contexto;
+
+import java.util.Map;
+import java.util.Optional;
+
+public class ContextoComposto implements Contexto {
+
+    private final Map<String, Contexto> escopos;
+
+    public ContextoComposto(Map<String, Contexto> escopos) {
+        this.escopos = escopos;
+    }
+
+    @Override
+    public Optional<Object> get(String caminho) {
+        int ponto = caminho.indexOf(".");
+        if (ponto == -1) return Optional.empty();
+
+        String escopo = caminho.substring(0, ponto);
+        String resto  = caminho.substring(ponto + 1);
+
+        Contexto ctx = escopos.get(escopo);
+        if (ctx == null) return Optional.empty();
+
+        return ctx.get(resto);
+    }
+}
